@@ -345,6 +345,19 @@ pub async fn abrir_no_sistema(caminho: String) -> Result<(), String> {
     platform::current().open_step(&caminho).run().map(|_| ())
 }
 
+/// Consulta se há versão nova. Chamada na abertura, e por isso com timeout
+/// curto: rede ruim não pode segurar a primeira tela.
+#[tauri::command]
+pub async fn verificar_atualizacao() -> Result<crate::atualizacao::Atualizacao, String> {
+    crate::atualizacao::verificar().await
+}
+
+/// Baixa o instalador da versão nova e o abre.
+#[tauri::command]
+pub async fn instalar_atualizacao(app: AppHandle, url: String) -> Result<String, String> {
+    crate::atualizacao::instalar(app, url).await
+}
+
 #[tauri::command]
 pub async fn fechar_navegador(state: State<'_, AppState>) -> Result<(), String> {
     state.browser.shutdown().await;

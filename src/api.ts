@@ -30,7 +30,9 @@ import type {
   RegistroMetrica,
   LeituraDaRede,
   VagaClaude,
+  Atualizacao,
   Falha,
+  ProgressoBaixa,
   PedidoMotion,
   RelatorioNavegador,
   StatusNavegador,
@@ -47,6 +49,8 @@ export const api = {
   sondaSistema: () => invoke<SondaSistema>("sonda_sistema"),
   sondaMemoria: () => invoke<RamSnapshot>("sonda_memoria"),
   sondaAcelerador: () => invoke<PerfilComputacao>("sonda_acelerador"),
+  verificarAtualizacao: () => invoke<Atualizacao>("verificar_atualizacao"),
+  instalarAtualizacao: (url: string) => invoke<string>("instalar_atualizacao", { url }),
   sondaNavegador: () => invoke<StatusNavegador>("sonda_navegador"),
   provisionarNavegador: () => invoke<RelatorioNavegador>("provisionar_navegador"),
   sondaOllama: () => invoke<OllamaStatus>("sonda_ollama"),
@@ -137,6 +141,11 @@ export const api = {
 /** A campanha parou e espera a decisao sobre animar a peca. */
 /** A campanha parou. O Rust já disparou a notificação do sistema; aqui abre
  *  o modal com o detalhe. */
+/** Progresso do download da atualização. */
+export function ouvirAtualizacao(cb: (e: ProgressoBaixa) => void): Promise<UnlistenFn> {
+  return listen<ProgressoBaixa>("postly://atualizacao", (evento) => cb(evento.payload));
+}
+
 export function ouvirFalha(cb: (e: Falha) => void): Promise<UnlistenFn> {
   return listen<Falha>("postly://falha", (evento) => cb(evento.payload));
 }

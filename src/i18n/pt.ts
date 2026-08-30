@@ -54,6 +54,8 @@ export const pt = {
     installDone: "Ollama pronto.",
     installFailed: "A instalação não terminou.",
     browserUnknown: "Nao foi possivel verificar o navegador.",
+    autoTitle: "Preparando a sua máquina",
+    autoBody: "Baixando o que o Postly precisa para rodar: o Ollama, que executa os modelos, e o navegador que publica. É uma vez só, e você pode deixar rodando.",
     browserReady: "Navegador pronto para publicar.",
     browserInstall: "Baixar navegador",
     browserDownloading: "Baixando o Chromium (uma vez só, cerca de 150 MB)…",
@@ -412,6 +414,24 @@ export const pt = {
     rastro: "Os turnos que chegaram a rodar ficaram gravados: a pasta da execução guarda a conversa de cada cargo, mesmo a do que falhou.",
     abrirPasta: "Abrir a pasta",
     copiar: "Copiar a mensagem",
+  },
+
+  atualizacao: {
+    titulo: "Há uma versão nova",
+    dePara: "Você tem a {atual}. A {nova} está disponível.",
+    oQueMudou: "O que mudou",
+    tamanho: "O download tem {t}.",
+    semTamanho: "O download começa assim que você confirmar.",
+    instalar: "Instalar agora",
+    agoraNao: "Agora não",
+    baixando: "Instalando a atualização",
+    pronta: "Instalador aberto",
+    instaladorAberto: "O instalador foi aberto. Siga por ele e reabra o Postly ao terminar — a sua chave, o cérebro e as campanhas continuam onde estão.",
+  },
+
+  tema: {
+    paraClaro: "Mudar para o tema claro",
+    paraEscuro: "Mudar para o tema escuro",
   },
 
   motion: {

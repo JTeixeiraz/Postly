@@ -9,6 +9,7 @@ import GuiaTopo from "./components/GuiaTopo";
 import type { Passo } from "./components/Guia";
 import Tour from "./components/Tour";
 import Skills from "./components/Skills";
+import ModalAtualizacao from "./components/ModalAtualizacao";
 import ModalFalha from "./components/ModalFalha";
 import ModalMotion from "./components/ModalMotion";
 import Auditoria from "./screens/Auditoria";
@@ -151,6 +152,7 @@ export default function App() {
           delas, e a campanha fica parada ate a resposta. */}
       <ModalMotion />
       <ModalFalha />
+      <ModalAtualizacao />
       <header className="topo">
         <div className="marca">
           <Marca size={23} />

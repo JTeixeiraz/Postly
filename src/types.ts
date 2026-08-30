@@ -491,3 +491,19 @@ export interface Falha {
   pasta: string | null;
   sugestao: string | null;
 }
+
+/** Uma versão nova disponível no GitHub. */
+export interface Atualizacao {
+  disponivel: boolean;
+  versao_atual: string;
+  versao_nova: string | null;
+  notas: string | null;
+  url_instalador: string | null;
+  tamanho_bytes: number | null;
+}
+
+export interface ProgressoBaixa {
+  baixado: number;
+  total: number;
+  percent: number;
+}

@@ -50,6 +50,8 @@ export const en: typeof pt = {
     installDone: "Ollama is ready.",
     installFailed: "The installation did not finish.",
     browserUnknown: "Could not check the browser.",
+    autoTitle: "Setting up your machine",
+    autoBody: "Downloading what Postly needs to run: Ollama, which executes the models, and the browser that publishes. Once only — you can leave it running.",
     browserReady: "Browser ready to publish.",
     browserInstall: "Download browser",
     browserDownloading: "Downloading Chromium (once, about 150 MB)…",
@@ -408,6 +410,24 @@ export const en: typeof pt = {
     rastro: "The turns that did run were saved: the run folder keeps each role's conversation, including the one that failed.",
     abrirPasta: "Open the folder",
     copiar: "Copy the message",
+  },
+
+  atualizacao: {
+    titulo: "A new version is out",
+    dePara: "You have {atual}. Version {nova} is available.",
+    oQueMudou: "What changed",
+    tamanho: "The download is {t}.",
+    semTamanho: "The download starts once you confirm.",
+    instalar: "Install now",
+    agoraNao: "Not now",
+    baixando: "Installing the update",
+    pronta: "Installer opened",
+    instaladorAberto: "The installer is open. Follow it and reopen Postly when it finishes — your key, the brain and the campaigns stay where they are.",
+  },
+
+  tema: {
+    paraClaro: "Switch to light theme",
+    paraEscuro: "Switch to dark theme",
   },
 
   motion: {

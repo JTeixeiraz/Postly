@@ -12,6 +12,7 @@
 //! - `browser`      ponte com o sidecar do Playwright.
 //! - `vault`        cofre cifrado de chave e credenciais.
 
+pub mod atualizacao;
 pub mod auditoria_cmds;
 pub mod brain;
 pub mod browser;
@@ -79,6 +80,8 @@ pub fn run() {
             commands::sonda_acelerador,
             commands::sonda_ollama,
             commands::sonda_navegador,
+            commands::verificar_atualizacao,
+            commands::instalar_atualizacao,
             commands::provisionar_navegador,
             commands::provisionar_ollama,
             commands::plano_otimizacao,
