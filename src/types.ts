@@ -465,3 +465,29 @@ export const PREFS_VAZIAS: Preferencias = {
   referencias: [],
   skills: [],
 };
+
+/** O navegador que publica — sonda da tela de preparação.
+ *
+ *  O Playwright chega pelo npm, mas o Chromium é um download à parte e preso
+ *  à versão exata da biblioteca. Atualizar uma sem a outra deixa um estado que
+ *  parece saudável até alguém clicar em publicar. */
+export interface StatusNavegador {
+  state: "pronto" | "ausente" | "semsidecar" | "semnode";
+  caminho: string | null;
+  detalhe: string;
+}
+
+export interface RelatorioNavegador {
+  ok: boolean;
+  passos: string[];
+  erros: string[];
+  status_final: StatusNavegador;
+}
+
+/** Uma falha que parou a campanha. */
+export interface Falha {
+  etapa: string;
+  detalhe: string;
+  pasta: string | null;
+  sugestao: string | null;
+}

@@ -30,7 +30,10 @@ import type {
   RegistroMetrica,
   LeituraDaRede,
   VagaClaude,
+  Falha,
   PedidoMotion,
+  RelatorioNavegador,
+  StatusNavegador,
   ResultadoCampanha,
   CartaoImagem,
 } from "./types";
@@ -44,6 +47,8 @@ export const api = {
   sondaSistema: () => invoke<SondaSistema>("sonda_sistema"),
   sondaMemoria: () => invoke<RamSnapshot>("sonda_memoria"),
   sondaAcelerador: () => invoke<PerfilComputacao>("sonda_acelerador"),
+  sondaNavegador: () => invoke<StatusNavegador>("sonda_navegador"),
+  provisionarNavegador: () => invoke<RelatorioNavegador>("provisionar_navegador"),
   sondaOllama: () => invoke<OllamaStatus>("sonda_ollama"),
   provisionarOllama: () => invoke<{ ok: boolean; steps: string[]; errors: string[] }>("provisionar_ollama"),
 
@@ -130,6 +135,12 @@ export const api = {
 };
 
 /** A campanha parou e espera a decisao sobre animar a peca. */
+/** A campanha parou. O Rust já disparou a notificação do sistema; aqui abre
+ *  o modal com o detalhe. */
+export function ouvirFalha(cb: (e: Falha) => void): Promise<UnlistenFn> {
+  return listen<Falha>("postly://falha", (evento) => cb(evento.payload));
+}
+
 export function ouvirMotion(cb: (e: PedidoMotion) => void): Promise<UnlistenFn> {
   return listen<PedidoMotion>("postly://motion", (evento) => cb(evento.payload));
 }

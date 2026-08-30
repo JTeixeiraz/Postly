@@ -2,7 +2,13 @@
 //!
 //! Assíncrono: `POST https://api.bfl.ai/v1/<modelo>` devolve `{id, polling_url}`,
 //! e o resultado sai depois num `GET` ao `polling_url`. Autentica com o header
-//! `X-API-Key`, não com Bearer.
+//! `x-key`, não com Bearer nem com `X-API-Key`.
+//!
+//! O nome do header foi verificado contra a API real, porque errá-lo não dá
+//! erro distinguível: com `X-API-Key` a resposta é `{"detail":"Not
+//! authenticated"}`, exatamente a mesma de não mandar header nenhum. Só com
+//! `x-key` a API chega a olhar o valor — e aí responde `{"detail":"Invalid API
+//! key format"}`, que é o que prova que ela leu.
 //!
 //! Os estados vêm do OpenAPI oficial (`api.bfl.ai/openapi.json`): `Pending`,
 //! `Reasoning`, `Generating`, `Ready`, `Error`, `Request Moderated`,
@@ -36,7 +42,7 @@ pub async fn gerar(
 
     let resp = http()
         .post(format!("{BASE}/{modelo}"))
-        .header("X-API-Key", chave)
+        .header("x-key", chave)
         .json(&serde_json::json!({
             "prompt": prompt,
             "width": largura,
@@ -98,7 +104,7 @@ async fn aguardar(polling_url: &str, chave: &str) -> Result<String, String> {
 
         let resp = http()
             .get(polling_url)
-            .header("X-API-Key", chave)
+            .header("x-key", chave)
             .send()
             .await
             .map_err(|e| format!("falha ao consultar a BFL: {e}"))?;
@@ -171,7 +177,7 @@ pub async fn validar(chave: &str) -> Result<String, String> {
     // Consulta o saldo: confere a chave sem enfileirar uma geracao paga.
     let resp = http()
         .get("https://api.bfl.ai/v1/get_balance")
-        .header("X-API-Key", chave)
+        .header("x-key", chave)
         .send()
         .await
         .map_err(|e| format!("falha ao falar com a BFL: {e}"))?;

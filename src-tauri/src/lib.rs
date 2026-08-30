@@ -18,11 +18,13 @@ pub mod browser;
 pub mod claude;
 pub mod commands;
 pub mod config_cmds;
+pub mod falha;
 pub mod gemini;
 pub mod hardware;
 pub mod idioma;
 pub mod imagem;
 pub mod metricas;
+pub mod navegador;
 pub mod ollama;
 pub mod orchestrator;
 pub mod platform;
@@ -76,6 +78,8 @@ pub fn run() {
             commands::sonda_memoria,
             commands::sonda_acelerador,
             commands::sonda_ollama,
+            commands::sonda_navegador,
+            commands::provisionar_navegador,
             commands::provisionar_ollama,
             commands::plano_otimizacao,
             commands::otimizar,

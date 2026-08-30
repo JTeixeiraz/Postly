@@ -53,6 +53,11 @@ export const pt = {
     installServer: "Subindo o servidor",
     installDone: "Ollama pronto.",
     installFailed: "A instalação não terminou.",
+    browserUnknown: "Nao foi possivel verificar o navegador.",
+    browserReady: "Navegador pronto para publicar.",
+    browserInstall: "Baixar navegador",
+    browserDownloading: "Baixando o Chromium (uma vez só, cerca de 150 MB)…",
+    browserTitle: "Navegador",
     installRequired: "O Postly não roda sem o Ollama: é ele que executa os modelos na sua máquina.",
     ollamaStart: "Subir servidor",
     node: "Navegador",
@@ -400,6 +405,15 @@ export const pt = {
     collectedAt: "Coletado em",
     removed: "Registro removido.",
   },
+  falha: {
+    titulo: "A campanha parou",
+    oQueFazer: "O que fazer",
+    mensagem: "Mensagem do sistema",
+    rastro: "Os turnos que chegaram a rodar ficaram gravados: a pasta da execução guarda a conversa de cada cargo, mesmo a do que falhou.",
+    abrirPasta: "Abrir a pasta",
+    copiar: "Copiar a mensagem",
+  },
+
   motion: {
     title: "Esta peça pede movimento",
     who: "Quem pediu",

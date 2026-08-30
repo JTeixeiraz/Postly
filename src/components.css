@@ -425,3 +425,30 @@
   color: var(--ink-3); opacity: .9;
 }
 .provedor[data-on="true"] .provedor__estado { color: var(--act-ink); opacity: .72; }
+
+/* ══ modal de falha ══════════════════════════════════════════════════════ */
+
+/* Mais largo que o do motion: aqui há uma mensagem de sistema para ler, e
+   quebrar um stack trace em 480px transforma quatro linhas em doze. */
+.modal--falha { width: min(100%, 620px); }
+
+.modal__topo { display: flex; align-items: flex-start; gap: var(--s3); }
+.modal__topo h2 { font-size: var(--t-h3); }
+
+/* O selo carrega a cor do estado: é o que diz "isto é um erro" antes de
+   qualquer palavra ser lida. */
+.modal__selo {
+  width: 32px; height: 32px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--r-md);
+}
+.modal__selo[data-tone="alert"] { background: var(--alert-wash); color: var(--alert); }
+.modal__selo[data-tone="live"] { background: var(--act-wash); color: var(--act); }
+
+/* A mensagem crua tem altura própria: ela é para ser lida e copiada, não para
+   empurrar os botões para fora da tela. */
+.modal__detalhe {
+  max-height: 30vh;
+  font-size: var(--t-micro);
+  line-height: 1.55;
+}

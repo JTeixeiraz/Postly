@@ -23,6 +23,7 @@ pub struct Diagnostico {
     /// RAM, acelerador e os tres tetos de orcamento numa leitura so.
     pub computacao: ComputeProfile,
     pub ollama: installer::OllamaStatus,
+    pub navegador: crate::navegador::StatusNavegador,
     pub node_instalado: bool,
     pub diretorio_dados: String,
     pub redes_suportadas: Vec<RedeInfo>,
@@ -45,6 +46,7 @@ pub async fn diagnostico() -> Diagnostico {
         plataforma_label: strategy.label(),
         computacao: hardware::compute_profile(),
         ollama: installer::status().await,
+        navegador: crate::navegador::status(),
         node_instalado: strategy.node_installed(),
         diretorio_dados: strategy.data_dir().to_string_lossy().to_string(),
         redes_suportadas: [
@@ -105,6 +107,20 @@ pub async fn sonda_memoria() -> RamSnapshot {
 #[tauri::command]
 pub async fn sonda_acelerador() -> ComputeProfile {
     hardware::compute_profile()
+}
+
+/// A sonda do navegador: um processo Node curto que pergunta ao Playwright
+/// onde está o Chromium dele. Fica fora do diagnóstico rápido porque custa um
+/// spawn, mas a tela de preparação chama junto das outras.
+#[tauri::command]
+pub fn sonda_navegador() -> crate::navegador::StatusNavegador {
+    crate::navegador::status()
+}
+
+/// Baixa o Chromium que falta. O mesmo gesto do botão do Ollama.
+#[tauri::command]
+pub async fn provisionar_navegador() -> crate::navegador::RelatorioNavegador {
+    crate::navegador::provisionar().await
 }
 
 #[tauri::command]
@@ -291,7 +307,17 @@ pub async fn iniciar_campanha(
     state: State<'_, AppState>,
     pedido: CampaignRequest,
 ) -> Result<CampaignReport, String> {
-    orchestrator::run_campaign(app, state.inner(), pedido).await
+    // O ponto único por onde toda falha de campanha passa. Deixar cada rota
+    // anunciar a sua garantiria que uma delas ficasse de fora — e a que ficar
+    // de fora é a que trava a pessoa sem explicação.
+    let etapa = crate::idioma::msg("Execucao da campanha", "Campaign run");
+    match orchestrator::run_campaign(app.clone(), state.inner(), pedido).await {
+        Ok(relatorio) => Ok(relatorio),
+        Err(e) => {
+            crate::falha::anunciar(&app, &etapa, &e, None);
+            Err(e)
+        }
+    }
 }
 
 /// As pecas que uma execucao produziu.

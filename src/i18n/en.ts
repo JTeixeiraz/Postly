@@ -49,6 +49,11 @@ export const en: typeof pt = {
     installServer: "Starting the server",
     installDone: "Ollama is ready.",
     installFailed: "The installation did not finish.",
+    browserUnknown: "Could not check the browser.",
+    browserReady: "Browser ready to publish.",
+    browserInstall: "Download browser",
+    browserDownloading: "Downloading Chromium (once, about 150 MB)…",
+    browserTitle: "Browser",
     installRequired: "Postly does not run without Ollama: it is what executes the models on your machine.",
     ollamaStart: "Start server",
     node: "Browser",
@@ -396,6 +401,15 @@ export const en: typeof pt = {
     collectedAt: "Collected",
     removed: "Record removed.",
   },
+  falha: {
+    titulo: "The campaign stopped",
+    oQueFazer: "What to do",
+    mensagem: "System message",
+    rastro: "The turns that did run were saved: the run folder keeps each role's conversation, including the one that failed.",
+    abrirPasta: "Open the folder",
+    copiar: "Copy the message",
+  },
+
   motion: {
     title: "This piece is asking for motion",
     who: "Who asked",

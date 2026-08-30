@@ -44,6 +44,14 @@ impl PlatformStrategy for WindowsStrategy {
         "node.exe"
     }
 
+    fn npm_binary(&self) -> &'static str {
+        "npm.cmd"
+    }
+
+    fn npx_binary(&self) -> &'static str {
+        "npx.cmd"
+    }
+
     fn data_dir(&self) -> PathBuf {
         dirs::data_dir()
             .unwrap_or_else(|| PathBuf::from("."))

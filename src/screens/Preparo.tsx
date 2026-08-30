@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { api, ouvirProvisao } from "../api";
 import { formatarBytes, useIdioma } from "../i18n";
-import type { Diagnostico, OllamaStatus, PerfilComputacao, ProgressoProvisao, RamSnapshot, SondaSistema, Vaga } from "../types";
+import type { Diagnostico, OllamaStatus, StatusNavegador, PerfilComputacao, ProgressoProvisao, RamSnapshot, SondaSistema, Vaga } from "../types";
 import Meter from "../components/Meter";
 import Elenco from "../components/Elenco";
 import Otimizar from "./Otimizar";
 import { IconAlert, IconArrow, IconCheck, IconDot, IconSpinner } from "../components/Icons";
 
 type Estado = "espera" | "rodando" | "ok" | "aviso" | "falhou";
-type Chave = "sistema" | "memoria" | "acelerador" | "ollama";
+type Chave = "sistema" | "memoria" | "acelerador" | "ollama" | "navegador";
 
 interface Linha {
   estado: Estado;
@@ -38,11 +38,13 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
     memoria: { estado: "espera" },
     acelerador: { estado: "espera" },
     ollama: { estado: "espera" },
+    navegador: { estado: "espera" },
   });
   const [rodando, setRodando] = useState(false);
   const [terminou, setTerminou] = useState(false);
   const [ram, setRam] = useState<RamSnapshot | null>(null);
   const [ollama, setOllama] = useState<OllamaStatus | null>(null);
+  const [navegador, setNavegador] = useState<StatusNavegador | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
   /** Andamento da instalacao do Ollama. Null quando nao ha instalacao rodando. */
   const [provisao, setProvisao] = useState<ProgressoProvisao | null>(null);
@@ -61,6 +63,7 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
       memoria: { estado: "espera" },
       acelerador: { estado: "espera" },
       ollama: { estado: "espera" },
+    navegador: { estado: "espera" },
     });
 
     // Sistema operacional.
@@ -112,6 +115,22 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
     setOllama(olla);
     aplicarOllama(olla);
 
+    // Navegador. Vem depois do Ollama porque só importa se houver o que
+    // publicar, mas é igualmente obrigatório: sem Chromium não há publicação
+    // nem coleta de desempenho.
+    marcar("navegador", { estado: "rodando" });
+    // A sonda roda um processo Node. Se ele não subir, o retorno vem vazio, e
+    // tratar isso como "não instalado" é mais honesto do que derrubar a tela.
+    const nav = await api.sondaNavegador().catch(() => null);
+    setNavegador(nav);
+    aplicarNavegador(
+      nav ?? {
+        state: "ausente",
+        caminho: null,
+        detalhe: d.boot.browserUnknown,
+      }
+    );
+
     // Fecha a leitura mostrando a consequência dela: quem seria escalado agora.
     setVagas(await api.elenco());
 
@@ -140,6 +159,49 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
         </button>
       ),
     });
+  };
+
+  const aplicarNavegador = (nav: StatusNavegador) => {
+    if (nav.state === "pronto") {
+      marcar("navegador", { estado: "ok", resultado: d.boot.browserReady });
+      return;
+    }
+    // "sem node" é o único caso que o app não resolve sozinho: instalar um
+    // runtime na máquina de alguém sem pedir seria invasivo.
+    const podeInstalar = nav.state !== "semnode";
+    marcar("navegador", {
+      estado: "falhou",
+      resultado: nav.detalhe,
+      acao: podeInstalar ? (
+        <button className="btn btn--sm btn--key" onClick={prepararNavegador}>
+          {d.boot.browserInstall}
+        </button>
+      ) : undefined,
+    });
+  };
+
+  const prepararNavegador = async () => {
+    setOcupado("navegador");
+    marcar("navegador", { estado: "rodando", resultado: d.boot.browserDownloading });
+    try {
+      const r = await api.provisionarNavegador();
+      setNavegador(r.status_final);
+      if (r.ok) {
+        marcar("navegador", { estado: "ok", resultado: d.boot.browserReady });
+      } else {
+        marcar("navegador", {
+          estado: "falhou",
+          resultado: r.erros.join(" · ") || r.status_final.detalhe,
+          acao: (
+            <button className="btn btn--sm" onClick={prepararNavegador}>
+              {d.common.retry}
+            </button>
+          ),
+        });
+      }
+    } finally {
+      setOcupado(null);
+    }
   };
 
   // O instalador do Ollama baixa perto de um giga. Sem acompanhar linha a
@@ -189,13 +251,17 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diag]);
 
-  const pronto = ollama?.state === "pronto";
-  const ordem: Chave[] = ["sistema", "memoria", "acelerador", "ollama"];
+  // Os dois são obrigatórios: o Ollama executa os modelos, o navegador
+  // publica. Faltando qualquer um, metade do produto não existe — e liberar a
+  // próxima tela seria empurrar a pessoa para uma campanha que trava no fim.
+  const pronto = ollama?.state === "pronto" && navegador?.state === "pronto";
+  const ordem: Chave[] = ["sistema", "memoria", "acelerador", "ollama", "navegador"];
   const titulos: Record<Chave, string> = {
     sistema: d.boot.os,
     memoria: d.boot.memory,
     acelerador: d.boot.accel,
     ollama: d.boot.ollama,
+    navegador: d.boot.browserTitle,
   };
 
   return (

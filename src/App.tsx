@@ -9,6 +9,7 @@ import GuiaTopo from "./components/GuiaTopo";
 import type { Passo } from "./components/Guia";
 import Tour from "./components/Tour";
 import Skills from "./components/Skills";
+import ModalFalha from "./components/ModalFalha";
 import ModalMotion from "./components/ModalMotion";
 import Auditoria from "./screens/Auditoria";
 import Meter from "./components/Meter";
@@ -143,6 +144,7 @@ export default function App() {
       {/* Fora do fluxo das telas: a pergunta chega no meio de qualquer uma
           delas, e a campanha fica parada ate a resposta. */}
       <ModalMotion />
+      <ModalFalha />
       <header className="topo">
         <div className="marca">
           <Marca size={23} />

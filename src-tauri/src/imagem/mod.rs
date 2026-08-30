@@ -163,24 +163,40 @@ pub async fn baixar(url: &str) -> Result<Vec<u8>, String> {
 /// documentado e cai nesta varredura. É defensivo de propósito: são as duas
 /// integrações que eu não pude exercitar.
 pub fn achar_url(v: &serde_json::Value) -> Option<String> {
+    achar(v, false)
+}
+
+/// `sob_chave_conhecida` afrouxa a exigência de extensão de arquivo.
+///
+/// Na varredura cega ela é necessária: sem ela, o primeiro `http` que
+/// aparecesse no envelope — a URL de documentação, o link do termo de uso —
+/// passaria por arte. Debaixo de um campo que só carrega o resultado, ela
+/// atrapalha: a BFL entrega URL ASSINADA, do tipo
+/// `https://delivery.../abc?signature=...`, que não tem `.png` em lugar nenhum.
+fn achar(v: &serde_json::Value, sob_chave_conhecida: bool) -> Option<String> {
     match v {
         serde_json::Value::String(s) => {
+            if !s.to_lowercase().starts_with("http") {
+                return None;
+            }
+            if sob_chave_conhecida {
+                return Some(s.clone());
+            }
             let baixo = s.to_lowercase();
-            (baixo.starts_with("http")
-                && [".png", ".jpg", ".jpeg", ".webp"]
-                    .iter()
-                    .any(|e| baixo.contains(e)))
-            .then(|| s.clone())
+            [".png", ".jpg", ".jpeg", ".webp"]
+                .iter()
+                .any(|e| baixo.contains(e))
+                .then(|| s.clone())
         }
-        serde_json::Value::Array(a) => a.iter().find_map(achar_url),
+        serde_json::Value::Array(a) => a.iter().find_map(|x| achar(x, sob_chave_conhecida)),
         serde_json::Value::Object(o) => {
             // Os nomes prováveis primeiro, para não pegar uma miniatura por acaso.
             for k in ["sample", "url", "image_url", "output_url", "result_url"] {
-                if let Some(u) = o.get(k).and_then(achar_url) {
+                if let Some(u) = o.get(k).and_then(|x| achar(x, true)) {
                     return Some(u);
                 }
             }
-            o.values().find_map(achar_url)
+            o.values().find_map(|x| achar(x, sob_chave_conhecida))
         }
         _ => None,
     }
@@ -299,5 +315,63 @@ mod testes {
         // Uma resposta de erro em texto tem essa cara: gravar isso como .png
         // deixaria a campanha seguir com uma peca quebrada.
         assert!(gravar(b"{\"error\":\"nope\"}", "png", "m", "1:1", &dir).is_err());
+    }
+}
+
+#[cfg(test)]
+mod testes_url {
+    use super::achar_url;
+    use serde_json::json;
+
+    #[test]
+    fn acha_a_url_assinada_da_bfl() {
+        // O envelope real: `result.sample`, com URL assinada e sem extensão.
+        let v = json!({
+            "status": "Ready",
+            "result": { "sample": "https://delivery-eu4.bfl.ai/results/9f2/abc?se=2026-08-30&sig=xyz" }
+        });
+        assert_eq!(
+            achar_url(&v).as_deref(),
+            Some("https://delivery-eu4.bfl.ai/results/9f2/abc?se=2026-08-30&sig=xyz")
+        );
+    }
+
+    #[test]
+    fn acha_url_com_extensao_em_campo_desconhecido() {
+        let v = json!({ "saida": { "arquivo": "https://cdn.exemplo.com/a/b.png" } });
+        assert_eq!(
+            achar_url(&v).as_deref(),
+            Some("https://cdn.exemplo.com/a/b.png")
+        );
+    }
+
+    #[test]
+    fn nao_confunde_link_de_documentacao_com_arte() {
+        // O afrouxamento vale só sob os campos conhecidos: numa varredura cega
+        // qualquer `http` viraria arte, e envelopes de erro vêm cheios deles.
+        let v = json!({
+            "detail": "cota esgotada",
+            "documentation_url": "https://docs.exemplo.com/rate-limits",
+            "help": "https://exemplo.com/suporte"
+        });
+        assert_eq!(achar_url(&v), None);
+    }
+
+    #[test]
+    fn prefere_o_campo_documentado_a_uma_miniatura() {
+        let v = json!({
+            "thumbnail": "https://cdn.exemplo.com/thumb.png",
+            "sample": "https://cdn.exemplo.com/full?sig=1"
+        });
+        assert_eq!(
+            achar_url(&v).as_deref(),
+            Some("https://cdn.exemplo.com/full?sig=1")
+        );
+    }
+
+    #[test]
+    fn envelope_sem_imagem_devolve_nada() {
+        assert_eq!(achar_url(&json!({ "status": "Pending" })), None);
+        assert_eq!(achar_url(&json!({ "sample": null })), None);
     }
 }

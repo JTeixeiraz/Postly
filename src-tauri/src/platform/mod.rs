@@ -158,6 +158,16 @@ pub trait PlatformStrategy: Send + Sync {
     /// Nome do executavel do Node (usado para o sidecar do Playwright).
     fn node_binary(&self) -> &'static str;
 
+    /// O npm e o npx que acompanham o Node. Servem para instalar o sidecar e
+    /// baixar o Chromium; no Windows os dois sao scripts `.cmd`, e chamar sem
+    /// a extensao devolve "programa nao encontrado".
+    fn npm_binary(&self) -> &'static str {
+        "npm"
+    }
+    fn npx_binary(&self) -> &'static str {
+        "npx"
+    }
+
     /// Onde o sistema guarda cerebro, transcricoes, midia e cofre.
     fn data_dir(&self) -> PathBuf;
 
