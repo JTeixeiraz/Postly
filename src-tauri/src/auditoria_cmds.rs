@@ -214,7 +214,8 @@ pub async fn analisar_desempenho() -> Result<String, String> {
             600,
         )
         .await
-        .map(|t| t.texto),
+        .map(|t| t.texto)
+        .map_err(String::from),
         crate::prefs::Provedor::Ollama => {
             let perfil = crate::hardware::compute_profile();
             let instalados = crate::ollama::client::installed_models().await;
@@ -345,6 +346,28 @@ pub fn responder_motion(state: tauri::State<'_, AppState>, aceitar: bool) -> Res
         .take();
     if let Some(tx) = canal {
         let _ = tx.send(aceitar);
+    }
+    Ok(())
+}
+
+// ------------------------------------------------------------------ limite
+
+/// A resposta da pessoa ao aviso de cota esgotada do Claude Code.
+///
+/// `esperar = true` deixa a campanha dormir ate a cota voltar e seguir
+/// sozinha; `false` encerra agora, e os turnos ja rodados ficam gravados.
+///
+/// Como no motion, nao achar ninguem esperando nao e erro: a janela pode ter
+/// sido fechada, e o clique so nao tem para onde ir.
+#[tauri::command]
+pub fn responder_limite(state: tauri::State<'_, AppState>, esperar: bool) -> Result<(), String> {
+    let canal = state
+        .resposta_limite
+        .lock()
+        .map_err(|_| "estado de limite indisponivel".to_string())?
+        .take();
+    if let Some(tx) = canal {
+        let _ = tx.send(esperar);
     }
     Ok(())
 }

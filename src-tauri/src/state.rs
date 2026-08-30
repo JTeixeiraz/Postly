@@ -20,6 +20,13 @@ pub struct AppState {
     /// oneshot e o menor mecanismo que faz a campanha dormir sem ocupar CPU e
     /// acordar exatamente uma vez.
     pub resposta_motion: Mutex<Option<tokio::sync::oneshot::Sender<bool>>>,
+    /// A vaga da resposta ao aviso de cota esgotada do Claude Code.
+    ///
+    /// `true` = esperar a cota voltar e seguir; `false` = encerrar agora. Vive
+    /// aqui pelo mesmo motivo da vaga do motion: a campanha roda numa tarefa
+    /// e a resposta chega por um comando, que sao dois mundos que so se falam
+    /// pelo estado compartilhado.
+    pub resposta_limite: Mutex<Option<tokio::sync::oneshot::Sender<bool>>>,
 }
 
 impl AppState {
@@ -29,6 +36,7 @@ impl AppState {
             browser: BrowserBridge::new(app_root.clone()),
             app_root,
             resposta_motion: Mutex::new(None),
+            resposta_limite: Mutex::new(None),
         }
     }
 }

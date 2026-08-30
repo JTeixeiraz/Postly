@@ -67,6 +67,7 @@ pub fn run() {
             auditoria_cmds::coletar_metricas,
             auditoria_cmds::analisar_desempenho,
             auditoria_cmds::responder_motion,
+            auditoria_cmds::responder_limite,
             config_cmds::elenco_claude,
             config_cmds::provedores_de_imagem,
             config_cmds::definir_provedor_imagem,

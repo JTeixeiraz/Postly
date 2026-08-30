@@ -4,6 +4,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type {
+  AvisoLimite,
+  EsperaLimite,
   CampanhaSalva,
   Diagnostico,
   OllamaStatus,
@@ -136,6 +138,7 @@ export const api = {
 
   elencoClaude: () => invoke<VagaClaude[]>("elenco_claude"),
   responderMotion: (aceitar: boolean) => invoke<void>("responder_motion", { aceitar }),
+  responderLimite: (esperar: boolean) => invoke<void>("responder_limite", { esperar }),
 };
 
 /** A campanha parou e espera a decisao sobre animar a peca. */
@@ -152,6 +155,23 @@ export function ouvirFalha(cb: (e: Falha) => void): Promise<UnlistenFn> {
 
 export function ouvirMotion(cb: (e: PedidoMotion) => void): Promise<UnlistenFn> {
   return listen<PedidoMotion>("postly://motion", (evento) => cb(evento.payload));
+}
+
+/** O aviso de cota esgotada, e os dois eventos da espera.
+ *
+ *  `ouvirEsperaLimite` e `ouvirFimDoLimite` existem porque a espera pode durar
+ *  horas: sem eles a tela ficaria mostrando o modal de decisão o tempo todo,
+ *  como se ninguém tivesse decidido nada. */
+export function ouvirLimite(cb: (e: AvisoLimite) => void): Promise<UnlistenFn> {
+  return listen<AvisoLimite>("postly://limite", (evento) => cb(evento.payload));
+}
+
+export function ouvirEsperaLimite(cb: (e: EsperaLimite) => void): Promise<UnlistenFn> {
+  return listen<EsperaLimite>("postly://limite-esperando", (evento) => cb(evento.payload));
+}
+
+export function ouvirFimDoLimite(cb: () => void): Promise<UnlistenFn> {
+  return listen("postly://limite-fim", () => cb());
 }
 
 export function ouvirEstagios(cb: (e: EventoEstagio) => void): Promise<UnlistenFn> {

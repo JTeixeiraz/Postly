@@ -451,6 +451,21 @@ export interface VagaClaude {
 }
 
 /** O que o modal de movimento recebe quando a campanha para para perguntar. */
+/** A cota do Claude Code acabou no meio da campanha. */
+export interface AvisoLimite {
+  /** Instante em que a cota volta, em segundos. `null` quando o CLI não disse
+   *  — e aí a tela não oferece esperar, porque não sabe medir a espera. */
+  volta_em: number | null;
+  /** O trecho da saída que provou o limite. Vai para a tela: um aviso que não
+   *  mostra de onde tirou a conclusão não dá para conferir. */
+  evidencia: string;
+}
+
+export interface EsperaLimite {
+  volta_em: number;
+  segundos: number;
+}
+
 export interface PedidoMotion {
   rede: string;
   motivo: string;

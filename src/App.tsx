@@ -12,6 +12,7 @@ import Skills from "./components/Skills";
 import Tema from "./components/Tema";
 import ModalAtualizacao from "./components/ModalAtualizacao";
 import ModalFalha from "./components/ModalFalha";
+import ModalLimite from "./components/ModalLimite";
 import ModalMotion from "./components/ModalMotion";
 import Auditoria from "./screens/Auditoria";
 import Meter from "./components/Meter";
@@ -152,6 +153,7 @@ export default function App() {
       {/* Fora do fluxo das telas: a pergunta chega no meio de qualquer uma
           delas, e a campanha fica parada ate a resposta. */}
       <ModalMotion />
+      <ModalLimite />
       <ModalFalha />
       <ModalAtualizacao />
       <header className="topo">

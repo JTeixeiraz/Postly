@@ -408,6 +408,24 @@ export const pt = {
     collectedAt: "Coletado em",
     removed: "Registro removido.",
   },
+  limite: {
+    pilula: "cota esgotada",
+    titulo: "O Claude Code atingiu o limite",
+    textoCom:
+      "A cota volta às {hora}, daqui a {falta}. Você pode encerrar agora e retomar quando quiser, ou deixar o Postly esperar e continuar sozinho.",
+    textoSem:
+      "O Claude Code não disse quando a cota volta. A campanha para aqui, e os turnos que já rodaram ficam gravados.",
+    oQueOClaudeDisse: "O que o Claude Code respondeu",
+    encerrar: "Encerrar agora",
+    esperar: "Esperar {falta} e continuar",
+    nota: "Esperando, a campanha segue sozinha do ponto exato onde parou. Encerrando, os turnos já rodados ficam gravados na pasta da execução.",
+    notaSem: "Os turnos que já rodaram ficam gravados na pasta da execução.",
+    esperando: "esperando a cota",
+    voltaAs: "A campanha volta às {hora}",
+    textoEsperando:
+      "Faltam {falta}. Deixe o Postly aberto — a espera vive nesta janela, e fechar o aplicativo encerra a campanha. O computador avisa quando ela voltar.",
+    encerrarAgora: "Não esperar, encerrar",
+  },
   falha: {
     titulo: "A campanha parou",
     oQueFazer: "O que fazer",

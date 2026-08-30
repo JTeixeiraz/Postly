@@ -28,6 +28,8 @@ use std::process::Stdio;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 
+pub mod limite;
+
 use crate::orchestrator::roles::Tier;
 
 /// Modelos por nivel. O nome do cargo nao muda; o executor, sim.
@@ -95,6 +97,48 @@ pub struct TurnoClaude {
     pub texto: String,
     /// Custo em dolares do turno, como o proprio CLI reporta.
     pub custo_usd: f64,
+}
+
+/// Por que o turno nao saiu.
+///
+/// O limite de cota fica separado dos demais porque a resposta a ele e outra:
+/// os outros erros encerram a campanha, e este pode virar uma espera. Um
+/// `String` unico obrigaria o orquestrador a reconhecer o caso pelo texto da
+/// mensagem, que e o tipo de acoplamento que quebra na primeira traducao.
+#[derive(Debug, Clone)]
+pub enum ErroTurno {
+    /// A cota acabou. Carrega quando ela volta, quando o CLI disse.
+    Limite(limite::Limite),
+    Outro(String),
+}
+
+impl std::fmt::Display for ErroTurno {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ErroTurno::Limite(l) => write!(
+                f,
+                "{} {}",
+                crate::idioma::msg(
+                    "A cota do Claude Code acabou.",
+                    "The Claude Code quota ran out."
+                ),
+                l.evidencia.lines().next().unwrap_or("")
+            ),
+            ErroTurno::Outro(m) => write!(f, "{m}"),
+        }
+    }
+}
+
+impl From<ErroTurno> for String {
+    fn from(e: ErroTurno) -> Self {
+        e.to_string()
+    }
+}
+
+impl From<String> for ErroTurno {
+    fn from(m: String) -> Self {
+        ErroTurno::Outro(m)
+    }
 }
 
 /// Onde esta o `claude` desta maquina.
@@ -209,12 +253,12 @@ pub async fn turno(
     system: &str,
     prompt: &str,
     timeout_s: u64,
-) -> Result<TurnoClaude, String> {
+) -> Result<TurnoClaude, ErroTurno> {
     let Some(binario) = localizar() else {
-        return Err(crate::idioma::msg(
+        return Err(ErroTurno::Outro(crate::idioma::msg(
             "Claude Code nao encontrado nesta maquina. Instale em claude.com/code ou volte para o Ollama.",
             "Claude Code was not found on this machine. Install it from claude.com/code or switch back to Ollama.",
-        ));
+        )));
     };
 
     let mut filho = Command::new(binario);
@@ -254,50 +298,60 @@ pub async fn turno(
     )
     .await
     .map_err(|_| {
-        crate::idioma::msg(
+        ErroTurno::Outro(crate::idioma::msg(
             "O Claude Code passou do tempo limite deste turno.",
             "Claude Code exceeded this turn's time limit.",
-        )
+        ))
     })?
-    .map_err(|e| format!("falha ao ler a resposta: {e}"))?;
+    .map_err(|e| ErroTurno::Outro(format!("falha ao ler a resposta: {e}")))?;
 
     let bruto = String::from_utf8_lossy(&saida.stdout);
+    let erro_bruto = String::from_utf8_lossy(&saida.stderr);
+
+    // A cota e conferida ANTES de tentar ler a resposta, e nas duas saidas: o
+    // CLI as vezes escreve o aviso no stderr com o stdout vazio, e as vezes
+    // devolve um JSON de erro com a mensagem dentro. Deixar isso para depois
+    // faria o limite chegar disfarcado de "resposta ilegivel".
+    let junto = format!("{bruto}\n{erro_bruto}");
+    if let Some(l) = limite::detectar(&junto) {
+        return Err(ErroTurno::Limite(l));
+    }
+
     if bruto.trim().is_empty() {
-        let erro = String::from_utf8_lossy(&saida.stderr);
-        return Err(format!(
+        return Err(ErroTurno::Outro(format!(
             "{} {}",
             crate::idioma::msg(
                 "O Claude Code nao devolveu nada.",
                 "Claude Code returned nothing."
             ),
-            erro.lines().next().unwrap_or("").trim()
-        ));
+            erro_bruto.lines().next().unwrap_or("").trim()
+        )));
     }
 
     let resposta: RespostaCli = serde_json::from_str(bruto.trim()).map_err(|e| {
-        format!(
+        ErroTurno::Outro(format!(
             "resposta ilegivel do Claude Code: {e} :: {}",
             bruto.chars().take(200).collect::<String>()
-        )
+        ))
     })?;
 
     if resposta.is_error {
-        return Err(format!(
+        return Err(ErroTurno::Outro(format!(
             "{} ({})",
             crate::idioma::msg(
                 "O Claude Code recusou o turno",
                 "Claude Code refused the turn"
             ),
             resposta.subtype.unwrap_or_else(|| "sem detalhe".into())
-        ));
+        )));
     }
 
     let texto = resposta.result.unwrap_or_default();
     if texto.trim().is_empty() {
-        return Err(crate::idioma::msg(
+        return Err(ErroTurno::Outro(crate::idioma::msg(
             "O Claude Code devolveu uma resposta vazia.",
             "Claude Code returned an empty response.",
-        ));
+        )));
     }
 
     Ok(TurnoClaude {

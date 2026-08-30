@@ -404,6 +404,24 @@ export const en: typeof pt = {
     collectedAt: "Collected",
     removed: "Record removed.",
   },
+  limite: {
+    pilula: "quota exhausted",
+    titulo: "Claude Code hit its limit",
+    textoCom:
+      "The quota comes back at {hora}, in {falta}. You can stop now and pick it up whenever you want, or let Postly wait and carry on by itself.",
+    textoSem:
+      "Claude Code did not say when the quota comes back. The campaign stops here, and the turns that already ran stay saved.",
+    oQueOClaudeDisse: "What Claude Code replied",
+    encerrar: "Stop now",
+    esperar: "Wait {falta} and continue",
+    nota: "If you wait, the campaign carries on by itself from exactly where it stopped. If you stop, the turns that already ran stay saved in the run folder.",
+    notaSem: "The turns that already ran stay saved in the run folder.",
+    esperando: "waiting for the quota",
+    voltaAs: "The campaign resumes at {hora}",
+    textoEsperando:
+      "{falta} to go. Keep Postly open — the wait lives in this window, and closing the app ends the campaign. Your computer will tell you when it is back.",
+    encerrarAgora: "Do not wait, stop",
+  },
   falha: {
     titulo: "The campaign stopped",
     oQueFazer: "What to do",

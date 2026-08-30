@@ -12,7 +12,7 @@
 
 use serde::Serialize;
 use std::time::Instant;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use super::prompts;
 use super::roles::{Network, Role};
@@ -424,11 +424,40 @@ impl<'a> AgentTurn<'a> {
 
         // Teto generoso: um briefing longo em Opus leva minutos, e derrubar o
         // turno por impaciencia gastaria o custo sem entregar nada.
-        let turno = match crate::claude::turno(tier, &self.system, &self.prompt, 900).await {
-            Ok(t) => t,
-            Err(e) => {
-                emit(self.app, base(Stage::Falhou, e.clone(), 0));
-                return Err(e);
+        // A cota pode acabar no meio da campanha, e ai a resposta nao e
+        // desistir: e perguntar. Quem escolhe esperar dorme dentro de
+        // `pausar_e_esperar` ate a cota voltar, e o turno e refeito uma vez.
+        // Uma vez so — se o limite reaparecer logo depois de voltar, insistir
+        // viraria laco, e a campanha deve parar com o motivo na tela.
+        let mut tentativa = 0;
+        let turno = loop {
+            match crate::claude::turno(tier, &self.system, &self.prompt, 900).await {
+                Ok(t) => break t,
+                Err(crate::claude::ErroTurno::Limite(l)) if tentativa == 0 => {
+                    tentativa += 1;
+                    emit(
+                        self.app,
+                        base(
+                            Stage::Falhou,
+                            crate::idioma::msg(
+                                "A cota do Claude Code acabou. Esperando a sua decisao.",
+                                "The Claude Code quota ran out. Waiting for your decision.",
+                            ),
+                            0,
+                        ),
+                    );
+                    let estado = self.app.state::<crate::state::AppState>();
+                    if !crate::claude::limite::pausar_e_esperar(self.app, &estado, &l).await {
+                        let msg = String::from(crate::claude::ErroTurno::Limite(l));
+                        emit(self.app, base(Stage::Falhou, msg.clone(), 0));
+                        return Err(msg);
+                    }
+                }
+                Err(e) => {
+                    let msg = String::from(e);
+                    emit(self.app, base(Stage::Falhou, msg.clone(), 0));
+                    return Err(msg);
+                }
             }
         };
 
