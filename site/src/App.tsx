@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useSpring, useTransform } from "motion/react";
 import Trilha from "./componentes/Trilha";
 import Comando from "./componentes/Comando";
-import Telas from "./componentes/Telas";
+import Apresentacao from "./componentes/Apresentacao";
+import Vitrine from "./componentes/Vitrine";
+import Trama from "./bits/Trama";
+import TextLoop from "./bits/TextLoop";
+import BorderGlow from "./bits/BorderGlow";
 
 const REPO = "https://github.com/JTeixeiraz/Postly";
 
@@ -63,7 +67,7 @@ function Secao({
   const { ref, visivel } = usarVisivel<HTMLElement>();
   return (
     <section ref={ref} id={id} className={`secao${estreita ? " secao--estreita" : ""}`}>
-      <span className="posta" data-passou={visivel} aria-hidden />
+      <span className="espinha__posta" data-passou={visivel} aria-hidden />
       <div className="secao__interno">{children}</div>
     </section>
   );
@@ -83,16 +87,17 @@ export default function App() {
         <motion.div className="espinha__aceso" style={{ scaleY: escala }} />
       </div>
 
-      <header className="topo">
-        <a className="topo__marca" href="#inicio">
+      <header className="cabecalho">
+        <a className="cabecalho__marca" href="#inicio">
           <Marca />
           <span>postly</span>
         </a>
-        <nav className="topo__nav">
+        <nav className="cabecalho__nav">
           <a href="#como">Como funciona</a>
+          <a href="#video">Vídeo</a>
           <a href="#telas">Telas</a>
           <a href="#instalacao">Instalação</a>
-          <a className="btn btn--fantasma" href={REPO} target="_blank" rel="noreferrer">
+          <a className="acao acao--fantasma" href={REPO} target="_blank" rel="noreferrer">
             GitHub
           </a>
         </nav>
@@ -100,6 +105,10 @@ export default function App() {
 
       {/* ── abertura ─────────────────────────────────────────────── */}
       <section className="secao heroi" id="inicio">
+        {/* A trama roda atrás do conteúdo, não em cima: é ambiente. */}
+        <div className="heroi__fundo" aria-hidden>
+          <Trama altura={720} />
+        </div>
         <div className="secao__interno heroi__interno">
         <motion.div
           className="heroi__texto"
@@ -127,10 +136,10 @@ export default function App() {
           <Comando compacto />
 
           <div className="heroi__acoes">
-            <a className="btn btn--fantasma" href="#como">
+            <a className="acao acao--fantasma" href="#como">
               Ver como funciona
             </a>
-            <a className="btn btn--fantasma" href={REPO} target="_blank" rel="noreferrer">
+            <a className="acao acao--fantasma" href={REPO} target="_blank" rel="noreferrer">
               Ler o código
             </a>
           </div>
@@ -139,6 +148,25 @@ export default function App() {
         <Trilha postas={CARGOS} />
         </div>
       </section>
+
+      {/* ── faixa ────────────────────────────────────────────────── */}
+      {/* Uma faixa e não um banner: o que ela repete é a promessa do projeto,
+          e uma frase que anda é lida por quem passa rolando. */}
+      <div className="faixa">
+        <TextLoop texto="código aberto · sem fins lucrativos · roda na sua máquina" />
+      </div>
+
+      {/* ── apresentação ─────────────────────────────────────────── */}
+      <Secao id="video" estreita>
+        <div className="secao__titulo">
+          <h2>Quarenta segundos</h2>
+          <p>
+            O projeto inteiro, do problema ao comando de instalação. Sem narração — dá para
+            assistir com o som desligado.
+          </p>
+        </div>
+        <Apresentacao />
+      </Secao>
 
       {/* ── por que existe ───────────────────────────────────────── */}
       <Secao estreita>
@@ -267,13 +295,16 @@ export default function App() {
         </p>
       </Secao>
 
-      {/* ── as telas ─────────────────────────────────────────────── */}
+      {/* ── as telas, ao vivo ────────────────────────────────────── */}
       <Secao id="telas">
         <div className="secao__titulo">
           <h2>O que você abre</h2>
-          <p>Capturas do aplicativo rodando. Nenhum mockup.</p>
+          <p>
+            O aplicativo, rodando aqui na página. Mesmo React, mesmo CSS — troque de aba,
+            arraste os nodes do grafo.
+          </p>
         </div>
-        <Telas />
+        <Vitrine />
       </Secao>
 
       {/* ── o laço ───────────────────────────────────────────────── */}
@@ -313,14 +344,14 @@ export default function App() {
               <li>O tráfego do navegador para as redes onde você publica, na sua sessão.</li>
             </ul>
           </div>
-          <div className="fluxo__col" data-fica="true">
+          <BorderGlow className="fluxo__col" raio={14}>
             <span className="fluxo__rotulo">fica</span>
             <ul>
               <li>Os modelos e tudo que eles escrevem.</li>
               <li>O grafo de contexto, as campanhas e as transcrições.</li>
               <li>As credenciais, cifradas em AES-256-GCM.</li>
             </ul>
-          </div>
+          </BorderGlow>
         </div>
 
         <p className="nota-medida">
@@ -386,11 +417,11 @@ export default function App() {
           </p>
         </div>
         <div className="heroi__acoes">
-          <a className="btn btn--acao" href={REPO} target="_blank" rel="noreferrer">
+          <a className="acao acao--forte" href={REPO} target="_blank" rel="noreferrer">
             Ver no GitHub
           </a>
           <a
-            className="btn"
+            className="acao"
             href={`${REPO}/issues/new`}
             target="_blank"
             rel="noreferrer"

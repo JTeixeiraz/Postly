@@ -1,0 +1,11 @@
+node_modules
+dist
+.DS_Store
+*.local
+
+# Gerados por scripts/importar-*.mjs a cada build, a partir do código do
+# aplicativo. Versioná-los criaria uma segunda fonte da verdade que envelhece
+# em silêncio na primeira vez que alguém mexe no app.
+src/vitrine-app.css
+src/app/
+*.tsbuildinfo

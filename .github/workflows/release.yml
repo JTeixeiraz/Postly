@@ -29,7 +29,10 @@ jobs:
           - os: macos-latest
             alvo: "--target aarch64-apple-darwin"
             nome: macos-apple-silicon
-          - os: macos-13
+          # macos-15-intel, nao macos-13: a imagem 13 foi aposentada e o job
+          # fica na fila para sempre em vez de falhar, o que e pior — a
+          # release inteira trava esperando um runner que nao existe mais.
+          - os: macos-15-intel
             alvo: "--target x86_64-apple-darwin"
             nome: macos-intel
           - os: windows-latest

@@ -1,0 +1,73 @@
+.brilho-borda {
+  --bg-borda: 0;
+  --bg-angulo: 45deg;
+  --bg-sensibilidade: 26;
+
+  position: relative;
+  border-radius: var(--bg-raio);
+  isolation: isolate;
+  display: grid;
+  border: 1px solid var(--line-soft);
+  background: var(--card);
+  transform: translate3d(0, 0, 0.01px);
+}
+
+.brilho-borda::before,
+.brilho-borda > .brilho-borda__luz {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transition: opacity 0.25s ease-out;
+  z-index: -1;
+}
+.brilho-borda:not(:hover)::before,
+.brilho-borda:not(:hover) > .brilho-borda__luz {
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+}
+
+/* A borda acesa: um cone de luz na direção do ponteiro. */
+.brilho-borda::before {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--card) 0 100%) padding-box,
+    linear-gradient(var(--act) 0 100%) border-box;
+  opacity: calc((var(--bg-borda) - var(--bg-sensibilidade)) / (100 - var(--bg-sensibilidade)));
+  mask-image: conic-gradient(
+    from var(--bg-angulo) at center,
+    black 6%, transparent 22%, transparent 78%, black 94%
+  );
+}
+
+/* O halo que escapa da caixa. */
+.brilho-borda > .brilho-borda__luz {
+  inset: calc(var(--bg-alcance) * -1);
+  pointer-events: none;
+  z-index: -2;
+  mask-image: conic-gradient(
+    from var(--bg-angulo) at center,
+    black 3%, transparent 12%, transparent 88%, black 97%
+  );
+  opacity: calc((var(--bg-borda) - var(--bg-sensibilidade)) / (100 - var(--bg-sensibilidade)));
+}
+.brilho-borda > .brilho-borda__luz::before {
+  content: "";
+  position: absolute;
+  inset: var(--bg-alcance);
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 1px oklch(0.88 0.20 124 / 0.85),
+    inset 0 0 8px 0 oklch(0.88 0.20 124 / 0.34),
+    inset 0 0 26px 2px oklch(0.88 0.20 124 / 0.14),
+    0 0 6px 0 oklch(0.88 0.20 124 / 0.34),
+    0 0 22px 1px oklch(0.88 0.20 124 / 0.18),
+    0 0 48px 3px oklch(0.88 0.20 124 / 0.10);
+}
+
+.brilho-borda__dentro { position: relative; z-index: 1; display: flex; flex-direction: column; }
+
+@media (prefers-reduced-motion: reduce) {
+  .brilho-borda::before,
+  .brilho-borda > .brilho-borda__luz { display: none; }
+}

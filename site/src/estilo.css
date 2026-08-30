@@ -110,7 +110,12 @@ img { max-width: 100%; display: block; }
    passando de posta em posta. Numa página sobre outra coisa isto seria
    decoração; aqui é o assunto. */
 
-.pagina { position: relative; }
+.pagina {
+  /* `clip` e não `hidden`: os dois contêm o que vaza, mas `hidden` cria um
+     contexto de rolagem e quebraria o `position: sticky` do cabeçalho. O que
+     vaza aqui é decoração — o halo do cartão com brilho passa 44px da caixa, e
+     a onda da faixa entra e sai fora do viewBox de propósito. */
+  overflow-x: clip; position: relative; }
 
 .espinha {
   position: fixed;
@@ -157,8 +162,11 @@ img { max-width: 100%; display: block; }
 .secao--estreita .secao__interno { max-width: 880px; }
 
 /* A marca de posta fica na espinha, alinhada ao início da seção. É o que
-   liga o texto à linha em vez de deixar a linha decorativa ao lado. */
-.posta {
+   liga o texto à linha em vez de deixar a linha decorativa ao lado.
+   O nome é prefixado de propósito: `.posta` sem prefixo é a estação do
+   revezamento no aplicativo, e a vitrine renderiza o app de verdade aqui
+   dentro — as duas colidiriam. */
+.espinha__posta {
   position: absolute;
   left: calc(clamp(18px, 4.2vw, 62px) - 6px);
   top: var(--s9);
@@ -169,8 +177,8 @@ img { max-width: 100%; display: block; }
   z-index: var(--z-conteudo);
   transition: border-color var(--slow) var(--ease), background var(--slow) var(--ease);
 }
-.posta[data-passou="true"] { border-color: var(--act); background: var(--act); }
-@media (max-width: 900px) { .posta { display: none; } }
+.espinha__posta[data-passou="true"] { border-color: var(--act); background: var(--act); }
+@media (max-width: 900px) { .espinha__posta { display: none; } }
 
 .secao__titulo { display: grid; gap: var(--s4); margin-bottom: var(--s6); }
 .secao__titulo p { font-size: var(--t-lead); color: var(--ink-2); max-width: 58ch; }
@@ -186,7 +194,7 @@ img { max-width: 100%; display: block; }
 
 /* ══ botões ══════════════════════════════════════════════════════════════ */
 
-.btn {
+.acao {
   display: inline-flex; align-items: center; justify-content: center; gap: 9px;
   padding: 13px 24px; border-radius: var(--r-pill);
   border: 1px solid var(--line); background: var(--card-2); color: var(--ink);
@@ -195,16 +203,16 @@ img { max-width: 100%; display: block; }
   transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease),
               transform var(--fast) var(--ease);
 }
-.btn:hover { border-color: var(--ink-3); background: var(--line-soft); }
-.btn:active { transform: translateY(1px); }
+.acao:hover { border-color: var(--ink-3); background: var(--line-soft); }
+.acao:active { transform: translateY(1px); }
 
-.btn--acao {
+.acao--forte {
   background: var(--act); border-color: var(--act); color: var(--act-ink); font-weight: 600;
 }
-.btn--acao:hover { background: oklch(0.920 0.200 124); border-color: oklch(0.920 0.200 124); }
+.acao--forte:hover { background: oklch(0.920 0.200 124); border-color: oklch(0.920 0.200 124); }
 
-.btn--fantasma { background: none; border-color: transparent; color: var(--ink-2); }
-.btn--fantasma:hover { color: var(--ink); background: var(--card-2); border-color: transparent; }
+.acao--fantasma { background: none; border-color: transparent; color: var(--ink-2); }
+.acao--fantasma:hover { color: var(--ink); background: var(--card-2); border-color: transparent; }
 
 /* ══ pílula ══════════════════════════════════════════════════════════════ */
 

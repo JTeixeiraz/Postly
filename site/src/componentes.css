@@ -2,7 +2,7 @@
 
 /* ══ topo ════════════════════════════════════════════════════════════════ */
 
-.topo {
+.cabecalho {
   position: sticky; top: 0; z-index: var(--z-topo);
   display: flex; align-items: center; gap: var(--s5);
   padding: var(--s4) clamp(20px, 5vw, 56px);
@@ -13,26 +13,26 @@
 }
 /* A borda só aparece quando há conteúdo passando por baixo. Sem isto ela
    desenha uma linha solta contra o topo da página parada. */
-.topo:not(:first-child) { border-bottom-color: var(--line-soft); }
+.cabecalho:not(:first-child) { border-bottom-color: var(--line-soft); }
 
-.topo__marca {
+.cabecalho__marca {
   display: inline-flex; align-items: center; gap: 9px;
   color: var(--act); text-decoration: none;
   font-weight: 640; letter-spacing: -0.025em; font-size: 17px;
 }
-.topo__marca span { color: var(--ink); }
+.cabecalho__marca span { color: var(--ink); }
 
-.topo__nav { margin-left: auto; display: flex; align-items: center; gap: var(--s5); }
-.topo__nav a {
+.cabecalho__nav { margin-left: auto; display: flex; align-items: center; gap: var(--s5); }
+.cabecalho__nav a {
   font-size: var(--t-sm); color: var(--ink-2); text-decoration: none;
   transition: color var(--fast) var(--ease);
 }
-.topo__nav a:hover { color: var(--ink); }
-.topo__nav .btn { font-size: var(--t-sm); padding: 9px 17px; }
+.cabecalho__nav a:hover { color: var(--ink); }
+.cabecalho__nav .acao { font-size: var(--t-sm); padding: 9px 17px; }
 
 @media (max-width: 720px) {
   /* Numa tela estreita sobra o essencial: a marca e o caminho para instalar. */
-  .topo__nav a:not(.btn):not([href="#instalacao"]) { display: none; }
+  .cabecalho__nav a:not(.acao):not([href="#instalacao"]) { display: none; }
 }
 
 /* ══ abertura ════════════════════════════════════════════════════════════ */
@@ -283,3 +283,174 @@
 .rodape__nota { margin-left: auto; font-size: var(--t-sm); color: var(--ink-3); }
 .rodape__nota a { color: var(--ink-2); text-decoration-color: var(--line); }
 .rodape__nota a:hover { color: var(--act); }
+
+/* ══ vídeo de apresentação ═══════════════════════════════════════════════ */
+
+.video__moldura {
+  position: relative;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--sunken);
+  box-shadow: var(--lift);
+  aspect-ratio: 16 / 9;
+}
+.video__quadro { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.video__capa {
+  display: block; width: 100%; height: 100%;
+  padding: 0; border: 0; background: none; cursor: pointer;
+  position: relative;
+}
+/* Véu leve: o pôster é o fecho do vídeo, e o botão precisa vencer o texto
+   que já está desenhado ali dentro. */
+.video__capa::after {
+  content: ""; position: absolute; inset: 0;
+  background: oklch(0.19 0.006 250 / 0.34);
+  transition: background var(--fast) var(--ease);
+}
+.video__capa:hover::after { background: oklch(0.19 0.006 250 / 0.16); }
+
+.video__play {
+  position: absolute; inset: 0; margin: auto;
+  width: 66px; height: 66px; z-index: 1;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--act); color: var(--act-ink);
+  /* O deslocamento compensa o centro óptico do triângulo, que não é o
+     geométrico: centralizado no cálculo, ele parece encostado à esquerda. */
+  padding-left: 4px;
+  transition: transform var(--fast) var(--ease);
+}
+.video__capa:hover .video__play { transform: scale(1.06); }
+.video__capa:active .video__play { transform: scale(0.97); }
+
+.video__duracao {
+  position: absolute; right: 14px; bottom: 12px; z-index: 1;
+  font-family: var(--mono); font-size: var(--t-micro);
+  padding: 4px 9px; border-radius: var(--r-pill);
+  background: oklch(0.19 0.006 250 / 0.72); color: var(--ink-2);
+  backdrop-filter: blur(6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video__capa:hover .video__play { transform: none; }
+}
+
+/* ══ janela do aplicativo, ao vivo ═══════════════════════════════════════ */
+
+/* Não é uma captura: é o app rodando dentro da página, com o CSS dele
+   importado em `vitrine-app.css`. A moldura branca não é enfeite do site — é
+   como o Postly realmente abre, e mostrar outra coisa seria mentir sobre ele. */
+.janela {
+  /* Contém o que estiver grudado lá dentro: o cabeçalho do aplicativo é
+     sticky, e sem uma âncora ele gruda na PÁGINA — sai da janela e passa por
+     baixo do cabeçalho do site. */
+  position: relative;
+  isolation: isolate;
+  border-radius: calc(var(--r-lg) + 4px);
+  overflow: hidden;
+  background: oklch(0.995 0 0);
+  box-shadow: 0 2px 8px oklch(0 0 0 / 0.34), 0 28px 70px oklch(0 0 0 / 0.40);
+}
+
+/* Altura fixa com rolagem interna: sem isto a página estica quando a tela do
+   app é longa, e a moldura deixa de parecer uma janela.
+   A classe repetida é necessária: o `.shell` do aplicativo pede `100dvh` por
+   `.vitrine.vitrine .shell`, e um seletor mais fraco perderia — a janela
+   ficaria com a altura da tela inteira e sobraria vazio embaixo. */
+.janela .janela__app.shell.shell {
+  height: clamp(460px, 62vh, 620px);
+  padding: 0 var(--s3) var(--s3);
+}
+.janela__app .main { min-height: 0; }
+/* Dentro da vitrine o cabeçalho não precisa acompanhar a rolagem: a janela
+   inteira já cabe na tela, e sticky aqui só produziria o vazamento acima. */
+.vitrine .topo { position: relative; }
+
+/* O app se desenha para uma janela cheia; aqui ele mora numa faixa mais
+   estreita, então a tipografia encolhe um degrau para o layout não quebrar. */
+.vitrine { font-size: 13.5px; }
+.vitrine .page__head h1 { font-size: 22px; }
+.vitrine .read__v { font-size: 21px; }
+.vitrine .page { padding: var(--s4) var(--s5) var(--s6); }
+
+/* Campo de leitura: mostra o que a pessoa escreveria, sem ser editável — um
+   <input> real convidaria a digitar numa vitrine que não guarda nada. */
+.vitrine .falso-campo {
+  background: var(--sunken); color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  padding: 10px 12px; line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  /* A vitrine numa tela estreita: o aplicativo se desenha para uma janela de
+     computador, e as media queries dele respondem à VIEWPORT e não ao
+     container — espremido em 390px ele mostraria um layout que o produto
+     nunca produz. A janela conserva a largura que o app espera e desliza
+     dentro do bloco; arrastar é uma afordância conhecida, e um `scale()` com
+     divisão de comprimento nem sequer é CSS válido. */
+  .vitrine-bloco { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .janela { width: 900px; flex: none; }
+  .vitrine-bloco__pe { position: sticky; left: 0; }
+}
+
+/* ══ herói com fundo ═════════════════════════════════════════════════════ */
+
+.heroi { position: relative; overflow: hidden; }
+.heroi__fundo {
+  position: absolute; inset: 0 0 auto 0;
+  pointer-events: none; z-index: 0;
+  /* A trama some para baixo e para as bordas: ela é ambiente, e um fundo que
+     disputa com o texto que está por cima deixa de ser fundo. */
+  mask-image:
+    linear-gradient(to bottom, #000 0%, #000 42%, transparent 92%),
+    radial-gradient(ellipse 76% 62% at 50% 34%, #000 30%, transparent 78%);
+  mask-composite: intersect;
+  opacity: 0.62;
+}
+.heroi .secao__interno { position: relative; z-index: 1; }
+.trama { display: block; width: 100%; }
+
+/* ══ faixa em curva ══════════════════════════════════════════════════════ */
+
+.faixa {
+  border-block: 1px solid var(--line-soft);
+  background: var(--card);
+  margin-block: var(--s8);
+  overflow: hidden;
+}
+.faixa .texto-loop { margin-block: -2%; }
+
+/* ══ o cartão com brilho dentro do fluxo ═════════════════════════════════ */
+
+/* O BorderGlow já desenha borda e fundo próprios, então quando ele veste a
+   classe do cartão o padding precisa migrar para dentro, senão sobram duas
+   caixas encaixadas. */
+.brilho-borda.fluxo__col { padding: 0; background: var(--act-wash); border-color: var(--act); }
+.brilho-borda.fluxo__col .brilho-borda__dentro {
+  padding: var(--s5); display: grid; gap: var(--s4); align-content: start;
+}
+.brilho-borda.fluxo__col .fluxo__rotulo { color: var(--act); }
+.brilho-borda.fluxo__col::before { background: linear-gradient(var(--act-wash) 0 100%) padding-box, linear-gradient(var(--act) 0 100%) border-box; }
+
+/* ══ bloco da vitrine ════════════════════════════════════════════════════ */
+
+.vitrine-bloco { display: grid; gap: var(--s4); }
+.vitrine-bloco__pe {
+  display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap;
+}
+.vitrine-bloco__legenda {
+  flex: 1; min-width: 260px;
+  color: var(--ink-3); font-size: var(--t-sm); line-height: 1.5; margin: 0;
+}
+
+/* ══ alvos de toque ══════════════════════════════════════════════════════ */
+
+/* No celular os links do cabeçalho ficavam com 23px de altura — abaixo dos
+   24px que a WCAG 2.5.8 pede como mínimo. O padding vertical resolve sem
+   mexer no ritmo visual, porque a linha já tem folga em volta. */
+@media (max-width: 720px) {
+  .cabecalho__nav a { padding-block: 11px; }
+  .cabecalho__marca { padding-block: 8px; }
+}

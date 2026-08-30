@@ -1,0 +1,9 @@
+node_modules
+dist
+.DS_Store
+.env
+
+# O vídeo renderizado não entra: ele vive em site/public/postly.mp4, servido
+# pelo site, e ter duas cópias de 6 MB no histórico não ajuda ninguém.
+out
+

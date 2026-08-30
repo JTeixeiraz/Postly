@@ -414,6 +414,24 @@ sidecar/                  Node + Playwright, um processo por demanda
 └── networks.mjs          um adaptador por rede social
 ```
 
+### O site e o vídeo
+
+`site/` é a página do projeto, publicada no GitHub Pages. A seção "O que você
+abre" **não usa capturas**: ela roda o aplicativo de verdade dentro da página —
+`scripts/importar-css.mjs` traz o CSS do app escopado sob `.vitrine`, e
+`importar-componentes.mjs` traz o grafo do Cérebro inteiro, com a física de
+forças que você arrasta no produto. Os dois rodam antes de todo build, e o
+primeiro falha se uma classe do site passar a colidir com uma do app.
+
+`video/` é a apresentação de 40 segundos, em [Remotion](https://remotion.dev).
+As telas também são desenhadas, não capturadas — e toda animação é função do
+quadro, porque a renderização é determinística.
+
+```bash
+cd site  && npm install && npm run dev
+cd video && npm install && npm run dev
+```
+
 ### Desenvolvimento
 
 ```bash
