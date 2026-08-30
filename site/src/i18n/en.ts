@@ -189,6 +189,7 @@ export const en: Dicionario = {
 
   comando: {
     rotulo: "Operating system",
+    maisOpcoes: "Or download the installer, no Git Bash →",
     ouBaixe: "Or download the installer:",
     emBreve: "under review",
     notaWinget: "The package is in the winget-pkgs queue. This command starts working the moment it is approved.",

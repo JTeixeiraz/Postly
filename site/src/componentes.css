@@ -158,7 +158,20 @@
 .comando__copiar:hover { background: var(--act); color: var(--act-ink); }
 
 .comando__nota { font-size: var(--t-sm); color: var(--fora-ink-3); max-width: 62ch; }
-.comando[data-compacto="true"] .comando__nota { display: none; }
+/* A nota fica menor no compacto, mas fica: ela é o que diz que o comando do
+   Windows é para o Git Bash, e sem isso a pessoa cola no PowerShell. */
+.comando[data-compacto="true"] .comando__nota {
+  font-size: var(--t-micro); max-width: 54ch;
+}
+/* Lime escuro sobre papel, lime cheio dentro do painel. O token de papel num
+   fundo escuro dá 3,5:1 — medido, e abaixo do mínimo. */
+.comando__mais {
+  font-size: var(--t-micro); color: var(--act-escuro);
+  text-decoration: none; width: fit-content;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--fast) var(--ease);
+}
+.comando__mais:hover { border-bottom-color: currentColor; }
 
 /* ══ prosa ═══════════════════════════════════════════════════════════════ */
 
@@ -651,3 +664,5 @@
 .painel .baixar__op { background: var(--card-2); border-color: var(--line); color: var(--ink); }
 .painel .baixar__op:hover { border-color: var(--act); background: var(--sunken); }
 .painel .baixar__op span { color: var(--ink-3); }
+
+.painel .comando__mais { color: var(--act); }

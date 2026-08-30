@@ -150,7 +150,20 @@ export default function Comando({ compacto = false }: { compacto?: boolean }) {
       </div>
 
       <Linha texto={sistema.comando} />
+
+      {/* A nota aparece nos DOIS lugares. No compacto ela chegava escondida, e
+          quem clicava em Windows via só o `curl` — colava no PowerShell e
+          falhava, sem nada na tela dizendo que aquilo é para o Git Bash. */}
       <p className="comando__nota">{d.comando.notas[sistema.id]}</p>
+
+      {/* No herói o Windows tem mais caminhos do que cabem, então em vez de
+          escondê-los sem aviso, aponta para onde eles estão. A diferença entre
+          o topo e a seção deixa de parecer falta de opção. */}
+      {compacto && sistema.id === "windows" && (
+        <a className="comando__mais" href="#instalacao">
+          {d.comando.maisOpcoes}
+        </a>
+      )}
 
       {janelaCheia && sistema.alternativo && (
         <motion.div

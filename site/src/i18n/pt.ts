@@ -187,6 +187,7 @@ export const pt = {
 
   comando: {
     rotulo: "Sistema operacional",
+    maisOpcoes: "Ou baixe o instalador, sem Git Bash →",
     ouBaixe: "Ou baixe o instalador:",
     emBreve: "em revisão",
     notaWinget: "O pacote está na fila do winget-pkgs. Este comando passa a funcionar assim que ele for aprovado.",
