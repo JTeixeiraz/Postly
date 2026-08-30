@@ -42,7 +42,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # O WebKitGTK e as libs de bandeja não vêm no runner do Ubuntu. A 22.04
       # está fixada de propósito: ela traz a libwebkit2gtk-4.1, e um AppImage
