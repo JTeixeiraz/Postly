@@ -1,0 +1,144 @@
+# Publica o Postly no Windows Package Manager.
+#
+# Roda numa imagem Windows por necessidade, não por gosto: `winget validate` só
+# existe lá, e é ele que pega o erro de manifesto antes do PR — a validação da
+# Microsoft roda depois que o PR abre, e um erro nela custa um ciclo de revisão
+# num repositório com milhares de PRs abertos.
+#
+# O caminho é `wingetcreate submit` com manifestos escritos à mão, e não
+# `wingetcreate new`: aquele é interativo e não roda desacompanhado, que é
+# exatamente o que um CI precisa fazer.
+name: winget
+
+on:
+  # Só depois que a release existe de verdade: uma release em rascunho tem URL
+  # temporária (`untagged-...`), e o manifesto guardaria um link que morre no
+  # dia em que ela for publicada.
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: "Versão a publicar (sem o v). Vazio usa a release mais recente."
+        required: false
+      ensaio:
+        description: "Só valida, sem abrir o PR"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  publicar:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Descobrir a versão e o instalador
+        id: alvo
+        shell: pwsh
+        run: |
+          $versao = '${{ inputs.versao }}'
+          if (-not $versao) {
+            $versao = '${{ github.event.release.tag_name }}'
+          }
+          if (-not $versao) {
+            # Disparo manual sem versão: pega a release publicada mais recente.
+            $versao = (gh release view --json tagName --jq '.tagName')
+          }
+          $versao = $versao -replace '^v', ''
+
+          # O nome do arquivo vem do padrão do Tauri para o instalador NSIS.
+          $tag = "v$versao"
+          $arquivo = "Postly_${versao}_x64-setup.exe"
+          $url = "https://github.com/${{ github.repository }}/releases/download/$tag/$arquivo"
+
+          "versao=$versao"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "url=$url"         | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "arquivo=$arquivo" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "versão: $versao"
+          Write-Host "instalador: $url"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Baixar o instalador e calcular o hash
+        id: hash
+        shell: pwsh
+        run: |
+          $url = '${{ steps.alvo.outputs.url }}'
+          # `-UseBasicParsing` e falha explícita: um 404 silencioso viraria um
+          # manifesto com hash de página de erro, e isso só apareceria na
+          # validação da Microsoft dias depois.
+          try {
+            Invoke-WebRequest -Uri $url -OutFile instalador.exe -UseBasicParsing -ErrorAction Stop
+          } catch {
+            Write-Error "Não achei o instalador em $url. A release está publicada (não em rascunho) e tem o .exe anexado?"
+            exit 1
+          }
+          $tamanho = (Get-Item instalador.exe).Length
+          if ($tamanho -lt 500KB) {
+            Write-Error "O arquivo baixado tem $tamanho bytes — pequeno demais para ser o instalador."
+            exit 1
+          }
+          $sha = (Get-FileHash instalador.exe -Algorithm SHA256).Hash
+          "sha=$sha" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "SHA256: $sha"
+          Write-Host "tamanho: $([math]::Round($tamanho/1MB,2)) MB"
+
+      - name: Montar os manifestos
+        shell: pwsh
+        run: |
+          $destino = "manifests/j/JTeixeiraz/Postly/${{ steps.alvo.outputs.versao }}"
+          New-Item -ItemType Directory -Force -Path $destino | Out-Null
+
+          Get-ChildItem winget/*.yaml | ForEach-Object {
+            $texto = Get-Content $_.FullName -Raw
+            $texto = $texto.Replace('__VERSAO__', '${{ steps.alvo.outputs.versao }}')
+            $texto = $texto.Replace('__URL__',    '${{ steps.alvo.outputs.url }}')
+            $texto = $texto.Replace('__SHA256__', '${{ steps.hash.outputs.sha }}')
+            $texto = $texto.Replace('__DATA__',   (Get-Date -Format 'yyyy-MM-dd'))
+            # Sem BOM: o validador do winget recusa YAML com marca de ordem.
+            [IO.File]::WriteAllText("$destino/$($_.Name)", $texto, (New-Object Text.UTF8Encoding $false))
+          }
+
+          Write-Host "`n--- manifesto do instalador ---"
+          Get-Content "$destino/JTeixeiraz.Postly.installer.yaml"
+
+      - name: Validar
+        shell: pwsh
+        run: |
+          $destino = "manifests/j/JTeixeiraz/Postly/${{ steps.alvo.outputs.versao }}"
+          # O `winget` do runner já vem instalado; validar aqui é o que separa
+          # um PR aceito de um ciclo de revisão perdido.
+          winget validate --manifest $destino
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Guardar os manifestos como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: winget-manifests-${{ steps.alvo.outputs.versao }}
+          path: manifests/
+
+      - name: Abrir o PR no winget-pkgs
+        # O ensaio é o padrão do disparo manual: publicar num repositório de
+        # terceiro não deve ser o efeito de apertar um botão por engano.
+        if: github.event_name == 'release' || inputs.ensaio == false
+        shell: pwsh
+        run: |
+          if (-not $env:WINGET_TOKEN) {
+            Write-Error @"
+          Falta o segredo WINGET_TOKEN.
+
+          O PR vai para microsoft/winget-pkgs, que é de outra pessoa, então o
+          token do próprio workflow não serve. Crie um Personal Access Token
+          CLÁSSICO com o escopo 'public_repo' e guarde como segredo do
+          repositório com o nome WINGET_TOKEN.
+          "@
+            exit 1
+          }
+          $destino = "manifests/j/JTeixeiraz/Postly/${{ steps.alvo.outputs.versao }}"
+          winget install --id Microsoft.WingetCreate --exact --silent --accept-source-agreements --accept-package-agreements
+          wingetcreate submit --token $env:WINGET_TOKEN $destino
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}

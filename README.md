@@ -68,6 +68,22 @@ pronto para a sua combinação de sistema e arquitetura, ele compila do
 código-fonte.
 
 <details>
+<summary><b>Windows: pelo winget</b></summary>
+<br>
+
+```powershell
+winget install JTeixeiraz.Postly
+```
+
+Os manifestos vivem em [`winget/`](winget/) e o
+[workflow](.github/workflows/winget.yml) os submete a cada release publicada.
+Ele roda numa imagem Windows por necessidade: `winget validate` só existe lá, e
+é ele que pega o erro de manifesto antes do PR chegar ao repositório da
+Microsoft.
+
+</details>
+
+<details>
 <summary><b>Instalar à mão</b></summary>
 <br>
 
