@@ -569,3 +569,21 @@
   .cabecalho__nav { order: 3; width: 100%; margin-left: 0; justify-content: center; }
   .lingua { margin-left: auto; }
 }
+
+/* O mascote do Claude Code, no canto do painel.
+
+   Fica no canto INFERIOR direito porque é o único vazio real da seção: o
+   terceiro cartão é o mais curto, e a nota que vem abaixo tem medida de
+   leitura e para antes da terceira coluna. Ancorado no topo ele cortava a
+   borda arredondada do painel e caía sobre o texto do cartão.
+
+   Some abaixo de 900px: ali a grade vira coluna única e o vazio deixa de
+   existir — a figura passaria a empurrar conteúdo. */
+.claude { position: relative; }
+.claude__mascote {
+  position: absolute; right: var(--s6); bottom: var(--s6);
+  width: 118px; height: auto;
+  opacity: 0.9;
+  pointer-events: none;
+}
+@media (max-width: 900px) { .claude__mascote { display: none; } }
