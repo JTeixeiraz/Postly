@@ -424,5 +424,22 @@ export const pt = {
     optional: "opcional",
     howTitle: "Como o turno é executado",
   },
+
+  imgProvider: {
+    title: "Quem gera a arte",
+    lead: "Clique no serviço que vai desenhar as peças.",
+    noKey: "sem chave",
+    verified: "testado de verdade",
+    untested: "não testado",
+    untestedWhy: "Este adaptador foi escrito a partir da documentação oficial do serviço, mas nunca fez uma chamada real. Se falhar, o erro vem do encaixe e não da sua chave — abra uma issue com a mensagem.",
+    getKey: "Pegar a chave",
+    addKey: "Colar a chave",
+    replaceKey: "Trocar a chave",
+    keyPlaceholder: "cole a chave aqui",
+    pairHint: "O Higgsfield autentica com um par. Cole no formato id:segredo, com os dois-pontos.",
+    test: "Testar",
+    testing: "Testando…",
+    testOk: "Chave aceita: {r}",
+  },
 };
 

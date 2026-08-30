@@ -34,6 +34,7 @@ próprias contas.
 | | |
 |---|---|
 | **Roda onde** | Sua máquina. Windows, macOS e Linux. |
+| **Quem desenha** | Gemini, OpenAI, FLUX, Stability AI ou Higgsfield — você escolhe. |
 | **Quem escreve** | Modelos locais do Ollama (37 no catálogo) ou o seu Claude Code. |
 | **Quem decide** | Quatro cargos com níveis diferentes, um modelo residente por vez. |
 | **O que sai para fora** | Só a chamada ao Gemini que gera a imagem, e o navegador que publica nas suas contas. |
@@ -217,6 +218,30 @@ ambiente do pai — então o Postly remove essa variável (e as de Bedrock e Ver
 do processo do Claude Code. O turno roda pela sua assinatura, ou não roda. O
 custo de cada turno aparece na trilha.
 
+### Quem desenha a arte: você escolhe
+
+![Escolha do gerador de imagem](docs/capturas/imagem.png)
+
+O texto sai dos modelos locais; a arte precisa de um serviço de imagem. Cinco
+estão integrados, e a escolha é clicando na logo:
+
+| | Modelo | Autenticação | Estado |
+|---|---|---|---|
+| **Gemini** | `gemini-3-pro-image` / flash | chave | **testado contra a API real** |
+| **OpenAI** | `gpt-image-1` / mini | chave | escrito pela documentação |
+| **FLUX** | `flux-2-pro` / klein 9B | chave | escrito pela documentação |
+| **Stability AI** | Stable Image ultra / core | chave | escrito pela documentação |
+| **Higgsfield** | Soul v2 | par `id:segredo` | escrito pela documentação |
+
+Cada serviço tem sua própria chave no cofre, então trocar de gerador não apaga
+a configuração do anterior.
+
+> [!NOTE]
+> Só o Gemini fez uma chamada real durante o desenvolvimento. Os outros quatro
+> foram escritos a partir da documentação oficial de cada um e a tela diz isso
+> em cada cartão. Se um falhar, o erro provavelmente está no encaixe e não na
+> sua chave — a mensagem do erro numa issue ajuda a corrigir.
+
 ### O catálogo se adapta ao hardware
 
 | Máquina | Escolha para os cargos de decisão | Por quê |
@@ -380,6 +405,7 @@ src-tauri/src/            backend em Rust
 ├── brain/                o grafo ponderado e a persistência
 ├── platform/             estratégia por sistema operacional
 ├── browser/              ponte com o sidecar do Playwright
+├── imagem/               os cinco geradores de arte, um adaptador cada
 ├── gemini/               cliente da API de imagem e texto
 ├── metricas.rs           desempenho publicado e a regra de divergir
 └── vault.rs              cofre cifrado

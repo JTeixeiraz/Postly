@@ -388,3 +388,40 @@
   display: grid; gap: var(--s4);
   grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
 }
+
+/* ══ escolha do gerador de imagem ════════════════════════════════════════ */
+
+/* Logo antes do nome: a pessoa reconhece a marca de relance e só lê o texto
+   para confirmar. Grade que quebra sozinha, porque cinco cartões não cabem
+   lado a lado numa janela estreita. */
+.provedores {
+  display: grid; gap: var(--s2);
+  grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr));
+}
+.provedor {
+  position: relative;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--card-2); padding: 14px 12px;
+  color: var(--ink-2); text-align: center;
+  transition: border-color var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.provedor:hover { border-color: var(--ink-3); color: var(--ink); }
+.provedor[data-on="true"] { color: var(--act-ink); border-color: var(--act); }
+
+/* A bolha é uma camada abaixo do conteúdo, e o conteúdo se isola acima dela:
+   sem o empilhamento explícito ela cobriria o rótulo do cartão ativo. */
+.provedor__bolha {
+  position: absolute; inset: 0; z-index: 0;
+  background: var(--act); border-radius: var(--r-md);
+}
+.provedor__conteudo {
+  position: relative; z-index: 1;
+  display: grid; gap: 7px; justify-items: center;
+}
+.provedor__nome { font-size: var(--t-sm); font-weight: 540; }
+.provedor__estado {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--mono); font-size: var(--t-micro);
+  color: var(--ink-3); opacity: .9;
+}
+.provedor[data-on="true"] .provedor__estado { color: var(--act-ink); opacity: .72; }

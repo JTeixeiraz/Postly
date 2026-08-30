@@ -22,8 +22,15 @@ const KEY_LEN: usize = 32;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Vault {
+    /// Chave do Gemini. Continua sendo um campo proprio, e nao mais uma entrada
+    /// no mapa abaixo, porque cofres gravados antes dos outros provedores
+    /// existirem so tem este nome: mover a chave quebraria a configuracao de
+    /// quem ja usava o app.
     #[serde(default)]
     pub gemini_api_key: String,
+    /// slug do provedor de imagem -> chave. O Gemini le do campo acima.
+    #[serde(default)]
+    pub image_keys: BTreeMap<String, String>,
     /// slug da rede -> credenciais. Vazio quando o usuario opta por nao salvar.
     #[serde(default)]
     pub credentials: BTreeMap<String, Credential>,
@@ -33,6 +40,29 @@ pub struct Vault {
 pub struct Credential {
     pub username: String,
     pub password: String,
+}
+
+impl Vault {
+    /// A credencial do provedor escolhido, venha ela do campo antigo ou do mapa.
+    pub fn chave_de(&self, p: crate::imagem::ProvedorImagem) -> String {
+        if p == crate::imagem::ProvedorImagem::Gemini {
+            return self.gemini_api_key.clone();
+        }
+        self.image_keys.get(p.slug()).cloned().unwrap_or_default()
+    }
+
+    pub fn definir_chave(&mut self, p: crate::imagem::ProvedorImagem, chave: &str) {
+        let chave = chave.trim().to_string();
+        if p == crate::imagem::ProvedorImagem::Gemini {
+            self.gemini_api_key = chave;
+            return;
+        }
+        if chave.is_empty() {
+            self.image_keys.remove(p.slug());
+        } else {
+            self.image_keys.insert(p.slug().to_string(), chave);
+        }
+    }
 }
 
 fn vault_path() -> PathBuf {

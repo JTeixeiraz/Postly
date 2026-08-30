@@ -50,6 +50,9 @@ pub struct Prefs {
     /// Quem executa os turnos. Ollama por padrao.
     #[serde(default)]
     pub provedor: Provedor,
+    /// Quem gera a arte das pecas.
+    #[serde(default)]
+    pub provedor_imagem: crate::imagem::ProvedorImagem,
     /// Liga a escolha manual de modelo por cargo.
     #[serde(default)]
     pub avancado: bool,

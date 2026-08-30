@@ -27,7 +27,6 @@ pub use tipos::{CampaignReport, CampaignRequest, PecaFinal};
 use crate::brain::Graph;
 use movimento::{descrever_peca, juntar, motivo_do_movimento, pedir_movimento};
 use support::{com_idioma, descrever_pecas, termos as termos_do_objetivo, gravar_no_cerebro, juntar_correcoes, montar_legenda, observar, parse_pecas};
-use crate::gemini;
 use crate::state::AppState;
 use crate::vault;
 
@@ -209,8 +208,11 @@ pub async fn run_campaign(
                 .find(|r| r.slug() == peca.rede)
                 .map(|r| r.aspect_ratio())
                 .unwrap_or("1:1");
-            match gemini::generate_image(
-                &cofre.gemini_api_key,
+            // O pipeline nao sabe qual servico esta ativo: pergunta ao
+            // despacho, que le a preferencia e a chave do cofre.
+            match crate::imagem::gerar(
+                crate::prefs::load().provedor_imagem,
+                &cofre,
                 &peca.prompt_imagem,
                 aspect,
                 req.qualidade_imagem,

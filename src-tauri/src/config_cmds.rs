@@ -237,3 +237,89 @@ pub fn remover_skill(id: String) -> Result<crate::prefs::Prefs, String> {
 pub fn previa_de_skills(cargo: String) -> String {
     crate::prefs::load().bloco_de_skills(&cargo)
 }
+
+// ------------------------------------------------- provedor de imagem
+
+/// Um serviço de geração de arte, do jeito que a tela precisa desenhar.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct CartaoImagem {
+    pub slug: String,
+    pub label: String,
+    /// Já rodou contra a API real? Só o Gemini rodou.
+    pub verificado: bool,
+    /// Autentica com um par id:segredo em vez de uma chave só.
+    pub precisa_de_par: bool,
+    pub url_da_chave: String,
+    pub tem_chave: bool,
+    /// Fim da chave guardada, para a pessoa reconhecer qual colou.
+    pub dica: String,
+    pub ativo: bool,
+}
+
+#[tauri::command]
+pub fn provedores_de_imagem() -> Vec<CartaoImagem> {
+    use crate::imagem::ProvedorImagem;
+    let prefs = crate::prefs::load();
+    let cofre = crate::vault::load();
+
+    ProvedorImagem::todos()
+        .iter()
+        .map(|p| {
+            let chave = cofre.chave_de(*p);
+            CartaoImagem {
+                slug: p.slug().to_string(),
+                label: p.label().to_string(),
+                verificado: p.verificado(),
+                precisa_de_par: p.precisa_de_par(),
+                url_da_chave: p.url_da_chave().to_string(),
+                tem_chave: !chave.trim().is_empty(),
+                // Só o fim: o começo de uma chave é o que identifica a conta.
+                dica: if chave.len() > 6 {
+                    format!("…{}", &chave[chave.len() - 4..])
+                } else {
+                    String::new()
+                },
+                ativo: prefs.provedor_imagem == *p,
+            }
+        })
+        .collect()
+}
+
+fn provedor_por_slug(slug: &str) -> Result<crate::imagem::ProvedorImagem, String> {
+    crate::imagem::ProvedorImagem::todos()
+        .into_iter()
+        .find(|p| p.slug() == slug)
+        .ok_or_else(|| format!("provedor de imagem desconhecido: {slug}"))
+}
+
+#[tauri::command]
+pub fn definir_provedor_imagem(slug: String) -> Result<Vec<CartaoImagem>, String> {
+    let p = provedor_por_slug(&slug)?;
+    let mut prefs = crate::prefs::load();
+    prefs.provedor_imagem = p;
+    crate::prefs::save(&prefs)?;
+    Ok(provedores_de_imagem())
+}
+
+#[tauri::command]
+pub fn salvar_chave_de_imagem(slug: String, chave: String) -> Result<Vec<CartaoImagem>, String> {
+    let p = provedor_por_slug(&slug)?;
+    let mut cofre = crate::vault::load();
+    cofre.definir_chave(p, &chave);
+    crate::vault::save(&cofre)?;
+    Ok(provedores_de_imagem())
+}
+
+/// Testa a chave contra o serviço, sem gerar arte.
+#[tauri::command]
+pub async fn testar_provedor_imagem(slug: String) -> Result<String, String> {
+    let p = provedor_por_slug(&slug)?;
+    let chave = crate::vault::load().chave_de(p);
+    if chave.trim().is_empty() {
+        return Err(crate::idioma::msg(
+            "Cole a chave antes de testar.",
+            "Paste the key before testing.",
+        ));
+    }
+    crate::imagem::validar(p, &chave).await
+}

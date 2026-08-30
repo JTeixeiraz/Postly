@@ -265,7 +265,8 @@ pub async fn salvar_chave_gemini(chave: String) -> Result<vault::VaultSummary, S
 #[tauri::command]
 pub async fn validar_chave_gemini() -> Result<String, String> {
     let cofre = vault::load();
-    crate::gemini::validate_key(&cofre.gemini_api_key).await
+    let p = crate::prefs::load().provedor_imagem;
+    crate::imagem::validar(p, &cofre.chave_de(p)).await
 }
 
 #[tauri::command]

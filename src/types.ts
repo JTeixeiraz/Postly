@@ -429,6 +429,18 @@ export interface LeituraDaRede {
   ranking: ItemRanking[];
 }
 
+/** Um serviço de geração de arte, do jeito que a tela desenha. */
+export interface CartaoImagem {
+  slug: string;
+  label: string;
+  verificado: boolean;
+  precisa_de_par: boolean;
+  url_da_chave: string;
+  tem_chave: boolean;
+  dica: string;
+  ativo: boolean;
+}
+
 /** Um cargo e o modelo Claude que o assume. */
 export interface VagaClaude {
   cargo: string;

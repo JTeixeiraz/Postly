@@ -32,6 +32,7 @@ import type {
   VagaClaude,
   PedidoMotion,
   ResultadoCampanha,
+  CartaoImagem,
 } from "./types";
 
 export const api = {
@@ -116,6 +117,13 @@ export const api = {
 
   pecasDaCampanha: (dir: string) =>
     invoke<ResultadoCampanha | null>("pecas_da_campanha", { dir }),
+
+  provedoresDeImagem: () => invoke<CartaoImagem[]>("provedores_de_imagem"),
+  definirProvedorImagem: (slug: string) =>
+    invoke<CartaoImagem[]>("definir_provedor_imagem", { slug }),
+  salvarChaveDeImagem: (slug: string, chave: string) =>
+    invoke<CartaoImagem[]>("salvar_chave_de_imagem", { slug, chave }),
+  testarProvedorImagem: (slug: string) => invoke<string>("testar_provedor_imagem", { slug }),
 
   elencoClaude: () => invoke<VagaClaude[]>("elenco_claude"),
   responderMotion: (aceitar: boolean) => invoke<void>("responder_motion", { aceitar }),

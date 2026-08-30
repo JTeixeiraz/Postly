@@ -1,0 +1,90 @@
+# Empacota o Postly para os três sistemas e publica na release.
+#
+# Existe porque o Tauri não faz cross-compile: cada instalador precisa nascer
+# no sistema de destino. Sem isto, quem não tem as três máquinas só consegue
+# publicar o pacote do próprio sistema, e o instalador de um comando cai no
+# caminho de compilar do código-fonte para todo mundo.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  # Permite gerar os pacotes sem criar tag, para testar o próprio workflow.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  empacotar:
+    strategy:
+      # Um sistema que falha não cancela os outros: melhor publicar dois
+      # pacotes e investigar o terceiro do que ficar sem release nenhuma.
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            alvo: ""
+            nome: linux
+          - os: macos-latest
+            alvo: "--target aarch64-apple-darwin"
+            nome: macos-apple-silicon
+          - os: macos-13
+            alvo: "--target x86_64-apple-darwin"
+            nome: macos-intel
+          - os: windows-latest
+            alvo: ""
+            nome: windows
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # O WebKitGTK e as libs de bandeja não vêm no runner do Ubuntu. A 22.04
+      # está fixada de propósito: ela traz a libwebkit2gtk-4.1, e um AppImage
+      # feito nela roda em distros mais novas — o contrário não vale.
+      - name: Dependências do sistema (Linux)
+        if: matrix.nome == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
+            patchelf libgtk-3-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.nome == 'macos-apple-silicon' && 'aarch64-apple-darwin' || matrix.nome == 'macos-intel' && 'x86_64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # O sidecar tem package.json próprio e não entra no npm ci da raiz.
+      # Sem ele não há Playwright, e sem Playwright não há publicação.
+      - run: npm ci --prefix sidecar
+
+      - name: Testes do Rust
+        # Alvos explícitos em vez de `--skip`: os dois testes que falam com um
+        # Ollama vivo estão num binário próprio (`ollama_vivo`), e `--skip`
+        # filtra NOME de teste, não arquivo — ele não os pegaria e o job
+        # quebraria no runner, que não tem Ollama.
+        run: cargo test --manifest-path src-tauri/Cargo.toml --lib --test cerebro --test sistema
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Postly ${{ github.ref_name }}"
+          releaseBody: "Os pacotes de cada sistema estão anexados abaixo. O instalador de um comando escolhe o certo sozinho."
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.alvo }}

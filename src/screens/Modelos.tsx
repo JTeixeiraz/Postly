@@ -14,6 +14,7 @@ import CargosAvancado from "../components/CargosAvancado";
 import Porque from "../components/Porque";
 import Provedor from "../components/Provedor";
 import ElencoClaude from "../components/ElencoClaude";
+import EscolhaImagem from "../components/EscolhaImagem";
 
 export default function Modelos({
   diag,
@@ -140,6 +141,10 @@ export default function Modelos({
           void recarregar();
         }}
       />
+
+      {/* Quem escreve e quem desenha sao decisoes separadas: trocar o provedor
+          de texto nao troca o de imagem, e vice-versa. */}
+      <EscolhaImagem />
 
       {/* Com o Claude Code no comando, o catalogo do Ollama deixa de valer para
           a proxima campanha. Manter as duas listas na tela sugeriria que da

@@ -20,6 +20,7 @@ pub mod commands;
 pub mod config_cmds;
 pub mod gemini;
 pub mod hardware;
+pub mod imagem;
 pub mod idioma;
 pub mod ollama;
 pub mod orchestrator;
@@ -64,6 +65,10 @@ pub fn run() {
             auditoria_cmds::analisar_desempenho,
             auditoria_cmds::responder_motion,
             config_cmds::elenco_claude,
+            config_cmds::provedores_de_imagem,
+            config_cmds::definir_provedor_imagem,
+            config_cmds::salvar_chave_de_imagem,
+            config_cmds::testar_provedor_imagem,
             commands::diagnostico,
             commands::memoria,
             commands::computacao,

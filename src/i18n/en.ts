@@ -420,4 +420,21 @@ export const en: typeof pt = {
     optional: "optional",
     howTitle: "How the turn is executed",
   },
+
+  imgProvider: {
+    title: "Who draws the art",
+    lead: "Click the service that will render the pieces.",
+    noKey: "no key",
+    verified: "actually tested",
+    untested: "untested",
+    untestedWhy: "This adapter was written from the service's official documentation but has never made a real call. If it fails, the error is in the integration and not in your key — please open an issue with the message.",
+    getKey: "Get the key",
+    addKey: "Paste the key",
+    replaceKey: "Replace the key",
+    keyPlaceholder: "paste the key here",
+    pairHint: "Higgsfield authenticates with a pair. Paste it as id:secret, colon included.",
+    test: "Test",
+    testing: "Testing…",
+    testOk: "Key accepted: {r}",
+  },
 };
