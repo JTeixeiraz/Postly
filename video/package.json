@@ -9,15 +9,15 @@
     "@remotion/cli": "4.0.518",
     "@remotion/fonts": "^4.0.518",
     "@remotion/tailwind-v4": "4.0.518",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "remotion": "4.0.518",
     "tailwindcss": "4.0.0"
   },
   "devDependencies": {
     "@remotion/eslint-config-flat": "4.0.518",
-    "@types/react": "19.2.7",
-    "@types/web": "0.0.166",
+    "@types/react": "19.2.18",
+    "@types/web": "0.0.354",
     "eslint": "9.19.0",
     "prettier": "3.8.1",
     "typescript": "5.9.3"
