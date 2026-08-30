@@ -404,6 +404,18 @@ export const en: typeof pt = {
     collectedAt: "Collected",
     removed: "Record removed.",
   },
+  local: {
+    motor: "Diffusion engine",
+    motorPorque:
+      "The stable-diffusion.cpp executable, about 30 MB. Runs on the CPU, with no Python and nothing to compile.",
+    instalado: "installed",
+    baixarMotor: "Download the engine",
+    baixar: "Download",
+    remover: "Delete from disk",
+    passos: "{n} steps · {px}px",
+    emDisco: "{n} on disk",
+    baixandoAgora: "downloading {alvo} — {p}% ({n} of {t})",
+  },
   desempenho: {
     titulo: "How much of the machine to use",
     subtitulo: "Applies to Ollama and to Claude Code",

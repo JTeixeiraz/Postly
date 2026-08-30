@@ -126,6 +126,10 @@ pub fn run() {
             config_cmds::previa_de_skills,
             config_cmds::modos_de_desempenho,
             config_cmds::definir_modo,
+            config_cmds::estado_imagem_local,
+            config_cmds::baixar_motor_local,
+            config_cmds::baixar_modelo_local,
+            config_cmds::remover_modelo_local,
             config_cmds::salvar_design_system,
         ])
         .run(tauri::generate_context!())

@@ -4,6 +4,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type {
+  EstadoLocal,
+  ProgressoLocal,
   CartaoModo,
   AvisoLimite,
   EsperaLimite,
@@ -82,6 +84,10 @@ export const api = {
     invoke<Preferencias>("anotar_referencia", { id, nota }),
   salvarDesignSystem: (ds: DesignSystem) => invoke<Preferencias>("salvar_design_system", { ds }),
 
+  estadoImagemLocal: () => invoke<EstadoLocal>("estado_imagem_local"),
+  baixarMotorLocal: () => invoke<string>("baixar_motor_local"),
+  baixarModeloLocal: (id: string) => invoke<string>("baixar_modelo_local", { id }),
+  removerModeloLocal: (id: string) => invoke<void>("remover_modelo_local", { id }),
   modosDeDesempenho: () => invoke<CartaoModo[]>("modos_de_desempenho"),
   definirModo: (slug: string) => invoke<void>("definir_modo", { slug }),
   statusProvedor: () => invoke<StatusProvedor>("status_provedor"),
@@ -165,6 +171,10 @@ export function ouvirMotion(cb: (e: PedidoMotion) => void): Promise<UnlistenFn> 
  *  `ouvirEsperaLimite` e `ouvirFimDoLimite` existem porque a espera pode durar
  *  horas: sem eles a tela ficaria mostrando o modal de decisão o tempo todo,
  *  como se ninguém tivesse decidido nada. */
+export function ouvirImagemLocal(cb: (e: ProgressoLocal) => void): Promise<UnlistenFn> {
+  return listen<ProgressoLocal>("postly://imagem-local", (evento) => cb(evento.payload));
+}
+
 export function ouvirLimite(cb: (e: AvisoLimite) => void): Promise<UnlistenFn> {
   return listen<AvisoLimite>("postly://limite", (evento) => cb(evento.payload));
 }

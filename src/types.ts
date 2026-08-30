@@ -453,6 +453,33 @@ export interface VagaClaude {
 /** O que o modal de movimento recebe quando a campanha para para perguntar. */
 /** A cota do Claude Code acabou no meio da campanha. */
 /** O que um modo de desempenho faz nesta máquina, agora. */
+/** O gerador de imagem que roda na própria máquina. */
+export interface EstadoLocal {
+  /** Caminho do executável, quando já foi baixado. */
+  motor: string | null;
+  modelos: CartaoModeloLocal[];
+  /** Quanto o conjunto baixado ocupa. */
+  bytes_em_disco: number;
+}
+
+export interface CartaoModeloLocal {
+  id: string;
+  nome: string;
+  bytes: number;
+  passos: number;
+  base: number;
+  nota: string;
+  baixado: boolean;
+}
+
+export interface ProgressoLocal {
+  /** `motor` ou o id do modelo — a tela precisa saber qual barra mover. */
+  alvo: string;
+  baixado: number;
+  total: number;
+  percent: number;
+}
+
 export interface CartaoModo {
   slug: "economico" | "normal" | "maximo";
   /** Teto de memória por modelo neste modo. */

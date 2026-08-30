@@ -20,7 +20,9 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 pub mod bfl;
+pub mod catalogo_local;
 pub mod higgsfield;
+pub mod local;
 pub mod openai;
 pub mod stability;
 
@@ -41,6 +43,12 @@ pub enum ProvedorImagem {
     Stability,
     /// Higgsfield Soul. Assíncrono, com polling.
     Higgsfield,
+    /// Difusão na própria máquina, pelo `sd-cli` do stable-diffusion.cpp.
+    ///
+    /// É o único que não pede chave nem manda nada para fora — e o único que
+    /// exige download por conta própria: o binário e o modelo somam alguns
+    /// gigabytes, e ninguém deve baixar isso sem pedir.
+    Local,
 }
 
 impl ProvedorImagem {
@@ -51,6 +59,7 @@ impl ProvedorImagem {
             Self::Flux => "flux",
             Self::Stability => "stability",
             Self::Higgsfield => "higgsfield",
+            Self::Local => "local",
         }
     }
 
@@ -60,6 +69,7 @@ impl ProvedorImagem {
             Self::OpenAi => "OpenAI",
             Self::Flux => "FLUX",
             Self::Stability => "Stability AI",
+            Self::Local => "Na sua maquina",
             Self::Higgsfield => "Higgsfield",
         }
     }
@@ -77,6 +87,8 @@ impl ProvedorImagem {
             Self::Flux => "https://dashboard.bfl.ai/keys",
             Self::Stability => "https://platform.stability.ai/account/keys",
             Self::Higgsfield => "https://cloud.higgsfield.ai/api-keys",
+            // Nao ha chave: o "onde pegar" e o proprio botao de baixar.
+            Self::Local => "",
         }
     }
 
@@ -86,13 +98,14 @@ impl ProvedorImagem {
         matches!(self, Self::Higgsfield)
     }
 
-    pub fn todos() -> [Self; 5] {
+    pub fn todos() -> [Self; 6] {
         [
             Self::Gemini,
             Self::OpenAi,
             Self::Flux,
             Self::Stability,
             Self::Higgsfield,
+            Self::Local,
         ]
     }
 }
@@ -228,6 +241,12 @@ pub async fn gerar(
     qualidade: ImageQuality,
     out_dir: &PathBuf,
 ) -> Result<GeneratedImage, String> {
+    // O local nao tem chave para conferir: e o unico que roda dentro da
+    // maquina, e a checagem abaixo o barraria sempre.
+    if provedor == ProvedorImagem::Local {
+        return local::gerar(prompt, aspect_ratio, qualidade, out_dir).await;
+    }
+
     let chave = cofre.chave_de(provedor);
     if chave.trim().is_empty() {
         return Err(format!(
@@ -248,6 +267,8 @@ pub async fn gerar(
         ProvedorImagem::Stability => {
             stability::gerar(&chave, prompt, aspect_ratio, qualidade, out_dir).await
         }
+        // Ja tratado antes da checagem de chave; aqui so para o match fechar.
+        ProvedorImagem::Local => local::gerar(prompt, aspect_ratio, qualidade, out_dir).await,
         ProvedorImagem::Higgsfield => {
             higgsfield::gerar(&chave, prompt, aspect_ratio, qualidade, out_dir).await
         }
@@ -263,6 +284,12 @@ pub async fn validar(provedor: ProvedorImagem, chave: &str) -> Result<String, St
         ProvedorImagem::Flux => bfl::validar(chave).await,
         ProvedorImagem::Stability => stability::validar(chave).await,
         ProvedorImagem::Higgsfield => higgsfield::validar(chave).await,
+        // Nao ha chave para validar: o que decide se o local funciona e se o
+        // motor e o modelo estao no disco, e isso a tela ja mostra.
+        ProvedorImagem::Local => Ok(crate::idioma::msg(
+            "Roda na sua maquina; nao ha chave para conferir.",
+            "Runs on your machine; there is no key to check.",
+        )),
     }
 }
 

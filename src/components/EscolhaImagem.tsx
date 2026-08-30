@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { api } from "../api";
 import { useIdioma } from "../i18n";
 import type { CartaoImagem } from "../types";
+import ImagemLocal from "./ImagemLocal";
 import MarcaImagem from "./MarcaImagem";
 import { IconCheck, IconOpen } from "./Icons";
 
@@ -109,6 +110,13 @@ export default function EscolhaImagem() {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
           >
+              {/* O local nao tem chave: o que decide se ele funciona e o que
+                  esta no disco. Mostrar o campo de chave ali seria pedir um
+                  segredo que nao existe. */}
+              {c.slug === "local" ? (
+                <ImagemLocal />
+              ) : (
+              <>
             <div className="row row--tight">
               <strong style={{ color: "var(--ink)" }}>{c.label}</strong>
               {c.verificado ? (
@@ -190,6 +198,8 @@ export default function EscolhaImagem() {
                 </motion.div>
               )}
             </AnimatePresence>
+              </>
+              )}
           </motion.div>
         ) : null
       )}

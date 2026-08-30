@@ -252,6 +252,81 @@ pub fn definir_modo(slug: String) -> Result<(), String> {
     Ok(())
 }
 
+/// O estado do gerador local: o motor, os modelos e o que ja esta no disco.
+#[derive(serde::Serialize)]
+pub struct EstadoLocal {
+    /// Caminho do executavel, quando ja foi baixado.
+    pub motor: Option<String>,
+    pub modelos: Vec<CartaoModeloLocal>,
+    /// Quanto o conjunto baixado ocupa.
+    pub bytes_em_disco: u64,
+}
+
+#[derive(serde::Serialize)]
+pub struct CartaoModeloLocal {
+    pub id: String,
+    pub nome: String,
+    pub bytes: u64,
+    pub passos: u32,
+    pub base: u32,
+    pub nota: String,
+    pub baixado: bool,
+}
+
+#[tauri::command]
+pub fn estado_imagem_local() -> EstadoLocal {
+    use crate::imagem::{catalogo_local, local};
+    let baixados = local::modelos_baixados();
+    let modelos = catalogo_local::MODELOS
+        .iter()
+        .map(|m| CartaoModeloLocal {
+            id: m.id.to_string(),
+            nome: m.nome.to_string(),
+            bytes: m.bytes,
+            passos: m.passos,
+            base: m.base,
+            nota: crate::idioma::msg(m.nota_pt, m.nota_en),
+            baixado: baixados.iter().any(|b| b == m.arquivo),
+        })
+        .collect();
+    let bytes = baixados
+        .iter()
+        .filter_map(|b| std::fs::metadata(local::modelos_dir().join(b)).ok())
+        .map(|m| m.len())
+        .sum();
+    EstadoLocal {
+        motor: local::binario().map(|p| p.to_string_lossy().to_string()),
+        modelos,
+        bytes_em_disco: bytes,
+    }
+}
+
+#[tauri::command]
+pub async fn baixar_motor_local(app: tauri::AppHandle) -> Result<String, String> {
+    crate::imagem::local::baixar_motor(app).await
+}
+
+#[tauri::command]
+pub async fn baixar_modelo_local(app: tauri::AppHandle, id: String) -> Result<String, String> {
+    crate::imagem::local::baixar_modelo(app, id).await
+}
+
+/// Apaga um modelo baixado.
+///
+/// Existe porque os arquivos passam de 2 GB: sem isto, experimentar tres
+/// modelos custaria 10 GB permanentes e a unica saida seria apagar a mao,
+/// num diretorio que a pessoa nao sabe onde fica.
+#[tauri::command]
+pub fn remover_modelo_local(id: String) -> Result<(), String> {
+    let spec = crate::imagem::catalogo_local::por_id(&id)
+        .ok_or_else(|| format!("modelo desconhecido: {id}"))?;
+    let caminho = crate::imagem::local::modelos_dir().join(spec.arquivo);
+    if caminho.is_file() {
+        std::fs::remove_file(&caminho).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub fn definir_provedor(provedor: crate::prefs::Provedor) -> Result<crate::prefs::Prefs, String> {
     if provedor == crate::prefs::Provedor::ClaudeCode && !crate::claude::disponivel() {

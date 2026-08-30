@@ -408,6 +408,18 @@ export const pt = {
     collectedAt: "Coletado em",
     removed: "Registro removido.",
   },
+  local: {
+    motor: "Motor de difusão",
+    motorPorque:
+      "O executável do stable-diffusion.cpp, cerca de 30 MB. Roda na CPU, sem Python e sem compilar nada.",
+    instalado: "instalado",
+    baixarMotor: "Baixar o motor",
+    baixar: "Baixar",
+    remover: "Apagar do disco",
+    passos: "{n} passos · {px}px",
+    emDisco: "{n} em disco",
+    baixandoAgora: "baixando {alvo} — {p}% ({n} de {t})",
+  },
   desempenho: {
     titulo: "Quanto da máquina usar",
     subtitulo: "Vale para o Ollama e para o Claude Code",
