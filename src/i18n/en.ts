@@ -404,6 +404,31 @@ export const en: typeof pt = {
     collectedAt: "Collected",
     removed: "Record removed.",
   },
+  galeria: {
+    titulo: "Asset gallery",
+    subtitulo: "One folder per product, kept on your computer",
+    novaPasta: "Product name",
+    criar: "Create folder",
+    nenhuma: "No folders yet. Create one per product and the material is ready for the next campaign.",
+    resumo: "{n} assets · {r} references · {b}",
+    doProduto: "Brand material",
+    doProdutoPorque:
+      "Photos of the product, the shop, the team. Goes in as an image for models that can see, and may appear in the piece.",
+    deTerceiros: "Style references",
+    deTerceirosPorque:
+      "Other brands' work, for direction. Goes in as text only — handing another brand's art to the model to copy is the shortest path to someone else's logo showing up in your piece.",
+    adicionar: "Add",
+    apagar: "Delete",
+    apagarPasta: "Delete the whole folder",
+    abrirPasta: "Open in the system",
+    semItens: "Nothing here yet.",
+    semRefs: "No style references.",
+    erroLeitura: "Could not read the chosen files.",
+    naCampanha: "Asset folder",
+    naCampanhaNenhuma: "None — only the loose references",
+    naCampanhaPorque:
+      "The folder's contents add to what you upload below; they do not replace it.",
+  },
   local: {
     motor: "Diffusion engine",
     motorPorque:

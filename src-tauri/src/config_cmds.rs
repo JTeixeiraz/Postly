@@ -327,6 +327,56 @@ pub fn remover_modelo_local(id: String) -> Result<(), String> {
     Ok(())
 }
 
+// ------------------------------------------------------------------ galeria
+
+#[tauri::command]
+pub fn galeria_listar() -> Vec<crate::galeria::Pasta> {
+    crate::galeria::listar()
+}
+
+#[tauri::command]
+pub fn galeria_criar(nome: String) -> Result<crate::galeria::Pasta, String> {
+    crate::galeria::criar(&nome)
+}
+
+#[derive(serde::Deserialize)]
+pub struct ArquivoEnviado {
+    pub nome: String,
+    pub dados: String,
+}
+
+#[tauri::command]
+pub fn galeria_adicionar(
+    slug: String,
+    arquivos: Vec<ArquivoEnviado>,
+    para_referencias: bool,
+) -> Result<crate::galeria::Pasta, String> {
+    // Erro num arquivo nao derruba os outros: quem arrastou dez fotos e tinha
+    // um PDF no meio quer as nove que servem, com um aviso sobre a decima.
+    let mut falhas = Vec::new();
+    for a in &arquivos {
+        if let Err(e) = crate::galeria::adicionar(&slug, &a.nome, &a.dados, para_referencias) {
+            falhas.push(format!("{}: {e}", a.nome));
+        }
+    }
+    let pasta = crate::galeria::ler(&slug)
+        .ok_or_else(|| crate::idioma::msg("Pasta nao encontrada.", "Folder not found."))?;
+    if !arquivos.is_empty() && falhas.len() == arquivos.len() {
+        return Err(falhas.join(" · "));
+    }
+    Ok(pasta)
+}
+
+#[tauri::command]
+pub fn galeria_remover_item(caminho: String) -> Result<(), String> {
+    crate::galeria::remover_item(&caminho)
+}
+
+#[tauri::command]
+pub fn galeria_remover_pasta(slug: String) -> Result<(), String> {
+    crate::galeria::remover_pasta(&slug)
+}
+
 #[tauri::command]
 pub fn definir_provedor(provedor: crate::prefs::Provedor) -> Result<crate::prefs::Prefs, String> {
     if provedor == crate::prefs::Provedor::ClaudeCode && !crate::claude::disponivel() {

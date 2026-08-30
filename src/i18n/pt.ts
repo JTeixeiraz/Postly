@@ -408,6 +408,31 @@ export const pt = {
     collectedAt: "Coletado em",
     removed: "Registro removido.",
   },
+  galeria: {
+    titulo: "Galeria de assets",
+    subtitulo: "Uma pasta por produto, guardada no seu computador",
+    novaPasta: "Nome do produto",
+    criar: "Criar pasta",
+    nenhuma: "Nenhuma pasta ainda. Crie uma por produto e o material fica pronto para a próxima campanha.",
+    resumo: "{n} assets · {r} referências · {b}",
+    doProduto: "Material da marca",
+    doProdutoPorque:
+      "Foto do produto, da loja, da equipe. Vai como imagem para os modelos que enxergam e pode aparecer na peça.",
+    deTerceiros: "Referências de estilo",
+    deTerceirosPorque:
+      "Trabalho de outras marcas, para dar direção. Vai só como texto — entregar a arte de outra marca para o modelo copiar é o caminho mais curto para sair logotipo alheio na sua peça.",
+    adicionar: "Adicionar",
+    apagar: "Apagar",
+    apagarPasta: "Apagar a pasta inteira",
+    abrirPasta: "Abrir no sistema",
+    semItens: "Nada aqui ainda.",
+    semRefs: "Nenhuma referência de estilo.",
+    erroLeitura: "Não consegui ler os arquivos escolhidos.",
+    naCampanha: "Pasta de assets",
+    naCampanhaNenhuma: "Nenhuma — só as referências avulsas",
+    naCampanhaPorque:
+      "O conteúdo da pasta soma com o que você subiu aqui embaixo; não substitui.",
+  },
   local: {
     motor: "Motor de difusão",
     motorPorque:

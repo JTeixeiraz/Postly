@@ -6,6 +6,7 @@ import { PREFS_VAZIAS, type Credencial, type Diagnostico, type EventoEstagio, ty
 import Relay, { planejar, postasDeEventos } from "../components/Relay";
 import Resultado from "../components/Resultado";
 import Referencias from "../components/Referencias";
+import type { PastaGaleria } from "../types";
 import PlanoExecucao from "../components/PlanoExecucao";
 import Selecao from "../components/Selecao";
 import { IconArrow, IconCheck, IconSpinner } from "../components/Icons";
@@ -26,12 +27,20 @@ export default function Campanha({ diag }: { diag: Diagnostico | null }) {
   const [simular, setSimular] = useState(true);
   const [rodadas, setRodadas] = useState(2);
   const [pensar, setPensar] = useState(false);
+  const [pasta, setPasta] = useState("");
+  const [pastas, setPastas] = useState<PastaGaleria[]>([]);
 
   const [eventos, setEventos] = useState<EventoEstagio[]>([]);
   const [rodando, setRodando] = useState(false);
   const [relatorio, setRelatorio] = useState<RelatorioCampanha | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const fim = useRef<HTMLDivElement>(null);
+
+  // As pastas da galeria: quem já organizou o material de um produto escolhe
+  // a pasta em vez de subir foto por foto de novo.
+  useEffect(() => {
+    api.galeriaListar().then(setPastas).catch(() => {});
+  }, []);
 
   useEffect(() => {
     void api.resumoCofre().then(setCofre);
@@ -282,6 +291,24 @@ export default function Campanha({ diag }: { diag: Diagnostico | null }) {
                 </label>
               </div>
             </section>
+          )}
+
+          {pastas.length > 0 && (
+            <div className="stack" style={{ marginBottom: "var(--s4)" }}>
+              <Selecao
+                rotulo={d.galeria.naCampanha}
+                valor={pasta}
+                opcoes={[
+                  { valor: "", rotulo: d.galeria.naCampanhaNenhuma },
+                  ...pastas.map((p) => ({
+                    valor: p.slug,
+                    rotulo: `${p.nome} — ${p.itens.length + p.referencias.length}`,
+                  })),
+                ]}
+                onEscolher={setPasta}
+              />
+              <p className="hint">{d.galeria.naCampanhaPorque}</p>
+            </div>
           )}
 
           <Referencias prefs={prefs} onMudar={setPrefs} />

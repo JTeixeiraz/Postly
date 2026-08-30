@@ -347,3 +347,33 @@
 /* O que já está no disco fica marcado: é a diferença entre "posso usar agora"
    e "vou esperar 2 GB baixarem". */
 .modelo-local[data-on="true"] { border-color: var(--act); }
+
+/* ══ galeria de assets ═══════════════════════════════════════════════════ */
+
+.pasta {
+  display: grid; gap: var(--s3);
+  padding: 12px 14px; border-radius: var(--r-md);
+  background: var(--card-2); border: 1px solid var(--line-soft);
+}
+.pasta[data-on="true"] { border-color: var(--act); }
+
+/* Miniaturas pequenas e em grade: a galeria é para reconhecer o que está lá,
+   não para admirar cada foto. */
+.galeria__grade {
+  display: grid; gap: var(--s2);
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+}
+.asset {
+  margin: 0; display: grid; gap: 4px;
+  border-radius: var(--r-sm); overflow: hidden;
+  background: var(--sunken); border: 1px solid var(--line-soft);
+}
+.asset img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.asset figcaption {
+  display: flex; align-items: center; gap: 4px;
+  padding: 3px 4px 4px 7px;
+}
+.asset__nome {
+  font-size: var(--t-micro); color: var(--ink-3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+}

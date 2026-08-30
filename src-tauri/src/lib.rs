@@ -20,6 +20,7 @@ pub mod claude;
 pub mod commands;
 pub mod config_cmds;
 pub mod falha;
+pub mod galeria;
 pub mod gemini;
 pub mod hardware;
 pub mod idioma;
@@ -126,6 +127,11 @@ pub fn run() {
             config_cmds::previa_de_skills,
             config_cmds::modos_de_desempenho,
             config_cmds::definir_modo,
+            config_cmds::galeria_listar,
+            config_cmds::galeria_criar,
+            config_cmds::galeria_adicionar,
+            config_cmds::galeria_remover_item,
+            config_cmds::galeria_remover_pasta,
             config_cmds::estado_imagem_local,
             config_cmds::baixar_motor_local,
             config_cmds::baixar_modelo_local,

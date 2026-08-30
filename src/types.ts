@@ -454,6 +454,26 @@ export interface VagaClaude {
 /** A cota do Claude Code acabou no meio da campanha. */
 /** O que um modo de desempenho faz nesta máquina, agora. */
 /** O gerador de imagem que roda na própria máquina. */
+/** Uma pasta de produto na galeria. */
+export interface PastaGaleria {
+  /** Nome de diretório: é a identidade em disco. */
+  slug: string;
+  /** O que a pessoa digitou. Pode ter acento, espaço e maiúscula. */
+  nome: string;
+  caminho: string;
+  /** Assets da própria marca — podem aparecer na peça. */
+  itens: ItemGaleria[];
+  /** Trabalho de terceiros — só direção de estilo. */
+  referencias: ItemGaleria[];
+  bytes: number;
+}
+
+export interface ItemGaleria {
+  nome: string;
+  caminho: string;
+  bytes: number;
+}
+
 export interface EstadoLocal {
   /** Caminho do executável, quando já foi baixado. */
   motor: string | null;

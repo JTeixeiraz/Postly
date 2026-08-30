@@ -36,6 +36,13 @@ pub struct CampaignRequest {
     /// do que a pessoa vai ler e publicar.
     #[serde(default = "default_idioma")]
     pub idioma: String,
+    /// Pasta da galeria a usar como material desta campanha.
+    ///
+    /// Quando vem preenchida, o conteudo dela ENTRA JUNTO das referencias
+    /// avulsas em vez de substitui-las: a pessoa pode ter subido uma foto
+    /// especifica desta campanha e ainda querer a pasta do produto.
+    #[serde(default)]
+    pub pasta: String,
 }
 
 fn default_quality() -> ImageQuality {

@@ -4,6 +4,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type {
+  PastaGaleria,
   EstadoLocal,
   ProgressoLocal,
   CartaoModo,
@@ -84,6 +85,15 @@ export const api = {
     invoke<Preferencias>("anotar_referencia", { id, nota }),
   salvarDesignSystem: (ds: DesignSystem) => invoke<Preferencias>("salvar_design_system", { ds }),
 
+  galeriaListar: () => invoke<PastaGaleria[]>("galeria_listar"),
+  galeriaCriar: (nome: string) => invoke<PastaGaleria>("galeria_criar", { nome }),
+  galeriaAdicionar: (
+    slug: string,
+    arquivos: { nome: string; dados: string }[],
+    paraReferencias: boolean
+  ) => invoke<PastaGaleria>("galeria_adicionar", { slug, arquivos, paraReferencias }),
+  galeriaRemoverItem: (caminho: string) => invoke<void>("galeria_remover_item", { caminho }),
+  galeriaRemoverPasta: (slug: string) => invoke<void>("galeria_remover_pasta", { slug }),
   estadoImagemLocal: () => invoke<EstadoLocal>("estado_imagem_local"),
   baixarMotorLocal: () => invoke<string>("baixar_motor_local"),
   baixarModeloLocal: (id: string) => invoke<string>("baixar_modelo_local", { id }),

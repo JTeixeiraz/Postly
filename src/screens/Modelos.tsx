@@ -15,6 +15,7 @@ import Porque from "../components/Porque";
 import Provedor from "../components/Provedor";
 import ElencoClaude from "../components/ElencoClaude";
 import EscolhaImagem from "../components/EscolhaImagem";
+import Galeria from "../components/Galeria";
 import ModoDesempenho from "../components/ModoDesempenho";
 
 export default function Modelos({
@@ -151,6 +152,11 @@ export default function Modelos({
       {/* Quem escreve e quem desenha sao decisoes separadas: trocar o provedor
           de texto nao troca o de imagem, e vice-versa. */}
       <EscolhaImagem />
+
+        {/* A galeria fica aqui e nao na Campanha: e material que se organiza
+            uma vez e se reusa, nao decisao de uma campanha. La ela aparece
+            so como um seletor. */}
+        <Galeria />
 
       {/* Com o Claude Code no comando, o catalogo do Ollama deixa de valer para
           a proxima campanha. Manter as duas listas na tela sugeriria que da

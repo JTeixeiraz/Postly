@@ -62,12 +62,17 @@ pub async fn run_campaign(
     // para todas as rodadas.
     let prefs = crate::prefs::load();
     let identidade = prefs.ds.bloco();
-    let refs_texto = crate::referencias::bloco_descritivo(&prefs.referencias);
+    // A pasta escolhida SOMA com as referencias avulsas, nao substitui: quem
+    // subiu uma foto so para esta campanha ainda quer o material do produto.
+    let mut referencias = prefs.referencias.clone();
+    if !req.pasta.trim().is_empty() {
+        referencias.extend(crate::galeria::como_referencias(&req.pasta));
+    }
+    let refs_texto = crate::referencias::bloco_descritivo(&referencias);
     // So o material da propria marca vira imagem no turno. Referencia de estilo
     // fica no texto: mandar a arte de outra marca para o modelo copiar e o
     // caminho mais curto para a peca sair com logotipo alheio.
-    let refs_proprias: Vec<_> = prefs
-        .referencias
+    let refs_proprias: Vec<_> = referencias
         .iter()
         .filter(|r| r.tipo == crate::referencias::TipoReferencia::Propria)
         .cloned()
