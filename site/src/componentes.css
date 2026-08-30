@@ -1,0 +1,287 @@
+/* Peças próprias do site. */
+
+/* ══ topo ════════════════════════════════════════════════════════════════ */
+
+.topo {
+  position: sticky; top: 0; z-index: var(--z-topo);
+  display: flex; align-items: center; gap: var(--s5);
+  padding: var(--s4) clamp(20px, 5vw, 56px);
+  background: oklch(0.190 0.006 250 / 0.82);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--mid) var(--ease);
+}
+/* A borda só aparece quando há conteúdo passando por baixo. Sem isto ela
+   desenha uma linha solta contra o topo da página parada. */
+.topo:not(:first-child) { border-bottom-color: var(--line-soft); }
+
+.topo__marca {
+  display: inline-flex; align-items: center; gap: 9px;
+  color: var(--act); text-decoration: none;
+  font-weight: 640; letter-spacing: -0.025em; font-size: 17px;
+}
+.topo__marca span { color: var(--ink); }
+
+.topo__nav { margin-left: auto; display: flex; align-items: center; gap: var(--s5); }
+.topo__nav a {
+  font-size: var(--t-sm); color: var(--ink-2); text-decoration: none;
+  transition: color var(--fast) var(--ease);
+}
+.topo__nav a:hover { color: var(--ink); }
+.topo__nav .btn { font-size: var(--t-sm); padding: 9px 17px; }
+
+@media (max-width: 720px) {
+  /* Numa tela estreita sobra o essencial: a marca e o caminho para instalar. */
+  .topo__nav a:not(.btn):not([href="#instalacao"]) { display: none; }
+}
+
+/* ══ abertura ════════════════════════════════════════════════════════════ */
+
+.heroi {
+  display: grid; gap: var(--s8);
+  padding-top: clamp(56px, 8vw, 104px);
+  padding-bottom: var(--s9);
+}
+.heroi__texto { display: grid; gap: var(--s5); justify-items: start; }
+.heroi__linha { font-size: var(--t-lead); color: var(--ink-2); max-width: 54ch; }
+.heroi__acoes { display: flex; gap: var(--s3); flex-wrap: wrap; }
+
+/* ══ a trilha da abertura ════════════════════════════════════════════════ */
+
+.trilha {
+  position: relative;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  gap: var(--s4);
+  padding-top: var(--s6);
+}
+.trilha__fio, .trilha__aceso {
+  position: absolute;
+  left: calc(100% / 8); right: calc(100% / 8);
+  top: calc(var(--s6) + 7px);
+  height: 2px; border-radius: var(--r-pill);
+}
+.trilha__fio { background: var(--line); }
+.trilha__aceso { background: var(--act); transform-origin: left; }
+
+.posta-t {
+  display: grid; gap: 9px; align-content: start;
+  padding-right: var(--s4);
+  position: relative;
+}
+.posta-t__marca {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--act);
+  box-shadow: 0 0 0 5px oklch(0.880 0.200 124 / 0.10);
+}
+.posta-t__cargo { color: var(--ink); font-weight: 570; font-size: var(--t-body); line-height: 1.2; }
+.posta-t__modelo { font-size: var(--t-micro); color: var(--act); }
+.posta-t__nota { font-size: var(--t-sm); color: var(--ink-3); line-height: 1.45; max-width: 30ch; }
+
+@media (max-width: 860px) {
+  /* Vira coluna com fio à esquerda: quatro cargos lado a lado numa tela
+     estreita reduz cada um a duas palavras cortadas. */
+  .trilha { grid-auto-flow: row; grid-auto-columns: auto; gap: var(--s5); padding-left: var(--s5); }
+  .trilha__fio, .trilha__aceso {
+    left: 7px; right: auto; top: var(--s6); bottom: 8px;
+    height: auto; width: 2px;
+  }
+  .trilha__aceso { transform-origin: top; }
+  .posta-t { grid-template-columns: 16px 1fr; gap: 3px var(--s4); }
+  .posta-t__marca { grid-row: span 3; }
+  .posta-t__nota { max-width: none; }
+}
+
+/* ══ comando de instalação ═══════════════════════════════════════════════ */
+
+.comando { display: grid; gap: var(--s3); width: 100%; max-width: 720px; }
+
+.comando__abas {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: var(--sunken); border: 1px solid var(--line-soft);
+  border-radius: var(--r-pill); width: fit-content;
+}
+.comando__aba {
+  position: relative; isolation: isolate;
+  border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: var(--t-micro); font-weight: 540;
+  color: var(--ink-3); padding: 7px 16px; border-radius: var(--r-pill);
+  transition: color var(--fast) var(--ease);
+}
+.comando__aba:hover { color: var(--ink-2); }
+.comando__aba[aria-selected="true"] { color: var(--act-ink); }
+.comando__bolha {
+  position: absolute; inset: 0; z-index: -1;
+  background: var(--act); border-radius: var(--r-pill);
+}
+
+.comando__linha {
+  display: flex; align-items: stretch; gap: 0;
+  background: var(--sunken); border: 1px solid var(--line);
+  border-radius: var(--r-md); overflow: hidden;
+}
+.comando__texto {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 10px;
+  padding: 15px 17px; font-size: var(--t-sm); color: var(--ink);
+  overflow-x: auto; white-space: nowrap;
+  /* Sem barra visível: o comando cabe em quase toda largura e a barra
+     desenharia um traço permanente sob o texto. */
+  scrollbar-width: none;
+}
+.comando__texto::-webkit-scrollbar { display: none; }
+.comando__cifrao { color: var(--act); flex: none; user-select: none; }
+
+.comando__copiar {
+  flex: none; border: 0; border-left: 1px solid var(--line);
+  background: var(--card-2); color: var(--ink-2); cursor: pointer;
+  font: inherit; font-family: var(--mono); font-size: var(--t-micro);
+  padding: 0 19px; min-width: 88px;
+  display: grid; place-items: center;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.comando__copiar:hover { background: var(--act); color: var(--act-ink); }
+
+.comando__nota { font-size: var(--t-sm); color: var(--ink-3); max-width: 62ch; }
+.comando[data-compacto="true"] .comando__nota { display: none; }
+
+/* ══ prosa ═══════════════════════════════════════════════════════════════ */
+
+.prosa { display: grid; gap: var(--s4); }
+.prosa p { font-size: var(--t-body); }
+
+.nota-medida {
+  margin-top: var(--s5); font-size: var(--t-sm); color: var(--ink-3);
+  max-width: 72ch; line-height: 1.6;
+}
+
+/* ══ os quatro passos ════════════════════════════════════════════════════ */
+
+/* Lista ordenada de verdade, com a numeração como conteúdo e não como
+   enfeite: a ordem aqui é o que o sistema faz, e trocá-la mudaria o produto. */
+.passos { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.passos li {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--s5);
+  padding: var(--s5) 0;
+  border-top: 1px solid var(--line-soft);
+  align-items: start;
+}
+.passos li:last-child { border-bottom: 1px solid var(--line-soft); }
+.passos__n {
+  font-size: var(--t-h3); color: var(--act); font-weight: 500;
+  line-height: 1.15; min-width: 2ch;
+}
+.passos h3 { margin-bottom: 7px; }
+.passos p { color: var(--ink-2); max-width: 62ch; }
+
+@media (max-width: 620px) {
+  .passos li { gap: var(--s4); }
+}
+
+/* ══ o duelo de modelos ══════════════════════════════════════════════════ */
+
+.duelo {
+  display: grid; gap: var(--s5);
+  grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr));
+}
+.duelo__lado {
+  display: grid; gap: 7px; align-content: start;
+  padding: var(--s5);
+  border: 1px solid var(--line-soft); border-radius: var(--r-lg);
+  background: var(--card);
+}
+.duelo__lado[data-vence="true"] { border-color: var(--act); background: var(--act-wash); }
+
+.duelo__nome { font-size: var(--t-lead); color: var(--ink); font-weight: 500; }
+.duelo__tipo { font-size: var(--t-sm); color: var(--ink-2); }
+.duelo__peso { font-size: var(--t-sm); color: var(--ink-3); }
+.duelo__barra {
+  height: 8px; border-radius: var(--r-pill); background: var(--sunken);
+  overflow: hidden; margin-top: var(--s3);
+}
+.duelo__barra span { display: block; height: 100%; background: var(--act); border-radius: var(--r-pill); }
+.duelo__valor { font-size: var(--t-h3); color: var(--ink); font-weight: 500; margin-top: 3px; }
+.duelo__lado[data-vence="true"] .duelo__valor { color: var(--act); }
+
+/* ══ galeria de telas ════════════════════════════════════════════════════ */
+
+.telas { display: grid; gap: var(--s5); }
+
+.telas__abas {
+  display: flex; gap: var(--s2); flex-wrap: wrap;
+}
+.telas__aba {
+  position: relative; isolation: isolate;
+  border: 1px solid var(--line-soft); background: var(--card);
+  border-radius: var(--r-pill); cursor: pointer;
+  font: inherit; font-size: var(--t-micro); font-weight: 520;
+  color: var(--ink-3); padding: 8px 16px;
+  transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+.telas__aba:hover { color: var(--ink); border-color: var(--ink-3); }
+.telas__aba[aria-current="true"] { color: var(--act-ink); border-color: var(--act); }
+.telas__bolha {
+  position: absolute; inset: 0; z-index: -1;
+  background: var(--act); border-radius: var(--r-pill);
+}
+
+/* Altura reservada pela proporção da captura: sem isto a página pula a cada
+   troca de aba enquanto a imagem seguinte carrega. */
+.telas__palco { position: relative; }
+.telas__quadro { margin: 0; display: grid; gap: var(--s4); }
+.telas__quadro img {
+  width: 100%; height: auto; aspect-ratio: 1440 / 1000;
+  object-fit: cover; object-position: top;
+  border: 1px solid var(--line-soft); border-radius: var(--r-lg);
+  background: var(--card);
+}
+.telas__quadro figcaption {
+  font-size: var(--t-sm); color: var(--ink-2); max-width: 76ch; line-height: 1.6;
+}
+
+/* ══ o que sai e o que fica ══════════════════════════════════════════════ */
+
+.fluxo {
+  display: grid; gap: var(--s5);
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+}
+.fluxo__col {
+  padding: var(--s5); border-radius: var(--r-lg);
+  border: 1px solid var(--line-soft); background: var(--card);
+  display: grid; gap: var(--s4); align-content: start;
+}
+.fluxo__col[data-fica="true"] { border-color: var(--act); background: var(--act-wash); }
+.fluxo__rotulo {
+  font-size: var(--t-micro); font-weight: 600; color: var(--ink-3);
+  font-family: var(--mono);
+}
+.fluxo__col[data-fica="true"] .fluxo__rotulo { color: var(--act); }
+.fluxo ul { margin: 0; padding-left: 1.15em; display: grid; gap: 10px; }
+.fluxo li { color: var(--ink-2); font-size: var(--t-sm); line-height: 1.55; }
+
+/* ══ requisitos ══════════════════════════════════════════════════════════ */
+
+.requisitos {
+  margin-top: var(--s6);
+  display: grid; gap: var(--s5);
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+}
+.requisitos h3 { font-size: var(--t-body); margin-bottom: 6px; }
+.requisitos p { font-size: var(--t-sm); color: var(--ink-3); line-height: 1.55; }
+
+/* ══ rodapé ══════════════════════════════════════════════════════════════ */
+
+.rodape {
+  position: relative; z-index: var(--z-conteudo);
+  display: flex; align-items: center; gap: var(--s5); flex-wrap: wrap;
+  padding: var(--s6) clamp(20px, 5vw, 56px);
+  max-width: 1240px; margin-inline: auto;
+  border-top: 1px solid var(--line-soft);
+}
+.rodape__marca {
+  display: inline-flex; align-items: center; gap: 9px;
+  color: var(--act); font-weight: 620; letter-spacing: -0.02em;
+}
+.rodape__marca span { color: var(--ink); }
+.rodape__nota { margin-left: auto; font-size: var(--t-sm); color: var(--ink-3); }
+.rodape__nota a { color: var(--ink-2); text-decoration-color: var(--line); }
+.rodape__nota a:hover { color: var(--act); }

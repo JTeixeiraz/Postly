@@ -1,0 +1,225 @@
+/* Postly — sistema visual do site.
+ *
+ * Os tokens são os mesmos do aplicativo, não uma reinterpretação: quem clica
+ * em instalar precisa reconhecer o que abriu. Identidade preservada vence
+ * exploração.
+ *
+ * O que muda aqui é a ESCALA. O app é um painel de operação, denso porque a
+ * pessoa vai passar horas nele. O site é lido uma vez, rolando: tipografia
+ * maior, respiro maior, e uma ideia dominante por dobra.
+ */
+
+@import "@fontsource-variable/geist/index.css";
+@import "@fontsource-variable/geist-mono/index.css";
+
+:root {
+  /* --- superfície: os três degraus do app --- */
+  --bg:        oklch(0.190 0.006 250);
+  --card:      oklch(0.238 0.008 250);
+  --card-2:    oklch(0.288 0.009 250);
+  --sunken:    oklch(0.165 0.006 250);
+  --line:      oklch(0.335 0.010 250);
+  --line-soft: oklch(0.285 0.008 250);
+
+  /* --- tinta --- */
+  --ink:   oklch(0.975 0.002 250);
+  --ink-2: oklch(0.790 0.006 250);
+  --ink-3: oklch(0.659 0.006 250);
+
+  /* --- ação: um acento, um significado --- */
+  --act:      oklch(0.880 0.200 124);
+  --act-ink:  oklch(0.240 0.070 124);
+  --act-wash: oklch(0.320 0.070 124);
+
+  --ok:    oklch(0.800 0.170 150);
+  --warn:  oklch(0.840 0.150 85);
+  --alert: oklch(0.720 0.170 25);
+
+  --sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Escala modular com razão 1.32, fluida no topo. O app trava a escala
+     porque se lê em DPI constante; aqui a página vai de um celular a um
+     monitor largo e o título precisa acompanhar. */
+  --t-micro: 12px;
+  --t-sm:    14px;
+  --t-body:  clamp(16px, 0.95rem + 0.22vw, 18px);
+  --t-lead:  clamp(19px, 1.05rem + 0.5vw, 24px);
+  --t-h3:    clamp(21px, 1.1rem + 0.7vw, 28px);
+  --t-h2:    clamp(28px, 1.4rem + 1.5vw, 44px);
+  --t-h1:    clamp(40px, 2rem + 4.2vw, 88px);
+
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 40px; --s7: 64px; --s8: 104px;
+  --s9: clamp(72px, 9vw, 152px);
+
+  --r-sm: 7px; --r-md: 11px; --r-lg: 18px; --r-xl: 26px; --r-pill: 999px;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --fast: 140ms; --mid: 280ms; --slow: 620ms;
+
+  /* Camadas nomeadas, nunca um 9999 solto. */
+  --z-trilha: 1; --z-conteudo: 2; --z-topo: 30; --z-modal: 40;
+
+  color-scheme: dark;
+  accent-color: var(--act);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--t-body);
+  /* Texto claro sobre fundo escuro pesa menos e pede mais respiro. */
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 { color: var(--ink); margin: 0; text-wrap: balance; }
+h1 { font-size: var(--t-h1); font-weight: 680; letter-spacing: -0.038em; line-height: 0.98; }
+h2 { font-size: var(--t-h2); font-weight: 620; letter-spacing: -0.028em; line-height: 1.08; }
+h3 { font-size: var(--t-h3); font-weight: 580; letter-spacing: -0.018em; line-height: 1.2; }
+p  { margin: 0; text-wrap: pretty; max-width: 68ch; }
+
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+::selection { background: var(--act); color: var(--act-ink); }
+
+:focus-visible {
+  outline: 2px solid var(--act);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
+}
+
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--mono); }
+
+/* ══ a espinha ═══════════════════════════════════════════════════════════
+   A trilha de revezamento atravessa a página inteira e é a única metáfora
+   estrutural do site. Ela existe porque o produto É um percurso: um despacho
+   passando de posta em posta. Numa página sobre outra coisa isto seria
+   decoração; aqui é o assunto. */
+
+.pagina { position: relative; }
+
+.espinha {
+  position: fixed;
+  left: clamp(18px, 4.2vw, 62px);
+  top: 0; bottom: 0;
+  width: 2px;
+  z-index: var(--z-trilha);
+  pointer-events: none;
+}
+.espinha__fio {
+  position: absolute; inset: 0;
+  background: var(--line-soft);
+  border-radius: var(--r-pill);
+}
+/* Cresce por transform, nunca por height: height reflui a página a cada
+   quadro do scroll. */
+.espinha__aceso {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, var(--act), oklch(0.880 0.200 124 / 0.25));
+  border-radius: var(--r-pill);
+  transform-origin: top;
+}
+
+/* Abaixo de 900px a espinha sai: numa tela estreita ela rouba a margem que o
+   texto precisa, e a metáfora não vale o custo. */
+@media (max-width: 900px) {
+  .espinha { display: none; }
+}
+
+/* ══ seções ══════════════════════════════════════════════════════════════ */
+
+.secao {
+  position: relative;
+  z-index: var(--z-conteudo);
+  padding: var(--s9) clamp(20px, 5vw, 56px);
+  max-width: 1240px;
+  margin-inline: auto;
+}
+.secao--estreita { max-width: 880px; }
+
+/* A marca de posta fica na espinha, alinhada ao início da seção. É o que
+   liga o texto à linha em vez de deixar a linha decorativa ao lado. */
+.posta {
+  position: absolute;
+  left: calc(clamp(18px, 4.2vw, 62px) - 6px);
+  top: var(--s9);
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--line);
+  z-index: var(--z-conteudo);
+  transition: border-color var(--slow) var(--ease), background var(--slow) var(--ease);
+}
+.posta[data-passou="true"] { border-color: var(--act); background: var(--act); }
+@media (max-width: 900px) { .posta { display: none; } }
+
+.secao__titulo { display: grid; gap: var(--s4); margin-bottom: var(--s6); }
+.secao__titulo p { font-size: var(--t-lead); color: var(--ink-2); max-width: 58ch; }
+
+/* ══ cartão ══════════════════════════════════════════════════════════════ */
+
+.cartao {
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  padding: var(--s5);
+}
+
+/* ══ botões ══════════════════════════════════════════════════════════════ */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 13px 24px; border-radius: var(--r-pill);
+  border: 1px solid var(--line); background: var(--card-2); color: var(--ink);
+  font: inherit; font-size: var(--t-sm); font-weight: 540;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease),
+              transform var(--fast) var(--ease);
+}
+.btn:hover { border-color: var(--ink-3); background: var(--line-soft); }
+.btn:active { transform: translateY(1px); }
+
+.btn--acao {
+  background: var(--act); border-color: var(--act); color: var(--act-ink); font-weight: 600;
+}
+.btn--acao:hover { background: oklch(0.920 0.200 124); border-color: oklch(0.920 0.200 124); }
+
+.btn--fantasma { background: none; border-color: transparent; color: var(--ink-2); }
+.btn--fantasma:hover { color: var(--ink); background: var(--card-2); border-color: transparent; }
+
+/* ══ pílula ══════════════════════════════════════════════════════════════ */
+
+.pilula {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: var(--t-micro); font-weight: 520; line-height: 1;
+  padding: 7px 13px; border-radius: var(--r-pill);
+  border: 1px solid var(--line); color: var(--ink-2); background: var(--card-2);
+  white-space: nowrap;
+}
+.pilula__ponto { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); flex: none; }
+.pilula[data-tom="acao"] { border-color: transparent; background: var(--act-wash); color: var(--act); }
+.pilula[data-tom="acao"] .pilula__ponto { background: var(--act); }
+
+/* ══ movimento ═══════════════════════════════════════════════════════════
+   Sem motion, a página continua legível e completa. Nada aqui depende de
+   uma classe para ficar visível: uma revelação que não dispara num
+   renderizador headless entrega uma seção em branco. */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
