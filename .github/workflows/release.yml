@@ -81,7 +81,7 @@ jobs:
         # quebraria no runner, que não tem Ollama.
         run: cargo test --manifest-path src-tauri/Cargo.toml --lib --test cerebro --test sistema
 
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
