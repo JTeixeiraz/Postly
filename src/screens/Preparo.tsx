@@ -31,6 +31,8 @@ interface Props {
   avancar: () => void;
 }
 
+const CHAVE_PREPARO = "postly:preparo-feito";
+
 export default function Preparo({ diag, recarregar, avancar }: Props) {
   const { d, f, idioma } = useIdioma();
   const [linhas, setLinhas] = useState<Record<Chave, Linha>>({
@@ -45,6 +47,10 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
   const [ram, setRam] = useState<RamSnapshot | null>(null);
   const [ollama, setOllama] = useState<OllamaStatus | null>(null);
   const [navegador, setNavegador] = useState<StatusNavegador | null>(null);
+  const [autoInstalando, setAutoInstalando] = useState(false);
+  // Guardado no navegador embutido e não no cofre: é preferência de fluxo, não
+  // segredo, e o cofre exige decifrar a cada leitura.
+  const [primeiraVez] = useState(() => localStorage.getItem(CHAVE_PREPARO) !== "1");
   const [ocupado, setOcupado] = useState<string | null>(null);
   /** Andamento da instalacao do Ollama. Null quando nao ha instalacao rodando. */
   const [provisao, setProvisao] = useState<ProgressoProvisao | null>(null);
@@ -136,9 +142,51 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
 
     setRodando(false);
     setTerminou(true);
+
+    // Primeira abertura: instala o que falta sem esperar clique.
+    //
+    // A tela antes só detectava e oferecia um botão para cada peça. Mas
+    // ninguém abre um aplicativo de marketing querendo administrar
+    // dependências: o Ollama executa os modelos e o navegador publica, e
+    // faltando qualquer um o produto não faz nada. Perguntar "deseja instalar
+    // o que é obrigatório?" é dar uma escolha que não existe.
+    //
+    // Só na PRIMEIRA vez. Depois disso, se algo sumir, é caso de decidir — o
+    // botão volta e a instalação vira gesto explícito.
+    if (primeiraVez) {
+      await instalarOQueFalta(olla, nav);
+    }
     void recarregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [d, f, idioma, recarregar]);
+
+  /** Instala Ollama e navegador, em sequência, sem pedir clique.
+   *
+   *  Em sequência e não em paralelo: os dois baixam centenas de megabytes, e
+   *  dividir a banda faria os dois demorarem o dobro, com duas barras
+   *  disputando a mesma linha da tela.
+   *
+   *  O Ollama vem primeiro porque é o maior e o mais provável de faltar; se
+   *  ele falhar, o navegador ainda é tentado — uma campanha sem publicação
+   *  automática continua produzindo peças, mas sem modelo não há nada. */
+  const instalarOQueFalta = async (
+    olla: OllamaStatus,
+    nav: StatusNavegador | null
+  ) => {
+    const faltaOllama = olla.state !== "pronto";
+    const faltaNavegador = nav?.state !== "pronto" && nav?.state !== "semnode";
+    if (!faltaOllama && !faltaNavegador) {
+      // Nada a fazer, e a marca de primeira vez já pode cair.
+      localStorage.setItem(CHAVE_PREPARO, "1");
+      return;
+    }
+
+    setAutoInstalando(true);
+    if (faltaOllama) await prepararOllama();
+    if (faltaNavegador) await prepararNavegador();
+    setAutoInstalando(false);
+    localStorage.setItem(CHAVE_PREPARO, "1");
+  };
 
   const aplicarOllama = (olla: OllamaStatus) => {
     if (olla.state === "pronto") {
@@ -309,6 +357,16 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
             );
           })}
         </div>
+
+        {/* Na primeira abertura o app instala sozinho o que falta, e isso
+            leva minutos. Sem esta linha a tela fica parada com sondas
+            piscando e nada explica por quê. */}
+        {autoInstalando && (
+          <div className="note" data-tone="signal" style={{ marginTop: 18 }}>
+            <strong>{d.boot.autoTitle}</strong>
+            <span>{d.boot.autoBody}</span>
+          </div>
+        )}
 
         {/* Progresso real da instalacao: passo, percentual quando o
             instalador informa, e a ultima linha que ele escreveu. */}
