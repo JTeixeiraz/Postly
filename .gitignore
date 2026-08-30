@@ -41,3 +41,7 @@ sidecar/undefined/
 # --- sistema ---
 .DS_Store
 Thumbs.db
+
+# --- site ---
+site/node_modules/
+site/dist/

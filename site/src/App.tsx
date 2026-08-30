@@ -64,7 +64,7 @@ function Secao({
   return (
     <section ref={ref} id={id} className={`secao${estreita ? " secao--estreita" : ""}`}>
       <span className="posta" data-passou={visivel} aria-hidden />
-      {children}
+      <div className="secao__interno">{children}</div>
     </section>
   );
 }
@@ -100,6 +100,7 @@ export default function App() {
 
       {/* ── abertura ─────────────────────────────────────────────── */}
       <section className="secao heroi" id="inicio">
+        <div className="secao__interno heroi__interno">
         <motion.div
           className="heroi__texto"
           initial={{ opacity: 0, y: 18 }}
@@ -113,7 +114,7 @@ export default function App() {
 
           <h1>
             Um departamento de marketing
-            <br />
+            <br className="so-largo" />{" "}
             que roda na sua máquina.
           </h1>
 
@@ -136,6 +137,7 @@ export default function App() {
         </motion.div>
 
         <Trilha postas={CARGOS} />
+        </div>
       </section>
 
       {/* ── por que existe ───────────────────────────────────────── */}

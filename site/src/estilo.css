@@ -97,6 +97,10 @@ img { max-width: 100%; display: block; }
   border-radius: var(--r-sm);
 }
 
+/* A quebra manual só vale onde há largura para ela ajudar o ritmo. Abaixo
+   disso ela empurra uma palavra sozinha para a primeira linha. */
+@media (max-width: 760px) { .so-largo { display: none; } }
+
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .mono { font-family: var(--mono); }
 
@@ -141,11 +145,16 @@ img { max-width: 100%; display: block; }
 .secao {
   position: relative;
   z-index: var(--z-conteudo);
-  padding: var(--s9) clamp(20px, 5vw, 56px);
+  padding-block: var(--s9);
+}
+/* O limite de largura mora no interno, não na seção: a seção precisa ocupar a
+   janela inteira para a marca da posta cair sobre a espinha, que é fixa. */
+.secao__interno {
   max-width: 1240px;
   margin-inline: auto;
+  padding-inline: clamp(20px, 5vw, 56px);
 }
-.secao--estreita { max-width: 880px; }
+.secao--estreita .secao__interno { max-width: 880px; }
 
 /* A marca de posta fica na espinha, alinhada ao início da seção. É o que
    liga o texto à linha em vez de deixar a linha decorativa ao lado. */

@@ -37,11 +37,8 @@
 
 /* ══ abertura ════════════════════════════════════════════════════════════ */
 
-.heroi {
-  display: grid; gap: var(--s8);
-  padding-top: clamp(56px, 8vw, 104px);
-  padding-bottom: var(--s9);
-}
+.heroi { padding-top: clamp(56px, 8vw, 104px); padding-bottom: var(--s9); }
+.heroi__interno { display: grid; gap: var(--s8); }
 .heroi__texto { display: grid; gap: var(--s5); justify-items: start; }
 .heroi__linha { font-size: var(--t-lead); color: var(--ink-2); max-width: 54ch; }
 .heroi__acoes { display: flex; gap: var(--s3); flex-wrap: wrap; }
@@ -121,18 +118,19 @@
 }
 .comando__texto {
   flex: 1; min-width: 0;
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: flex-start; gap: 10px;
   padding: 15px 17px; font-size: var(--t-sm); color: var(--ink);
-  overflow-x: auto; white-space: nowrap;
-  /* Sem barra visível: o comando cabe em quase toda largura e a barra
-     desenharia um traço permanente sob o texto. */
-  scrollbar-width: none;
+  line-height: 1.55;
+  /* Quebra em vez de rolar. Rolando, o fim do comando some por baixo do botão
+     de copiar e o visitante não vê o que está prestes a executar — que é a
+     única coisa que ele precisa conferir antes de colar no terminal. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
-.comando__texto::-webkit-scrollbar { display: none; }
 .comando__cifrao { color: var(--act); flex: none; user-select: none; }
 
 .comando__copiar {
-  flex: none; border: 0; border-left: 1px solid var(--line);
+  flex: none; align-self: stretch; border: 0; border-left: 1px solid var(--line);
   background: var(--card-2); color: var(--ink-2); cursor: pointer;
   font: inherit; font-family: var(--mono); font-size: var(--t-micro);
   padding: 0 19px; min-width: 88px;
