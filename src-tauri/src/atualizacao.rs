@@ -62,13 +62,29 @@ fn mais_nova(nova: &str, atual: &str) -> bool {
 }
 
 /// O sufixo do instalador desta plataforma no conjunto de arquivos da release.
+///
+/// O SUFIXO CARREGA A ARQUITETURA, e nao so a extensao. Uma release de macOS
+/// publica DOIS `.dmg` — `aarch64` para Apple Silicon e `x64` para Intel — e
+/// casar so por `.dmg` entregaria o pacote da arquitetura errada para metade
+/// dos Macs. O aplicativo baixado nem abriria, e o erro apareceria como se a
+/// atualizacao estivesse corrompida.
+///
+/// A ordem dos padroes e a preferencia. No Windows o NSIS vem antes do MSI
+/// porque instala sem elevacao.
 fn padrao_do_instalador() -> &'static [&'static str] {
-    if cfg!(target_os = "windows") {
-        &["-setup.exe", ".msi"]
-    } else if cfg!(target_os = "macos") {
-        &[".dmg"]
-    } else {
-        &[".AppImage", ".deb", ".rpm"]
+    match (
+        cfg!(target_os = "windows"),
+        cfg!(target_os = "macos"),
+        cfg!(target_arch = "aarch64"),
+    ) {
+        (true, _, true) => &["arm64-setup.exe", "arm64_en-US.msi"],
+        (true, _, false) => &["x64-setup.exe", "x64_en-US.msi"],
+        (_, true, true) => &["aarch64.dmg"],
+        (_, true, false) => &["x64.dmg"],
+        // Linux: hoje a release so publica x86_64, mas o sufixo explicito evita
+        // que um pacote de outra arquitetura seja servido no dia em que houver.
+        (_, _, true) => &["aarch64.AppImage", "arm64.deb", "aarch64.rpm"],
+        _ => &["amd64.AppImage", "amd64.deb", "x86_64.rpm"],
     }
 }
 
@@ -228,7 +244,7 @@ pub async fn instalar(app: AppHandle, url: String) -> Result<String, String> {
 
 #[cfg(test)]
 mod testes {
-    use super::mais_nova;
+    use super::{mais_nova, padrao_do_instalador};
 
     #[test]
     fn reconhece_versao_mais_nova() {
@@ -243,6 +259,61 @@ mod testes {
         assert!(!mais_nova("0.1.0", "0.1.0"));
         assert!(!mais_nova("0.1.0", "0.2.0"));
         assert!(!mais_nova("0.9.0", "1.0.0"));
+    }
+
+    /// Os nomes que a release publica de verdade (conferidos na v0.1.1).
+    const ARTEFATOS: &[&str] = &[
+        "Postly-0.1.1-1.x86_64.rpm",
+        "Postly_0.1.1_aarch64.app.tar.gz",
+        "Postly_0.1.1_aarch64.dmg",
+        "Postly_0.1.1_amd64.AppImage",
+        "Postly_0.1.1_amd64.deb",
+        "Postly_0.1.1_x64-setup.exe",
+        "Postly_0.1.1_x64.app.tar.gz",
+        "Postly_0.1.1_x64.dmg",
+        "Postly_0.1.1_x64_en-US.msi",
+    ];
+
+    #[test]
+    fn o_padrao_desta_maquina_acha_exatamente_um_pacote() {
+        // A release de macOS publica DOIS `.dmg`, um por arquitetura. Casar so
+        // por extensao entregaria o errado para metade dos Macs — e o app
+        // baixado nem abriria.
+        let achados: Vec<&str> = padrao_do_instalador()
+            .iter()
+            .filter_map(|sufixo| ARTEFATOS.iter().find(|n| n.ends_with(sufixo)).copied())
+            .collect();
+        assert!(
+            !achados.is_empty(),
+            "nenhum pacote serve para esta plataforma; padroes: {:?}",
+            padrao_do_instalador()
+        );
+        // O primeiro e o que o updater escolhe, e ele tem que ser desta
+        // arquitetura.
+        let escolhido = achados[0];
+        if cfg!(target_os = "macos") {
+            let esperado = if cfg!(target_arch = "aarch64") {
+                "aarch64"
+            } else {
+                "x64"
+            };
+            assert!(escolhido.contains(esperado), "macOS escolheu {escolhido}");
+        }
+        // E nunca um `.app.tar.gz`, que e o pacote de atualizacao interna do
+        // Tauri e nao um instalador.
+        assert!(!escolhido.ends_with(".app.tar.gz"), "escolheu {escolhido}");
+    }
+
+    #[test]
+    fn nenhum_padrao_casa_com_pacote_de_outra_arquitetura() {
+        for sufixo in padrao_do_instalador() {
+            let casam: Vec<&&str> = ARTEFATOS.iter().filter(|n| n.ends_with(sufixo)).collect();
+            assert!(
+                casam.len() <= 1,
+                "o sufixo {sufixo} casa com {} pacotes: {casam:?}",
+                casam.len()
+            );
+        }
     }
 
     #[test]
