@@ -320,9 +320,12 @@ export default function App() {
           <div className="claude__grade">
             {d.claude.itens.map((it) => (
               <div className="claude__item" key={it.titulo}>
-                <span className="claude__marca" aria-hidden>
-                  <MarcaClaude size={17} />
-                </span>
+                {/* O mesmo mascote do canto, em adesivo holográfico: os olhos
+                    quadrados aguentam a redução melhor que os `> <` da versão
+                    sólida, que a 44px viram mancha. A pílula acima segue com o
+                    glifo desenhado — ali ele é marcador de texto, não figura. */}
+                <img className="claude__marca" src="claude-holo.png" alt="" aria-hidden
+                     width={44} height={36} loading="lazy" />
                 <h3>{it.titulo}</h3>
                 <p>{it.texto}</p>
               </div>

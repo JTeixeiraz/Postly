@@ -546,13 +546,14 @@
 }
 .claude__item h3 { font-size: var(--t-body); color: var(--ink); }
 .claude__item p { font-size: var(--t-sm); color: var(--ink-3); line-height: 1.6; }
-/* O glifo dentro do cartão escuro usa o coral cheio: ali ele tem contraste de
-   sobra e é o único ponto de cor que não é o lime da casa. */
+/* O adesivo que marca cada tópico. Sem caixa de fundo: o adesivo já tem
+   silhueta e contorno próprios, e um quadrado atrás dele viraria moldura de
+   moldura. A inclinação é a mesma do mascote grande, invertida — os quatro
+   colados no mesmo ângulo pareceriam impressos, não colados. */
 .claude__marca {
-  display: grid; place-items: center;
-  width: 34px; height: 34px; border-radius: var(--r-md);
-  background: oklch(0.700 0.150 42 / 0.16);
-  color: oklch(0.780 0.150 42);
+  display: block; width: 44px; height: auto;
+  transform: rotate(5deg);
+  filter: drop-shadow(0 3px 9px oklch(0 0 0 / 0.5));
 }
 
 /* Marca de terceiro pede a ressalva à vista, não escondida no rodapé. */
