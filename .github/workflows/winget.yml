@@ -111,8 +111,18 @@ jobs:
           $destino = "manifests/j/JTeixeiraz/Postly/${{ steps.alvo.outputs.versao }}"
           # O `winget` do runner já vem instalado; validar aqui é o que separa
           # um PR aceito de um ciclo de revisão perdido.
-          winget validate --manifest $destino
-          if ($LASTEXITCODE -ne 0) { exit 1 }
+          #
+          # Aviso conta como falha de propósito. O `winget validate` devolve
+          # código diferente de zero quando "valida com avisos", e a validação
+          # do winget-pkgs recusa por coisas que aqui saem como aviso — campo
+          # desconhecido e cabeçalho de schema ausente são dois exemplos que
+          # já custaram um ciclo neste repositório.
+          $saida = winget validate --manifest $destino 2>&1 | Out-String
+          Write-Host $saida
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "A validação reprovou. Cada aviso acima é motivo de recusa no winget-pkgs."
+            exit 1
+          }
 
       - name: Guardar os manifestos como artefato
         uses: actions/upload-artifact@v4

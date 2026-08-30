@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.12.0.schema.json
+
 # Manifesto de instalador do Postly para o Windows Package Manager.
 #
 # As três âncoras abaixo são substituídas pelo workflow a cada release:
