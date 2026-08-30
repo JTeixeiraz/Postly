@@ -82,7 +82,7 @@ export const pt = {
   },
   models: {
     title: "O que roda aqui",
-    lead: "Você não escolhe. A cada cargo, sobe o modelo mais forte que couber.",
+    lead: "Você escolhe quanto da máquina liberar. Dentro disso, cada cargo recebe o modelo mais forte que couber.",
     why: "A lista vem da memória que a máquina tem, não da que está livre agora. A cada troca de cargo o sistema remede a memória do momento: fechar programas antes de rodar melhora o time sozinho.",
     tierHigh: "Decisão",
     tierHighWho: "Diretor e Gerente. Escolhem o ângulo e julgam a peça.",
@@ -407,6 +407,24 @@ export const pt = {
     fromManual: "digitado",
     collectedAt: "Coletado em",
     removed: "Registro removido.",
+  },
+  desempenho: {
+    titulo: "Quanto da máquina usar",
+    subtitulo: "Vale para o Ollama e para o Claude Code",
+    nomes: {
+      economico: "Econômico",
+      normal: "Normal",
+      maximo: "Máximo",
+    },
+    porques: {
+      economico: "Modelos menores. Sobra máquina para o resto e o turno termina rápido.",
+      normal: "O equilíbrio de sempre: o melhor modelo que roda em tempo razoável.",
+      maximo: "O modelo mais forte que a memória aguentar, sem freio de velocidade.",
+    },
+    tps: "≈ {n} tok/s",
+    teto: "até {n} por modelo",
+    avisoMaximo:
+      "No máximo, um turno pode levar dezenas de minutos numa máquina sem GPU, e o resto do computador fica lento enquanto ele roda. A campanha continua igual — só demora mais para cada cargo responder.",
   },
   limite: {
     pilula: "cota esgotada",

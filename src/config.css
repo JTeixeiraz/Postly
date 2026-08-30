@@ -325,3 +325,13 @@
 
 /* O modal de atualização precisa de largura para as notas de versão. */
 .modal--atualizacao { width: min(100%, 560px); }
+
+/* ══ modo de desempenho ══════════════════════════════════════════════════ */
+
+/* O modelo que o modo traria, em destaque: é a consequência concreta da
+   escolha, e sem ela o seletor pediria uma decisão sem mostrar o efeito. */
+.modo__num {
+  display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap;
+  margin-top: 7px; font-size: var(--t-sm); color: var(--ink);
+}
+.modo__tps { font-size: var(--t-micro); color: var(--act-txt); }

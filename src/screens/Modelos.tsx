@@ -15,6 +15,7 @@ import Porque from "../components/Porque";
 import Provedor from "../components/Provedor";
 import ElencoClaude from "../components/ElencoClaude";
 import EscolhaImagem from "../components/EscolhaImagem";
+import ModoDesempenho from "../components/ModoDesempenho";
 
 export default function Modelos({
   diag,
@@ -141,6 +142,11 @@ export default function Modelos({
           void recarregar();
         }}
       />
+
+        {/* Depois de QUEM executa, QUANTO da maquina ele pode usar. A ordem
+            importa: o modo mostra qual modelo cada opcao traria, e essa lista
+            muda conforme o provedor escolhido acima. */}
+        <ModoDesempenho key={provedor?.provedor} />
 
       {/* Quem escreve e quem desenha sao decisoes separadas: trocar o provedor
           de texto nao troca o de imagem, e vice-versa. */}

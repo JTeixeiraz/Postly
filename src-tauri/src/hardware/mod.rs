@@ -19,8 +19,9 @@ use crate::platform::{self, ReclaimTarget, Step};
 /// Fracao da RAM total que aceitamos dedicar a um modelo. O restante fica para
 /// SO, navegador do Playwright e a propria janela do app.
 const MAX_BUDGET_RATIO: f64 = 0.70;
-/// Fracao da RAM livre que aceitamos consumir ao subir um agente agora.
-const LIVE_BUDGET_RATIO: f64 = 0.85;
+// A fracao da RAM livre que um agente pode ocupar mora em
+// `ModoDesempenho::fracao_da_ram_livre`, e nao aqui. Duas fontes para o mesmo
+// numero e como um valor errado sobrevive: alguem ajusta uma e esquece a outra.
 /// Fracao da VRAM que um modelo pode ocupar sem estourar a placa. Mais apertado
 /// que o da RAM: quando a VRAM acaba, o driver nao troca para disco, ele falha.
 const VRAM_BUDGET_RATIO: f64 = 0.92;
@@ -51,6 +52,15 @@ pub struct RamSnapshot {
 }
 
 pub fn snapshot() -> RamSnapshot {
+    snapshot_com(crate::prefs::load().modo)
+}
+
+/// A leitura de memoria com um modo explicito.
+///
+/// Existe separada porque a tela de modos precisa mostrar, lado a lado, quanto
+/// cada um libera — e para isso tem que perguntar por um modo que ainda nao e
+/// o salvo.
+pub fn snapshot_com(modo: crate::prefs::ModoDesempenho) -> RamSnapshot {
     let mut sys = System::new();
     sys.refresh_memory();
 
@@ -74,7 +84,7 @@ pub fn snapshot() -> RamSnapshot {
         swap_total_bytes: swap_total,
         swap_used_bytes: swap_used,
         max_budget_bytes: (total as f64 * MAX_BUDGET_RATIO) as u64,
-        live_budget_bytes: (available as f64 * LIVE_BUDGET_RATIO) as u64,
+        live_budget_bytes: (available as f64 * modo.fracao_da_ram_livre()) as u64,
         pressure,
         low_ram_warning: available < LOW_RAM_BYTES,
     }

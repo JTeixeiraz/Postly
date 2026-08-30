@@ -62,14 +62,24 @@ impl ModelSpec {
     /// de 27B a 0,6 tok/s leva quase uma hora para um briefing, e um MoE de 30B
     /// com 3B ativos entrega o mesmo trabalho em minutos. Por isso a nota cai
     /// junto com a vazao quando a inferencia e na CPU.
-    pub fn rank_score(&self, mode: ComputeMode) -> f32 {
+    /// Quanto este modelo vale para o cargo, dado o hardware e o modo.
+    ///
+    /// Numa GPU a conta e a forca crua: a placa entrega rapido de qualquer
+    /// jeito. Na CPU a forca e descontada pela lentidao, porque um modelo que
+    /// leva quarenta minutos por turno nao e melhor que um que leva cinco — e
+    /// o piso desse desconto e o que o modo de desempenho move.
+    pub fn rank_score(&self, mode: ComputeMode, modo: crate::prefs::ModoDesempenho) -> f32 {
         let bruto = self.strength as f32;
+        let Some(piso) = modo.piso_de_velocidade() else {
+            // Modo maximo: forca pura, a lentidao e o preco aceito.
+            return bruto;
+        };
         if mode != ComputeMode::Cpu {
             return bruto;
         }
         let tps = estimated_tokens_per_second(mode, self.active_params_b);
-        // Abaixo de 2 tok/s o turno deixa de ser espera e vira abandono.
-        bruto * (tps / 2.0).min(1.0)
+        // Abaixo do piso o turno deixa de ser espera e vira abandono.
+        bruto * (tps / piso).min(1.0)
     }
 }
 
@@ -370,6 +380,10 @@ pub struct CatalogEntry {
 /// e marcado como suportado. `live_budget` vem da RAM livre e so informa o que
 /// caberia neste instante.
 pub fn build(profile: &ComputeProfile, installed: &[String]) -> Vec<CatalogEntry> {
+    // A lista e ordenada pelo mesmo criterio da escolha automatica. Sem isso o
+    // catalogo mostraria uma ordem e o sistema escolheria outra — e o topo da
+    // lista deixaria de ser a recomendacao.
+    let modo = crate::prefs::load().modo;
     let max_budget = profile.max_budget_bytes;
     let live_budget = profile.live_budget_bytes;
 
@@ -428,8 +442,8 @@ pub fn build(profile: &ComputeProfile, installed: &[String]) -> Vec<CatalogEntry
     entries.sort_by(|a, b| {
         b.supported.cmp(&a.supported).then(
             b.spec
-                .rank_score(profile.mode)
-                .partial_cmp(&a.spec.rank_score(profile.mode))
+                .rank_score(profile.mode, modo)
+                .partial_cmp(&a.spec.rank_score(profile.mode, modo))
                 .unwrap_or(std::cmp::Ordering::Equal),
         )
     });
@@ -452,6 +466,7 @@ pub fn pick(
     tier: Tier,
     budget_bytes: u64,
     mode: ComputeMode,
+    modo: crate::prefs::ModoDesempenho,
     installed_only: bool,
     installed: &[String],
 ) -> Option<(&'static ModelSpec, Option<String>)> {
@@ -464,8 +479,8 @@ pub fn pick(
             .collect();
 
         opcoes.sort_by(|a, b| {
-            b.rank_score(mode)
-                .partial_cmp(&a.rank_score(mode))
+            b.rank_score(mode, modo)
+                .partial_cmp(&a.rank_score(mode, modo))
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
 
@@ -482,4 +497,82 @@ pub fn pick(
         }
     }
     None
+}
+
+#[cfg(test)]
+mod testes_modo {
+    use super::*;
+    use crate::prefs::ModoDesempenho::*;
+
+    /// Uma maquina sem GPU com 12 GB livres — o caso comum.
+    fn escolha(modo: crate::prefs::ModoDesempenho) -> &'static ModelSpec {
+        let livres = gb(12);
+        let orcamento = (livres as f64 * modo.fracao_da_ram_livre()) as u64;
+        pick(Tier::Alto, orcamento, ComputeMode::Cpu, modo, false, &[])
+            .expect("algum modelo tem que caber")
+            .0
+    }
+
+    #[test]
+    fn os_tres_modos_nao_escolhem_a_mesma_coisa() {
+        let (e, n, m) = (escolha(Economico), escolha(Normal), escolha(Maximo));
+        // Se os tres caissem no mesmo modelo, o seletor seria enfeite: a pessoa
+        // trocaria de modo e nada mudaria na maquina dela.
+        assert!(
+            e.tag != m.tag,
+            "economico e maximo escolheram o mesmo: {}",
+            e.tag
+        );
+        eprintln!(
+            "  economico: {}\n  normal:    {}\n  maximo:    {}",
+            e.tag, n.tag, m.tag
+        );
+    }
+
+    #[test]
+    fn o_economico_nao_e_mais_lento_que_o_maximo() {
+        let vel = |m: &ModelSpec| estimated_tokens_per_second(ComputeMode::Cpu, m.active_params_b);
+        let (e, m) = (escolha(Economico), escolha(Maximo));
+        assert!(
+            vel(e) >= vel(m),
+            "economico ({}, {:.1} tok/s) devia ser ao menos tao rapido quanto o maximo ({}, {:.1} tok/s)",
+            e.tag, vel(e), m.tag, vel(m)
+        );
+    }
+
+    #[test]
+    fn o_maximo_nao_e_mais_fraco_que_o_economico() {
+        let (e, m) = (escolha(Economico), escolha(Maximo));
+        assert!(
+            m.strength >= e.strength,
+            "maximo ({}, forca {}) devia ser ao menos tao forte quanto o economico ({}, forca {})",
+            m.tag,
+            m.strength,
+            e.tag,
+            e.strength
+        );
+    }
+
+    #[test]
+    fn nenhum_modo_estoura_o_proprio_orcamento() {
+        for modo in [Economico, Normal, Maximo] {
+            let orcamento = (gb(12) as f64 * modo.fracao_da_ram_livre()) as u64;
+            let m = escolha(modo);
+            assert!(
+                m.fits(orcamento),
+                "{:?} escolheu {}, que nao cabe",
+                modo,
+                m.tag
+            );
+        }
+    }
+
+    #[test]
+    fn o_maximo_deixa_sobra_para_o_resto_da_maquina() {
+        // Nunca 100%: o app, o navegador do Playwright e o sistema precisam
+        // caber junto. Sem sobra, a troca de cargo derruba o PC.
+        assert!(Maximo.fracao_da_ram_livre() < 1.0);
+        assert!(Maximo.fracao_da_ram_livre() > Normal.fracao_da_ram_livre());
+        assert!(Economico.fracao_da_ram_livre() < Normal.fracao_da_ram_livre());
+    }
 }

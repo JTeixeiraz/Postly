@@ -178,6 +178,80 @@ pub async fn status_provedor() -> StatusProvedor {
     }
 }
 
+/// O que cada modo faz nesta maquina, agora.
+///
+/// Os numeros sao calculados com a memoria livre do momento, e nao com uma
+/// tabela fixa: "usa mais RAM" nao diz nada a quem tem 8 GB e a quem tem 64.
+#[derive(serde::Serialize)]
+pub struct CartaoModo {
+    pub slug: String,
+    /// Teto de memoria por modelo neste modo.
+    pub teto_bytes: u64,
+    /// O que a escolha automatica traria para o cargo que decide.
+    pub modelo_alto: String,
+    /// E para o que executa.
+    pub modelo_baixo: String,
+    /// Velocidade estimada do cargo que decide, nesta maquina.
+    pub tps_alto: f32,
+    pub ativo: bool,
+}
+
+#[tauri::command]
+pub async fn modos_de_desempenho() -> Vec<CartaoModo> {
+    use crate::prefs::ModoDesempenho as M;
+    let perfil = crate::hardware::compute_profile();
+    let instalados = crate::ollama::client::installed_models().await;
+    let prefs = crate::prefs::load();
+    let claude = prefs.provedor == crate::prefs::Provedor::ClaudeCode;
+
+    [M::Economico, M::Normal, M::Maximo]
+        .into_iter()
+        .map(|m| {
+            let teto = crate::hardware::snapshot_com(m).live_budget_bytes;
+            let nome = |tier| -> (String, f32) {
+                if claude {
+                    let id = crate::claude::modelo_do_nivel_com(tier, m);
+                    return (crate::claude::rotulo_do_modelo(id).to_string(), 0.0);
+                }
+                crate::ollama::catalog::pick(tier, teto, perfil.mode, m, false, &instalados)
+                    .map(|(s, _)| {
+                        let tps = crate::hardware::accelerator::estimated_tokens_per_second(
+                            perfil.mode,
+                            s.active_params_b,
+                        );
+                        (s.label.to_string(), tps)
+                    })
+                    .unwrap_or_else(|| ("-".into(), 0.0))
+            };
+            let (alto, tps) = nome(crate::orchestrator::roles::Tier::Alto);
+            let (baixo, _) = nome(crate::orchestrator::roles::Tier::Baixo);
+            CartaoModo {
+                slug: m.slug().to_string(),
+                teto_bytes: teto,
+                modelo_alto: alto,
+                modelo_baixo: baixo,
+                tps_alto: tps,
+                ativo: m == prefs.modo,
+            }
+        })
+        .collect()
+}
+
+#[tauri::command]
+pub fn definir_modo(slug: String) -> Result<(), String> {
+    use crate::prefs::ModoDesempenho as M;
+    let modo = match slug.as_str() {
+        "economico" => M::Economico,
+        "normal" => M::Normal,
+        "maximo" => M::Maximo,
+        outro => return Err(format!("modo desconhecido: {outro}")),
+    };
+    let mut p = crate::prefs::load();
+    p.modo = modo;
+    crate::prefs::save(&p)?;
+    Ok(())
+}
+
 #[tauri::command]
 pub fn definir_provedor(provedor: crate::prefs::Provedor) -> Result<crate::prefs::Prefs, String> {
     if provedor == crate::prefs::Provedor::ClaudeCode && !crate::claude::disponivel() {

@@ -137,6 +137,10 @@ impl<'a> AgentTurn<'a> {
         //    nada instalado serve ao nivel exigido.
         let installed = client::installed_models().await;
         let orcamento = perfil.live_budget_bytes;
+        // Relido a cada turno, e nao guardado no comeco da campanha: a pessoa
+        // pode trocar de modo com a campanha rodando, e a troca deve valer do
+        // proximo cargo em diante.
+        let modo = crate::prefs::load().modo;
 
         // Escolha manual, quando existe, vence a automatica: quem ligou a
         // configuracao avancada quer aquele modelo naquele cargo. O aviso sai
@@ -156,8 +160,10 @@ impl<'a> AgentTurn<'a> {
                 });
                 (escolhido, aviso)
             }
-            None => catalog::pick(self.role.tier(), orcamento, perfil.mode, true, &installed)
-                .or_else(|| catalog::pick(self.role.tier(), orcamento, perfil.mode, false, &installed))
+            None => catalog::pick(self.role.tier(), orcamento, perfil.mode, modo, true, &installed)
+                .or_else(|| {
+                    catalog::pick(self.role.tier(), orcamento, perfil.mode, modo, false, &installed)
+                })
             .ok_or_else(|| {
                 format!(
                     "Nenhum modelo cabe em {} de memoria livre. Rode a otimizacao ou feche alguns programas.",

@@ -78,7 +78,7 @@ export const en: typeof pt = {
   },
   models: {
     title: "What runs here",
-    lead: "You don't pick. At each role, the strongest model that fits loads.",
+    lead: "You choose how much of the machine to give. Within that, each role gets the strongest model that fits.",
     why: "The list comes from the memory the machine has, not what is free right now. At every handoff the system measures memory again, so closing programs before a run improves the crew on its own.",
     tierHigh: "Decision",
     tierHighWho: "Director and Manager. Choose the angle and judge the piece.",
@@ -403,6 +403,24 @@ export const en: typeof pt = {
     fromManual: "typed",
     collectedAt: "Collected",
     removed: "Record removed.",
+  },
+  desempenho: {
+    titulo: "How much of the machine to use",
+    subtitulo: "Applies to Ollama and to Claude Code",
+    nomes: {
+      economico: "Light",
+      normal: "Normal",
+      maximo: "Maximum",
+    },
+    porques: {
+      economico: "Smaller models. Leaves room for everything else and each turn finishes fast.",
+      normal: "The usual balance: the best model that still answers in reasonable time.",
+      maximo: "The strongest model your memory can hold, with no speed floor.",
+    },
+    tps: "≈ {n} tok/s",
+    teto: "up to {n} per model",
+    avisoMaximo:
+      "On maximum, a turn can take tens of minutes on a machine without a GPU, and the rest of the computer slows down while it runs. The campaign is the same — each role just takes longer to answer.",
   },
   limite: {
     pilula: "quota exhausted",

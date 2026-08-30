@@ -32,21 +32,47 @@ pub mod limite;
 
 use crate::orchestrator::roles::Tier;
 
+const OPUS: &str = "claude-opus-5";
+const SONNET: &str = "claude-sonnet-5";
+const HAIKU: &str = "claude-haiku-4-5-20251001";
+
 /// Modelos por nivel. O nome do cargo nao muda; o executor, sim.
+///
+/// O modo de desempenho vale aqui tambem, so que o eixo e outro: com Ollama
+/// ele troca memoria por qualidade, e com Claude Code troca dinheiro por
+/// qualidade. A intencao de quem escolhe e a mesma, entao seria confuso o
+/// seletor funcionar num provedor e nao no outro.
 pub fn modelo_do_nivel(tier: Tier) -> &'static str {
-    match tier {
-        Tier::Alto => "claude-opus-5",
-        Tier::Medio => "claude-sonnet-5",
-        Tier::Baixo => "claude-haiku-4-5-20251001",
+    modelo_do_nivel_com(tier, crate::prefs::load().modo)
+}
+
+pub fn modelo_do_nivel_com(tier: Tier, modo: crate::prefs::ModoDesempenho) -> &'static str {
+    use crate::prefs::ModoDesempenho as M;
+    match (modo, tier) {
+        // Economico: um degrau abaixo em tudo. O cargo que decide ainda
+        // raciocina, mas em Sonnet; quem executa briefing pronto nao precisa
+        // de mais que o Haiku ja entrega.
+        (M::Economico, Tier::Alto) => SONNET,
+        (M::Economico, _) => HAIKU,
+
+        (M::Normal, Tier::Alto) => OPUS,
+        (M::Normal, Tier::Medio) => SONNET,
+        (M::Normal, Tier::Baixo) => HAIKU,
+
+        // Maximo: o auditor sobe para Opus junto de quem decide — julgar a
+        // peca e a segunda decisao mais cara da campanha. O criador sobe para
+        // Sonnet: ele nao decide, mas escreve o que vai ao ar.
+        (M::Maximo, Tier::Baixo) => SONNET,
+        (M::Maximo, _) => OPUS,
     }
 }
 
 /// Nome curto do modelo, para a tela.
 pub fn rotulo_do_modelo(id: &str) -> &'static str {
     match id {
-        "claude-opus-5" => "Opus 5",
-        "claude-sonnet-5" => "Sonnet 5",
-        "claude-haiku-4-5-20251001" => "Haiku 4.5",
+        OPUS => "Opus 5",
+        SONNET => "Sonnet 5",
+        HAIKU => "Haiku 4.5",
         _ => "Claude",
     }
 }
@@ -358,4 +384,57 @@ pub async fn turno(
         texto,
         custo_usd: resposta.total_cost_usd.unwrap_or(0.0),
     })
+}
+
+#[cfg(test)]
+mod testes_modo {
+    use super::*;
+    use crate::prefs::ModoDesempenho::*;
+
+    fn preco(m: &str) -> u8 {
+        match m {
+            HAIKU => 1,
+            SONNET => 2,
+            OPUS => 3,
+            _ => 0,
+        }
+    }
+
+    #[test]
+    fn o_modo_muda_quem_assume_cada_cargo() {
+        for tier in [Tier::Alto, Tier::Medio, Tier::Baixo] {
+            let (e, m) = (
+                modelo_do_nivel_com(tier, Economico),
+                modelo_do_nivel_com(tier, Maximo),
+            );
+            assert!(
+                preco(e) < preco(m),
+                "{tier:?}: economico ({e}) devia custar menos que o maximo ({m})"
+            );
+        }
+    }
+
+    #[test]
+    fn o_nivel_do_cargo_continua_mandando_dentro_de_cada_modo() {
+        // A tese do produto e essa: quem decide recebe mais que quem executa.
+        // Um modo que achatasse tudo no mesmo modelo quebraria o organograma.
+        for modo in [Economico, Normal, Maximo] {
+            let alto = preco(modelo_do_nivel_com(Tier::Alto, modo));
+            let baixo = preco(modelo_do_nivel_com(Tier::Baixo, modo));
+            assert!(
+                alto >= baixo,
+                "{modo:?}: o cargo que decide nao pode receber menos que o que executa"
+            );
+        }
+    }
+
+    #[test]
+    fn todo_modelo_devolvido_tem_rotulo() {
+        for modo in [Economico, Normal, Maximo] {
+            for tier in [Tier::Alto, Tier::Medio, Tier::Baixo] {
+                let m = modelo_do_nivel_com(tier, modo);
+                assert_ne!(rotulo_do_modelo(m), "Claude", "sem rotulo para {m}");
+            }
+        }
+    }
 }

@@ -186,6 +186,7 @@ pub struct Vaga {
 #[tauri::command]
 pub async fn elenco() -> Vec<Vaga> {
     let perfil = hardware::compute_profile();
+    let modo = crate::prefs::load().modo;
     let instalados = client::installed_models().await;
 
     [
@@ -200,6 +201,7 @@ pub async fn elenco() -> Vec<Vaga> {
             cargo.tier(),
             perfil.live_budget_bytes,
             perfil.mode,
+            modo,
             false,
             &instalados,
         );

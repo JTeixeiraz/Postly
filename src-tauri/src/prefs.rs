@@ -45,8 +45,70 @@ pub enum Provedor {
     ClaudeCode,
 }
 
+/// Quanto da maquina a campanha pode usar.
+///
+/// O modo mexe em DUAS alavancas, e as duas na mesma direcao — mexer numa so
+/// nao daria tres comportamentos distintos:
+///
+///   - o **orcamento**: que fracao da RAM livre um modelo pode ocupar. Sozinho
+///     nao muda nada quando o modelo mais forte ja cabe.
+///   - o **piso de velocidade**: abaixo de quantos tokens por segundo um
+///     modelo deixa de valer a pena. Sozinho nao impede um modelo enorme de
+///     subir e engasgar a maquina.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ModoDesempenho {
+    /// Sobra maquina para o resto e o turno termina rapido. Modelos menores.
+    Economico,
+    /// O equilibrio de sempre.
+    #[default]
+    Normal,
+    /// O modelo mais forte que a memoria aguentar, sem freio de velocidade.
+    /// Um turno pode levar dezenas de minutos numa maquina sem GPU, e o resto
+    /// do computador fica lento enquanto ele roda — por isso a tela avisa.
+    Maximo,
+}
+
+impl ModoDesempenho {
+    /// Fracao da RAM livre que um modelo pode ocupar.
+    ///
+    /// O `Maximo` nao vai a 1,0 de proposito: sobra tem que existir para o
+    /// proprio app, o navegador do Playwright e o sistema. Sem ela a troca de
+    /// cargo derruba o PC em vez de subir o modelo.
+    pub fn fracao_da_ram_livre(&self) -> f64 {
+        match self {
+            ModoDesempenho::Economico => 0.55,
+            ModoDesempenho::Normal => 0.85,
+            ModoDesempenho::Maximo => 0.95,
+        }
+    }
+
+    /// Abaixo de quantos tokens por segundo o modelo perde pontos no ranking.
+    ///
+    /// `None` no `Maximo`: ali a escolha e por forca pura, e a lentidao e o
+    /// preco que a pessoa aceitou pagar ao escolher o modo.
+    pub fn piso_de_velocidade(&self) -> Option<f32> {
+        match self {
+            ModoDesempenho::Economico => Some(5.0),
+            ModoDesempenho::Normal => Some(2.0),
+            ModoDesempenho::Maximo => None,
+        }
+    }
+
+    pub fn slug(&self) -> &'static str {
+        match self {
+            ModoDesempenho::Economico => "economico",
+            ModoDesempenho::Normal => "normal",
+            ModoDesempenho::Maximo => "maximo",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Prefs {
+    /// Quanto da maquina a campanha pode usar.
+    #[serde(default)]
+    pub modo: ModoDesempenho,
     /// Quem executa os turnos. Ollama por padrao.
     #[serde(default)]
     pub provedor: Provedor,

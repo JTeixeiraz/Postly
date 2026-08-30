@@ -124,6 +124,8 @@ pub fn run() {
             config_cmds::salvar_skill,
             config_cmds::remover_skill,
             config_cmds::previa_de_skills,
+            config_cmds::modos_de_desempenho,
+            config_cmds::definir_modo,
             config_cmds::salvar_design_system,
         ])
         .run(tauri::generate_context!())

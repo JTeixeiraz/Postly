@@ -218,6 +218,7 @@ pub async fn analisar_desempenho() -> Result<String, String> {
         .map_err(String::from),
         crate::prefs::Provedor::Ollama => {
             let perfil = crate::hardware::compute_profile();
+            let modo = crate::prefs::load().modo;
             let instalados = crate::ollama::client::installed_models().await;
             // `installed_only` ligado: a analise nao pode disparar um download
             // de 20 GB porque alguem clicou em "analisar".
@@ -225,6 +226,7 @@ pub async fn analisar_desempenho() -> Result<String, String> {
                 crate::orchestrator::roles::Tier::Alto,
                 perfil.live_budget_bytes,
                 perfil.mode,
+                modo,
                 true,
                 &instalados,
             )

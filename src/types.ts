@@ -452,6 +452,21 @@ export interface VagaClaude {
 
 /** O que o modal de movimento recebe quando a campanha para para perguntar. */
 /** A cota do Claude Code acabou no meio da campanha. */
+/** O que um modo de desempenho faz nesta máquina, agora. */
+export interface CartaoModo {
+  slug: "economico" | "normal" | "maximo";
+  /** Teto de memória por modelo neste modo. */
+  teto_bytes: number;
+  /** O que a escolha automática traria para o cargo que decide. */
+  modelo_alto: string;
+  /** E para o que executa. */
+  modelo_baixo: string;
+  /** Velocidade estimada do cargo que decide. 0 no Claude Code, onde a
+   *  conta é de dinheiro e não de tokens por segundo. */
+  tps_alto: number;
+  ativo: boolean;
+}
+
 export interface AvisoLimite {
   /** Instante em que a cota volta, em segundos. `null` quando o CLI não disse
    *  — e aí a tela não oferece esperar, porque não sabe medir a espera. */

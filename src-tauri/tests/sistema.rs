@@ -102,6 +102,9 @@ fn o_nivel_do_modelo_e_proporcional_ao_cargo() {
         Role::GerenteSetor.tier(),
         farto,
         ComputeMode::Dedicada,
+        // O modo Normal: o teste mede a proporcao entre cargos, que nao pode
+        // depender de quanto da maquina a pessoa liberou.
+        postly_lib::prefs::ModoDesempenho::Normal,
         false,
         &[],
     )
@@ -110,6 +113,9 @@ fn o_nivel_do_modelo_e_proporcional_ao_cargo() {
         Role::Auditor.tier(),
         farto,
         ComputeMode::Dedicada,
+        // O modo Normal: o teste mede a proporcao entre cargos, que nao pode
+        // depender de quanto da maquina a pessoa liberou.
+        postly_lib::prefs::ModoDesempenho::Normal,
         false,
         &[],
     )
@@ -118,6 +124,9 @@ fn o_nivel_do_modelo_e_proporcional_ao_cargo() {
         Role::Criador.tier(),
         farto,
         ComputeMode::Dedicada,
+        // O modo Normal: o teste mede a proporcao entre cargos, que nao pode
+        // depender de quanto da maquina a pessoa liberou.
+        postly_lib::prefs::ModoDesempenho::Normal,
         false,
         &[],
     )
@@ -144,8 +153,15 @@ fn o_kimi_nunca_e_escolhido_para_rodar() {
     // Mesmo com orcamento absurdo, um modelo de 600 GB nao pode ser sorteado
     // em nenhuma maquina real.
     let real = 64u64 * 1024 * 1024 * 1024;
-    let (escolhido, _) =
-        catalog::pick(Tier::Alto, real, ComputeMode::Dedicada, false, &[]).unwrap();
+    let (escolhido, _) = catalog::pick(
+        Tier::Alto,
+        real,
+        ComputeMode::Dedicada,
+        postly_lib::prefs::ModoDesempenho::Normal,
+        false,
+        &[],
+    )
+    .unwrap();
     assert!(
         !escolhido.tag.starts_with("kimi"),
         "escolheu {}",
@@ -157,8 +173,15 @@ fn o_kimi_nunca_e_escolhido_para_rodar() {
 fn falta_de_memoria_rebaixa_o_cargo_com_aviso() {
     // 5 GB nao comportam nenhum modelo de nivel alto.
     let apertado = 5u64 * 1024 * 1024 * 1024;
-    let (modelo, aviso) = catalog::pick(Tier::Alto, apertado, ComputeMode::Cpu, false, &[])
-        .expect("precisa rebaixar, nao falhar");
+    let (modelo, aviso) = catalog::pick(
+        Tier::Alto,
+        apertado,
+        ComputeMode::Cpu,
+        postly_lib::prefs::ModoDesempenho::Normal,
+        false,
+        &[],
+    )
+    .expect("precisa rebaixar, nao falhar");
 
     assert!(
         modelo.footprint_bytes() <= apertado,
@@ -174,7 +197,15 @@ fn falta_de_memoria_rebaixa_o_cargo_com_aviso() {
 #[test]
 fn sem_memoria_nenhuma_a_escolha_falha_em_vez_de_estourar() {
     let nada = 200u64 * 1024 * 1024;
-    assert!(catalog::pick(Tier::Alto, nada, ComputeMode::Cpu, false, &[]).is_none());
+    assert!(catalog::pick(
+        Tier::Alto,
+        nada,
+        ComputeMode::Cpu,
+        postly_lib::prefs::ModoDesempenho::Normal,
+        false,
+        &[]
+    )
+    .is_none());
 }
 
 #[test]
@@ -201,9 +232,24 @@ fn a_escolha_muda_com_o_hardware() {
     // Mesmo orcamento, mesma exigencia de cargo, maquinas diferentes.
     let orcamento = 26u64 * 1024 * 1024 * 1024;
 
-    let (com_gpu, _) =
-        catalog::pick(Tier::Alto, orcamento, ComputeMode::Dedicada, false, &[]).unwrap();
-    let (so_cpu, _) = catalog::pick(Tier::Alto, orcamento, ComputeMode::Cpu, false, &[]).unwrap();
+    let (com_gpu, _) = catalog::pick(
+        Tier::Alto,
+        orcamento,
+        ComputeMode::Dedicada,
+        postly_lib::prefs::ModoDesempenho::Normal,
+        false,
+        &[],
+    )
+    .unwrap();
+    let (so_cpu, _) = catalog::pick(
+        Tier::Alto,
+        orcamento,
+        ComputeMode::Cpu,
+        postly_lib::prefs::ModoDesempenho::Normal,
+        false,
+        &[],
+    )
+    .unwrap();
 
     // Com GPU, capacidade bruta manda: o denso mais forte vence.
     assert!(

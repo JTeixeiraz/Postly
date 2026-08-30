@@ -4,6 +4,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type {
+  CartaoModo,
   AvisoLimite,
   EsperaLimite,
   CampanhaSalva,
@@ -81,6 +82,8 @@ export const api = {
     invoke<Preferencias>("anotar_referencia", { id, nota }),
   salvarDesignSystem: (ds: DesignSystem) => invoke<Preferencias>("salvar_design_system", { ds }),
 
+  modosDeDesempenho: () => invoke<CartaoModo[]>("modos_de_desempenho"),
+  definirModo: (slug: string) => invoke<void>("definir_modo", { slug }),
   statusProvedor: () => invoke<StatusProvedor>("status_provedor"),
   definirProvedor: (provedor: Provedor) =>
     invoke<Preferencias>("definir_provedor", { provedor }),
