@@ -187,12 +187,15 @@ export const pt = {
 
   comando: {
     rotulo: "Sistema operacional",
+    ouBaixe: "Ou baixe direto:",
+    msi: "instala para todos, pede administrador",
+    exe: "instala só para você, sem administrador",
     copiar: "copiar",
     copiado: "copiado",
     notas: {
       linux: "Instala um AppImage em ~/.local/bin. Roda em qualquer distro e não pede root.",
       macos: "O mesmo comando. Na primeira abertura, clique com o botão direito no app e escolha Abrir.",
-      windows: "Em revisão no winget. Enquanto o pacote não é publicado, baixe o instalador na página de releases.",
+      windows: "Cole no Git Bash, que vem junto com o Git para Windows. O script detecta o sistema e baixa o instalador certo.",
     },
   },
 

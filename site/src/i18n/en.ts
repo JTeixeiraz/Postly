@@ -189,12 +189,15 @@ export const en: Dicionario = {
 
   comando: {
     rotulo: "Operating system",
+    ouBaixe: "Or download directly:",
+    msi: "installs for everyone, asks for admin",
+    exe: "installs just for you, no admin",
     copiar: "copy",
     copiado: "copied",
     notas: {
       linux: "Installs an AppImage into ~/.local/bin. Runs on any distro and doesn't ask for root.",
       macos: "Same command. On first launch, right-click the app and choose Open.",
-      windows: "Under review on winget. Until the package ships, download the installer from the releases page.",
+      windows: "Paste it into Git Bash, which ships with Git for Windows. The script detects your system and downloads the right installer.",
     },
   },
 

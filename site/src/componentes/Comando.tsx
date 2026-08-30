@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useIdioma } from "../i18n";
 
@@ -21,9 +21,13 @@ const SISTEMAS: { id: Slug; nome: string; comando: string }[] = [
     comando: `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/scripts/instalar.sh | bash`,
   },
   {
+    // O mesmo script do Linux e do macOS: ele detecta o Windows pelo `uname`
+    // do MSYS e baixa o instalador certo. O `winget install` fica de fora
+    // enquanto o pacote está em revisão — anunciar um comando que devolve
+    // "pacote não encontrado" é pior que não anunciar comando nenhum.
     id: "windows",
     nome: "Windows",
-    comando: `winget install --id JTeixeiraz.Postly`,
+    comando: `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/scripts/instalar.sh | bash`,
   },
 ];
 
@@ -35,10 +39,39 @@ const SISTEMAS: { id: Slug; nome: string; comando: string }[] = [
  *  A cópia usa a API de clipboard com um caminho de reserva. Sem ele, todo
  *  visitante em contexto não seguro (um `file://`, uma prévia local) clicaria
  *  no botão e nada aconteceria, sem erro nenhum. */
+/** Os instaladores do Windows da versão mais recente.
+ *
+ *  Buscados na API em vez de escritos à mão: o nome do arquivo carrega a
+ *  versão (`Postly_0.1.1_x64_en-US.msi`), e um link fixo apontaria para uma
+ *  versão velha no dia seguinte ao próximo lançamento. Falhando a busca, os
+ *  botões caem para a página de releases, que nunca some. */
+const RELEASES = `https://github.com/${REPO}/releases/latest`;
+
+function useInstaladoresWindows() {
+  const [links, setLinks] = useState<{ msi?: string; exe?: string }>({});
+  useEffect(() => {
+    let vivo = true;
+    fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((d: { assets?: { name: string; browser_download_url: string }[] }) => {
+        if (!vivo) return;
+        const achar = (fim: string) =>
+          d.assets?.find((a) => a.name.toLowerCase().endsWith(fim))?.browser_download_url;
+        setLinks({ msi: achar(".msi"), exe: achar("-setup.exe") });
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, []);
+  return links;
+}
+
 export default function Comando({ compacto = false }: { compacto?: boolean }) {
   const { d } = useIdioma();
   const [sistema, setSistema] = useState(SISTEMAS[0]);
   const [copiado, setCopiado] = useState(false);
+  const instaladores = useInstaladoresWindows();
 
   const copiar = async () => {
     try {
@@ -109,6 +142,29 @@ export default function Comando({ compacto = false }: { compacto?: boolean }) {
       </div>
 
       <p className="comando__nota">{d.comando.notas[sistema.id]}</p>
+
+      {/* Quem não tem o Git Bash não tem por que instalar um shell inteiro
+          para rodar um instalador. Os dois formatos aparecem porque eles
+          instalam diferente: o MSI vai para Programas e Recursos, o NSIS
+          instala para o usuário e não pede elevação. */}
+      {sistema.id === "windows" && !compacto && (
+        <motion.div
+          className="baixar"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <span className="baixar__rotulo">{d.comando.ouBaixe}</span>
+          <a className="baixar__op" href={instaladores.msi ?? RELEASES}>
+            <strong>.msi</strong>
+            <span>{d.comando.msi}</span>
+          </a>
+          <a className="baixar__op" href={instaladores.exe ?? RELEASES}>
+            <strong>.exe</strong>
+            <span>{d.comando.exe}</span>
+          </a>
+        </motion.div>
+      )}
     </div>
   );
 }
