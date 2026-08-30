@@ -159,15 +159,42 @@ instalar_macos() {
   msg "${CINZA}Na primeira abertura o macOS pede confirmacao: clique com o botao direito no app e escolha Abrir.${ZERA}"
 }
 
+# Windows a partir de um shell POSIX — Git Bash, MSYS2 ou Cygwin.
+#
+# A release traz dois instaladores para Windows: o NSIS (`-setup.exe`) e o MSI.
+# O nome do arquivo baixado tem de acompanhar o que ele é: `msiexec` recusa um
+# pacote NSIS, e a extensão errada faz o Windows abrir o programa errado.
 instalar_windows() {
-  local url tmp
-  url="$(achar_ativo "\.msi|setup\.exe" || true)"
+  local url tmp arquivo ext caminho
+  # O MSI vem primeiro na preferência porque `msiexec` instala em silêncio e
+  # devolve código de saída; o NSIS é o plano B.
+  url="$(achar_ativo "\.msi$" || true)"
+  [ -z "$url" ] || ext="msi"
+  if [ -z "$url" ]; then
+    url="$(achar_ativo "setup\.exe$|\.exe$" || true)"
+    [ -z "$url" ] || ext="exe"
+  fi
   [ -z "$url" ] && return 1
+
   tmp="$(mktemp -d)"
-  baixar "$url" "$tmp/postly-setup.msi"
+  arquivo="$tmp/postly-setup.$ext"
+  baixar "$url" "$arquivo"
+
+  # O Windows não entende `/tmp/...`; o caminho precisa ir em formato nativo.
+  caminho="$(cygpath -w "$arquivo" 2>/dev/null || echo "$arquivo")"
   msg "${CINZA}abrindo o instalador...${ZERA}"
-  msiexec //i "$(cygpath -w "$tmp/postly-setup.msi" 2>/dev/null || echo "$tmp/postly-setup.msi")" || \
-    erro "Nao consegui abrir o instalador. Ele esta em $tmp/postly-setup.msi"
+
+  if [ "$ext" = "msi" ]; then
+    # `//i` e não `/i`: o MSYS traduz caminhos que começam com uma barra, e o
+    # argumento chegaria ao msiexec como `C:/Program Files/i`.
+    msiexec //i "$caminho" //qb || \
+      erro "Nao consegui abrir o instalador. Ele esta em $caminho"
+  else
+    # `start` devolve o terminal imediatamente; sem ele o shell fica preso até
+    # a pessoa terminar de clicar no instalador.
+    cmd //c start "" "$caminho" || \
+      erro "Nao consegui abrir o instalador. Ele esta em $caminho"
+  fi
 }
 
 compilar() {

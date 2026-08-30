@@ -67,6 +67,10 @@ pacote da release mais recente e coloca no lugar certo. Se não houver pacote
 pronto para a sua combinação de sistema e arquitetura, ele compila do
 código-fonte.
 
+O comando funciona no **Git Bash** também, se você já o tem aberto: o script
+reconhece o ambiente MSYS, baixa o `.msi` e chama o instalador do Windows. Não
+precisa de WSL.
+
 <details>
 <summary><b>Windows: pelo winget</b></summary>
 <br>
