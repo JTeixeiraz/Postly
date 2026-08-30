@@ -1,0 +1,43 @@
+# --- dependencias e artefatos de build ---
+node_modules/
+sidecar/node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# --- segredo ---
+#
+# O app guarda chave e credenciais em ~/.local/share/postly (ou o equivalente
+# do sistema), nunca dentro do repositorio. As regras abaixo sao rede de
+# seguranca: se um arquivo de segredo aparecer aqui por engano, ele nao sobe.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.keystore
+vault.bin
+prefs.json
+secrets.json
+*credentials*.json
+
+# --- estado local do app, se alguem rodar apontando para o projeto ---
+.profiles/
+runs/
+referencias/
+brain/*.zst
+_screenshots/
+
+# --- ferramentas e ambiente de quem desenvolve ---
+.claude-flow/
+.claude/
+sidecar/_shot.mjs
+sidecar/undefined/
+*.local
+.vscode/
+.idea/
+
+# --- sistema ---
+.DS_Store
+Thumbs.db

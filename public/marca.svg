@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="512" height="512">
+  <!-- Postly. A haste do P e a rota; o ponto e a posta onde o despacho esta. -->
+  <rect width="32" height="32" rx="7.5" fill="#004647"/>
+  <path d="M11.6 24.5V9.4h5.1a3.9 3.9 0 0 1 0 7.8h-5.1"
+        fill="none" stroke="#F4F9F8" stroke-width="3.3"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="11.6" cy="9.4" r="2.9" fill="#E2703A"/>
+</svg>

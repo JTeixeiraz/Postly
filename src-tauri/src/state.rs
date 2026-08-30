@@ -1,0 +1,34 @@
+//! Estado compartilhado do processo.
+
+use std::path::PathBuf;
+use std::sync::Mutex;
+
+use crate::brain::store::BrainHandle;
+use crate::browser::BrowserBridge;
+
+pub struct AppState {
+    /// Grafo vivo em memoria; o artefato em disco fica sempre compactado.
+    pub brain: BrainHandle,
+    /// Ponte com o Playwright. Nao sobe navegador nenhum ate alguem pedir.
+    pub browser: BrowserBridge,
+    pub app_root: PathBuf,
+    /// Canal por onde a campanha, parada, espera a resposta da pessoa sobre
+    /// entrar ou nao no turno de motion.
+    ///
+    /// Mora aqui porque a decisao atravessa dois mundos: quem pergunta e a
+    /// campanha rodando em Rust, quem responde e um clique na janela. Um
+    /// oneshot e o menor mecanismo que faz a campanha dormir sem ocupar CPU e
+    /// acordar exatamente uma vez.
+    pub resposta_motion: Mutex<Option<tokio::sync::oneshot::Sender<bool>>>,
+}
+
+impl AppState {
+    pub fn new(app_root: PathBuf) -> Self {
+        Self {
+            brain: BrainHandle::load(),
+            browser: BrowserBridge::new(app_root.clone()),
+            app_root,
+            resposta_motion: Mutex::new(None),
+        }
+    }
+}

@@ -1,0 +1,45 @@
+/* Postly — adaptacao a largura da janela.
+ *
+ * Separado dos tokens e dos componentes de proposito: aqui mora so o que muda
+ * de forma quando a janela encolhe, e e o primeiro lugar que se abre quando
+ * algo quebra num monitor diferente.
+ */
+
+/* Uma coluna quando nao ha largura para duas. */
+@media (max-width: 1100px) {
+  .split { grid-template-columns: 1fr; }
+}
+
+/* Header apertado: a leitura de memoria sai primeiro. Ela e referencia, e a
+   mesma informacao continua na tela de Preparacao. */
+@media (max-width: 1120px) {
+  .ram-topo { display: none; }
+}
+
+/* Mais estreito ainda: as abas ficam so com o simbolo. O rotulo continua no
+   nome acessivel, entao leitor de tela nao perde nada. */
+@media (max-width: 940px) {
+  .aba span:not(.aba__badge):not(.aba__bolha) { display: none; }
+  .aba { padding: 8px 11px; }
+  .guia-topo__gatilho span:not(.guia-topo__anel):not(.guia-topo__conta) { display: none; }
+  .tour__abre span { display: none; }
+  .tour__abre { padding-inline: 10px; }
+}
+
+/* Vertical: o header vira duas linhas, com as abas rolando na segunda. */
+@media (max-width: 720px) {
+  .topo { flex-wrap: wrap; gap: var(--s2) var(--s3); padding-inline: var(--s4); }
+  .abas { order: 3; width: 100%; }
+  .topo__acoes { margin-left: auto; }
+  .page { padding: var(--s2) var(--s4) var(--s6); }
+  .guia-topo__painel { right: auto; left: 0; transform-origin: top left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

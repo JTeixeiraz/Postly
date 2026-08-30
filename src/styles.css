@@ -1,0 +1,468 @@
+/* Postly — sistema visual.
+ *
+ * Painel de operacao escuro com cartoes elevados e um unico acento eletrico.
+ * A estrutura mudou de proposito: antes eram secoes empilhadas separadas por
+ * fio, o que lia como documento. Agora cada bloco e um CARTAO com fundo
+ * proprio, e os cartoes se organizam em grade. E a diferenca entre ler um
+ * relatorio e operar um painel.
+ *
+ * Gramatica da cor, e ela nao muda de tela para tela:
+ *
+ *   lime      o que voce aciona e o que esta acontecendo agora. Aparece pouco,
+ *             e por isso e visto de longe.
+ *   carvao    a superficie. Tres degraus: fundo, cartao, cartao interno.
+ *   branco    reservado ao resultado. Quando uma peca fica pronta, ela vem num
+ *             cartao claro: a inversao e o destaque mais forte que existe sem
+ *             gastar mais uma cor.
+ *
+ * Verde, ambar e vermelho existem so como estado.
+ */
+
+@import "@fontsource-variable/geist/index.css";
+@import "@fontsource-variable/geist-mono/index.css";
+
+:root {
+  /* --- superficie: tres degraus de carvao, croma minimo --- */
+  --bg:         oklch(0.160 0.006 250);
+  --card:       oklch(0.265 0.008 250);
+  --card-2:     oklch(0.315 0.009 250);
+  --sunken:     oklch(0.135 0.006 250);
+  --line:       oklch(0.370 0.010 250);
+  --line-soft:  oklch(0.320 0.008 250);
+  /* Borda de controle: 3:1 sobre o cartao mais claro. Num campo escuro sobre
+     fundo escuro a borda e o unico indicador de que ali se digita. */
+  --line-strong: oklch(0.583 0.010 250);
+
+  /* --- tinta --- */
+  --ink:        oklch(0.975 0.002 250);
+  --ink-2:      oklch(0.760 0.006 250);
+  --ink-3:      oklch(0.684 0.006 250);
+
+  /* --- acao: um acento so, eletrico --- */
+  --act:        oklch(0.880 0.200 124);
+  --act-hover:  oklch(0.920 0.200 124);
+  --act-ink:    oklch(0.240 0.070 124);
+  --act-wash:   oklch(0.320 0.070 124);
+
+  /* --- a moldura: o app e um cartao escuro pousado sobre papel branco --- */
+  --fora:       oklch(0.995 0 0);
+  --fora-ink:   oklch(0.255 0.010 250);
+  --fora-ink-2: oklch(0.480 0.008 250);
+  --fora-linha: oklch(0.905 0.003 250);
+
+  /* --- cartao claro: reservado ao resultado --- */
+  --light:      oklch(0.985 0.002 250);
+  --light-ink:  oklch(0.220 0.008 250);
+  --light-ink2: oklch(0.450 0.008 250);
+  --light-line: oklch(0.900 0.004 250);
+
+  /* --- estado --- */
+  --ok:         oklch(0.800 0.170 150);
+  --ok-wash:    oklch(0.300 0.070 150);
+  --warn:       oklch(0.840 0.150 85);
+  --warn-wash:  oklch(0.320 0.060 85);
+  --alert:      oklch(0.720 0.170 25);
+  --alert-wash: oklch(0.310 0.080 25);
+
+  /* --- tipografia --- */
+  --sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --t-micro: 11.5px;
+  --t-sm:    13px;
+  --t-body:  14.5px;
+  --t-lead:  16px;
+  --t-h3:    17px;
+  --t-h2:    20px;
+  --t-h1:    28px;
+
+  /* --- ritmo --- */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 72px;
+
+  /* Cantos generosos: e o que separa painel de formulario. */
+  --r-sm: 7px; --r-md: 11px; --r-lg: 18px; --r-xl: 24px; --r-pill: 999px;
+
+  --lift: 0 1px 2px oklch(0 0 0 / 0.32), 0 8px 24px oklch(0 0 0 / 0.22);
+
+  --z-base: 0; --z-sticky: 10; --z-rail: 20;
+  --z-overlay: 30; --z-modal: 40; --z-toast: 50;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --fast: 130ms; --mid: 240ms; --slow: 460ms;
+
+  color-scheme: dark;
+  accent-color: var(--act);
+}
+
+* { box-sizing: border-box; min-width: 0; }
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: var(--t-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+h1, h2, h3 { color: var(--ink); margin: 0; line-height: 1.15; text-wrap: balance; }
+h1 { font-size: var(--t-h1); font-weight: 600; letter-spacing: -0.028em; }
+h2 { font-size: var(--t-h2); font-weight: 560; letter-spacing: -0.02em; }
+h3 { font-size: var(--t-h3); font-weight: 550; letter-spacing: -0.012em; }
+p  { margin: 0; text-wrap: pretty; max-width: 68ch; }
+
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+:focus-visible { outline: 2px solid var(--act); outline-offset: 2px; border-radius: var(--r-sm); }
+
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-feature-settings: "zero" 1; }
+.mono { font-family: var(--mono); }
+.dim { color: var(--ink-3); }
+.hint { color: var(--ink-3); font-size: var(--t-sm); line-height: 1.45; }
+
+/* ══ concha ══════════════════════════════════════════════════════════════ */
+
+/* Navegacao no topo, nao na lateral. Sao cinco telas: uma coluna de 216px
+   gastava um sexto da largura para listar cinco palavras, e a largura e
+   justamente o que falta nas telas de cartao. */
+/* A janela e branca; o app pousa nela como um cartao. A margem existe para o
+   olho ter onde descansar entre a borda da tela e a densidade do painel, e a
+   navegacao fica FORA do cartao: ela e a moldura, nao o conteudo. */
+.shell {
+  display: grid; grid-template-rows: auto 1fr;
+  height: 100dvh; background: var(--fora);
+  padding: 0 var(--s3) var(--s3);
+}
+
+.topo {
+  display: flex; align-items: center; gap: var(--s4);
+  padding: var(--s3) var(--s2);
+  position: relative; z-index: var(--z-rail);
+}
+
+/* Sobre o branco, o que nao tem fundo proprio troca de tinta. */
+/* A marca herda a tinta do lugar: no topo branco ela e escura. */
+.marca { color: var(--fora-ink); }
+.topo .marca__nome { color: var(--fora-ink); }
+.topo .btn--quiet { color: var(--fora-ink-2); }
+.topo .btn--quiet:hover:not(:disabled) { color: var(--fora-ink); background: oklch(0.955 0.002 250); }
+
+.marca { display: flex; align-items: center; gap: 9px; flex: none; }
+.marca__nome {
+  font-size: 15.5px; font-weight: 620; letter-spacing: -0.025em;
+  color: var(--ink); white-space: nowrap;
+}
+
+/* As abas vivem dentro de uma pilula, e a ativa e outra pilula por dentro. E o
+   que faz a barra ler como um controle unico em vez de cinco links soltos. */
+.abas {
+  display: flex; align-items: center; gap: 2px;
+  /* Borda forte: o container de abas e um controle, e o degrau de superficie
+     entre cartao e fundo e de apenas 1,27. Sem uma borda de 3:1 a pilula nao
+     se delimita sozinha. */
+  background: var(--card); border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill); padding: 4px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.abas::-webkit-scrollbar { display: none; }
+
+.aba {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 15px; border-radius: var(--r-pill);
+  color: var(--ink-2); font-size: var(--t-sm); font-weight: 500;
+  white-space: nowrap; position: relative;
+  transition: color var(--fast) var(--ease);
+}
+.aba:hover:not(:disabled) { color: var(--ink); }
+.aba:disabled { color: var(--ink-3); opacity: 0.4; cursor: not-allowed; }
+.aba[aria-current="page"] { color: var(--act-ink); }
+/* A pilula ativa e uma camada por tras do rotulo: assim ela desliza entre as
+   abas em vez de piscar de uma para outra.
+   z-index negativo nao serve: sem stacking context proprio a camada escapa
+   para tras do fundo do container e some. Isolamos a aba e empilhamos dentro
+   dela: bolha em 0, conteudo em 1. */
+.aba { isolation: isolate; }
+.aba > :not(.aba__bolha) { position: relative; z-index: 1; }
+.aba__bolha {
+  position: absolute; inset: 0; z-index: 0;
+  background: var(--act); border-radius: var(--r-pill);
+}
+.aba__badge { width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
+.aba[aria-current="page"] .aba__badge { background: var(--act-ink); }
+
+.topo__acoes { display: flex; align-items: center; gap: var(--s2); margin-left: auto; flex: none; }
+
+/* Leitura de memoria no topo: compacta, porque e referencia, nao protagonista. */
+.ram-topo {
+  display: flex; align-items: center; gap: 9px;
+  background: var(--card); border: 1px solid var(--line-soft);
+  border-radius: var(--r-pill); padding: 6px 14px 6px 12px;
+}
+.ram-topo .meter { width: 54px; }
+.ram-topo__txt { font-size: var(--t-micro); color: var(--ink-2); white-space: nowrap; }
+
+/* ══ area principal ══════════════════════════════════════════════════════ */
+
+.main {
+  overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable;
+  background: var(--bg);
+  border-radius: var(--r-xl);
+  /* Sombra curta e tingida: a borda branca ja separa, a sombra so assenta. */
+  box-shadow: 0 1px 3px oklch(0.2 0.01 250 / 0.10), 0 12px 32px oklch(0.2 0.01 250 / 0.10);
+}
+.page {
+  width: min(100%, 1400px);
+  margin-inline: auto;
+  padding: var(--s5) clamp(16px, 2.2vw, 32px) var(--s7);
+  display: grid; gap: var(--s4);
+}
+
+.page__head { display: grid; gap: 5px; margin-bottom: var(--s1); }
+.page__head p { color: var(--ink-2); font-size: var(--t-lead); max-width: 62ch; }
+
+/* ══ CARTAO: a unidade da interface ══════════════════════════════════════ */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  padding: var(--s4) var(--s5) var(--s5);
+  display: grid; gap: var(--s4);
+  align-content: start;
+}
+.card--flat { background: none; border-color: transparent; padding-inline: 0; }
+/* Reservado ao resultado: a inversao e o destaque mais forte sem gastar cor. */
+.card--light { background: var(--light); border-color: var(--light-line); color: var(--light-ink2); }
+.card--light h2, .card--light h3, .card--light .card__titulo { color: var(--light-ink); }
+.card--light .hint { color: var(--light-ink2); }
+
+.card__topo { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.card__titulo { font-size: var(--t-sm); font-weight: 560; color: var(--ink); letter-spacing: -0.01em; }
+.card__nota { font-size: var(--t-sm); color: var(--ink-3); margin-left: auto; text-align: right; }
+.card__corpo { background: var(--card-2); border-radius: var(--r-md); padding: var(--s4); }
+
+/* Grade de cartoes. As telas se montam com isto, nao com secoes empilhadas. */
+.grade { display: grid; gap: var(--s4); grid-template-columns: repeat(12, 1fr); align-items: start; }
+.g4  { grid-column: span 4; }
+.g6  { grid-column: span 6; }
+.g8  { grid-column: span 8; }
+.g12 { grid-column: span 12; }
+
+/* Duas colunas: o que voce controla a esquerda, o que o sistema devolve a
+   direita. Sem isto a tela vira uma pilha de cartoes e meio monitor vazio. */
+.split {
+  display: grid;
+  gap: var(--s4);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.78fr);
+  align-items: start;
+}
+.split > * { display: grid; gap: var(--s4); align-content: start; }
+.split__side { display: grid; gap: var(--s4); align-content: start; }
+
+.stack { display: grid; gap: var(--s4); }
+.stack--tight { gap: var(--s2); }
+.row { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.row--tight { gap: var(--s2); }
+.push { margin-left: auto; }
+
+.auto-grid { display: grid; gap: var(--s3); grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); }
+
+/* ══ leituras ════════════════════════════════════════════════════════════ */
+
+.read { display: grid; gap: 2px; }
+.read__k { font-size: var(--t-sm); color: var(--ink-3); }
+.read__v {
+  font-weight: 560; font-size: 26px; color: var(--ink);
+  letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.read__v small { font-size: 0.52em; color: var(--ink-3); letter-spacing: 0; margin-left: 3px; font-weight: 480; }
+.read__note { font-size: var(--t-sm); color: var(--ink-3); }
+
+.meter { position: relative; height: 7px; background: var(--sunken); border-radius: var(--r-pill); overflow: hidden; }
+.meter__fill { position: absolute; inset: 0 auto 0 0; border-radius: var(--r-pill); background: var(--ink-3); transition: width var(--slow) var(--ease), background var(--mid) var(--ease); }
+.meter__fill[data-p="apertado"] { background: var(--warn); }
+.meter__fill[data-p="critico"]  { background: var(--alert); }
+.meter__cap { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); opacity: 0.55; }
+
+/* ══ pilula ══════════════════════════════════════════════════════════════ */
+
+.tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--t-micro); font-weight: 500; line-height: 1;
+  padding: 5px 10px; border-radius: var(--r-pill);
+  border: 1px solid var(--line); color: var(--ink-2); background: var(--card-2);
+  white-space: nowrap;
+}
+.tag__dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); flex: none; }
+.tag[data-tone="ok"]    { border-color: transparent; background: var(--ok-wash); color: var(--ok); }
+.tag[data-tone="ok"] .tag__dot { background: var(--ok); }
+.tag[data-tone="live"]  { border-color: transparent; background: var(--act-wash); color: var(--act); }
+.tag[data-tone="live"] .tag__dot { background: var(--act); animation: pulse 1.8s var(--ease) infinite; }
+.tag[data-tone="warn"]  { border-color: transparent; background: var(--warn-wash); color: var(--warn); }
+.tag[data-tone="warn"] .tag__dot { background: var(--warn); }
+.tag[data-tone="alert"] { border-color: transparent; background: var(--alert-wash); color: var(--alert); }
+.tag[data-tone="alert"] .tag__dot { background: var(--alert); }
+.card--light .tag { background: oklch(0.94 0.004 250); border-color: var(--light-line); color: var(--light-ink2); }
+
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.65); } }
+
+/* ══ botoes ══════════════════════════════════════════════════════════════ */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 9px 16px; border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong); background: var(--card-2); color: var(--ink);
+  font-size: var(--t-body); font-weight: 500; white-space: nowrap;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+.btn:hover:not(:disabled) { border-color: var(--ink-3); background: var(--line-soft); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn--key { background: var(--act); border-color: var(--act); color: var(--act-ink); font-weight: 560; }
+.btn--key:hover:not(:disabled) { background: var(--act-hover); border-color: var(--act-hover); }
+/* Acao indisponivel nao usa a cor de acao. */
+.btn--key:disabled { background: var(--card-2); border-color: var(--line); color: var(--ink-3); opacity: 1; }
+.btn--quiet { background: none; border-color: transparent; color: var(--ink-2); }
+.btn--quiet:hover:not(:disabled) { color: var(--ink); background: var(--card-2); border-color: transparent; }
+.btn--sm { padding: 6px 12px; font-size: var(--t-sm); }
+.btn--wide { width: 100%; }
+.btn[data-on="true"] { background: var(--act); border-color: var(--act); color: var(--act-ink); }
+.btn[data-on="true"]:hover:not(:disabled) { background: var(--act-hover); border-color: var(--act-hover); }
+
+.card--light .btn { background: oklch(0.94 0.004 250); border-color: var(--light-line); color: var(--light-ink); }
+.card--light .btn--key { background: var(--light-ink); border-color: var(--light-ink); color: var(--light); }
+
+/* ══ formulario ══════════════════════════════════════════════════════════ */
+
+.field { display: grid; gap: 6px; }
+.field > span { font-size: var(--t-sm); color: var(--ink-2); font-weight: 500; }
+.field__help { font-size: var(--t-sm); color: var(--ink-3); }
+
+input[type="text"], input[type="password"], textarea {
+  width: 100%; background: var(--sunken); color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  padding: 10px 12px; outline: none;
+  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+input::placeholder, textarea::placeholder { color: var(--ink-3); }
+input:focus, textarea:focus {
+  border-color: var(--act);
+  box-shadow: 0 0 0 3px var(--act-wash);
+}
+textarea { resize: vertical; min-height: 104px; line-height: 1.5; font-family: inherit; }
+
+input[type="checkbox"] {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px; flex: none; margin: 0;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--sunken);
+  display: grid; place-content: center;
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+input[type="checkbox"]::after {
+  content: ""; width: 10px; height: 10px;
+  clip-path: polygon(14% 44%, 0 60%, 39% 100%, 100% 16%, 84% 0, 39% 68%);
+  background: var(--act-ink);
+  transform: scale(0); transition: transform var(--fast) var(--ease);
+}
+input[type="checkbox"]:hover:not(:checked) { border-color: var(--ink-3); }
+input[type="checkbox"]:checked { background: var(--act); border-color: var(--act); }
+input[type="checkbox"]:checked::after { transform: scale(1); }
+
+input[type="range"] { accent-color: var(--act); width: 100%; }
+
+.choice {
+  display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start;
+  padding: 13px 15px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--card-2); cursor: pointer; text-align: left; width: 100%;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.choice:hover { border-color: var(--ink-3); }
+.choice[data-on="true"] { border-color: var(--act); background: var(--act-wash); }
+.choice__title { color: var(--ink); font-weight: 520; }
+
+.choice__marca {
+  width: 18px; height: 18px; margin-top: 1px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--sunken); display: grid; place-content: center;
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+.choice__marca::after {
+  content: ""; width: 10px; height: 10px;
+  clip-path: polygon(14% 44%, 0 60%, 39% 100%, 100% 16%, 84% 0, 39% 68%);
+  background: var(--act-ink);
+  transform: scale(0); transition: transform var(--fast) var(--ease);
+}
+.choice:hover .choice__marca { border-color: var(--ink-3); }
+.choice[data-on="true"] .choice__marca { background: var(--act); border-color: var(--act); }
+.choice[data-on="true"] .choice__marca::after { transform: scale(1); }
+
+/* ══ nota ════════════════════════════════════════════════════════════════ */
+
+.note {
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: 12px 14px; background: var(--card-2); font-size: var(--t-sm);
+  display: grid; gap: 5px;
+}
+.note[data-tone="signal"] { border-color: transparent; background: var(--act-wash); }
+.note[data-tone="alert"]  { border-color: transparent; background: var(--alert-wash); }
+.note[data-tone="warn"]   { border-color: transparent; background: var(--warn-wash); }
+.note strong { color: var(--ink); font-weight: 560; }
+
+/* ══ detalhe recolhido ═══════════════════════════════════════════════════ */
+
+.porque > summary {
+  cursor: pointer; list-style: none; font-size: var(--t-sm); color: var(--ink-3);
+  display: inline-flex; align-items: center; gap: 6px; user-select: none;
+}
+.porque > summary::-webkit-details-marker { display: none; }
+.porque > summary::before {
+  content: ""; width: 5px; height: 5px; flex: none;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform var(--fast) var(--ease);
+}
+.porque[open] > summary::before { transform: rotate(45deg); }
+.porque > summary:hover { color: var(--ink-2); }
+.porque__corpo { font-size: var(--t-sm); color: var(--ink-2); line-height: 1.55; padding-top: var(--s2); max-width: 66ch; }
+
+/* ══ tabela ══════════════════════════════════════════════════════════════ */
+
+.table-wrap { overflow-x: auto; }
+table.data { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
+table.data th {
+  text-align: left; padding: 0 var(--s3) var(--s2) 0; font-weight: 500;
+  color: var(--ink-3); border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+table.data td { padding: 8px var(--s3) 8px 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+/* ══ vazio e carregamento ════════════════════════════════════════════════ */
+
+.empty {
+  display: grid; gap: var(--s2); justify-items: start;
+  padding: var(--s6); color: var(--ink-3);
+  border: 1px dashed var(--line); border-radius: var(--r-lg); background: var(--card-2);
+}
+.empty h3 { color: var(--ink); }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--card) 0%, var(--card-2) 50%, var(--card) 100%);
+  background-size: 200% 100%; animation: shimmer 1.3s linear infinite;
+  border-radius: var(--r-md); height: 1em;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+pre.raw {
+  white-space: pre-wrap; word-break: break-word;
+  font-family: var(--mono); font-size: var(--t-sm); line-height: 1.6;
+  background: var(--sunken); border: 1px solid var(--line-soft);
+  border-radius: var(--r-md); padding: var(--s4);
+  max-height: 56vh; overflow: auto; color: var(--ink-2); margin: 0;
+}

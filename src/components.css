@@ -1,0 +1,390 @@
+/* Pecas proprias do Postly.
+ *
+ * A trilha de revezamento e o elemento central: ela mostra a coisa que o
+ * produto realmente faz, que e passar UM despacho de posta em posta, trocando
+ * de modelo a cada perna. Tudo o mais e leitura de apoio.
+ */
+
+/* ══ trilha de revezamento ═══════════════════════════════════════════════ */
+
+.relay {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--s2);
+  position: relative;
+  padding: var(--s5) 0 var(--s3);
+}
+
+/* A linha que liga as postas passa atras dos marcadores. */
+.relay::before {
+  content: "";
+  position: absolute;
+  left: calc(100% / var(--postas) / 2);
+  right: calc(100% / var(--postas) / 2);
+  top: calc(var(--s5) + 7px);
+  height: 2px; background: var(--line); border-radius: var(--r-pill);
+}
+
+/* O percurso ja cumprido acende e cresce por transform, nunca width. */
+.relay::after {
+  content: "";
+  position: absolute;
+  left: calc(100% / var(--postas) / 2);
+  right: calc(100% / var(--postas) / 2);
+  top: calc(var(--s5) + 7px);
+  height: 2px; background: var(--act); border-radius: var(--r-pill);
+  transform-origin: left;
+  transform: scaleX(var(--percurso, 0));
+  transition: transform var(--slow) var(--ease);
+}
+
+/* Linhas fixas: sem isto, uma posta com nome de rede empurra o texto para baixo
+   e a fileira inteira fica desalinhada. A linha da rede entra so quando alguma
+   posta tem rede, senao a trilha abre um vao morto no meio da configuracao. */
+.posta {
+  display: grid;
+  grid-template-rows: 16px auto auto;
+  justify-items: center; align-content: start; gap: 7px;
+  position: relative; z-index: 1; text-align: center;
+  padding-inline: var(--s1);
+}
+.relay[data-rede="true"] .posta { grid-template-rows: 16px auto auto auto; }
+
+.posta__marca {
+  width: 16px; height: 16px; justify-self: center; border-radius: 50%;
+  background: var(--bg); border: 2px solid var(--act);
+  display: grid; place-items: center;
+  transition: border-color var(--mid) var(--ease), background var(--mid) var(--ease);
+}
+.posta__marca::after {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--act); transition: background var(--mid) var(--ease), transform var(--mid) var(--ease);
+}
+
+.posta[data-estado="feito"] .posta__marca { border-color: var(--ok); background: var(--ok); }
+.posta[data-estado="feito"] .posta__marca::after { background: var(--bg); }
+
+.posta[data-estado="ativo"] .posta__marca { border-color: var(--act); background: var(--bg); }
+.posta[data-estado="ativo"] .posta__marca::after { background: var(--act); transform: scale(1.25); }
+/* O halo respira enquanto o modelo pensa: e o unico sinal de vida durante os
+   minutos em que nao ha nada para mostrar. */
+.posta[data-estado="ativo"] .posta__marca { animation: respira 2.2s var(--ease) infinite; }
+@keyframes respira {
+  0%, 100% { box-shadow: 0 0 0 0 var(--act-wash); }
+  50%      { box-shadow: 0 0 0 8px transparent; }
+}
+
+.posta[data-estado="falhou"] .posta__marca { border-color: var(--alert); background: var(--alert); }
+.posta[data-estado="falhou"] .posta__marca::after { background: var(--bg); }
+
+.posta__cargo { font-size: var(--t-sm); color: var(--ink-2); line-height: 1.25; font-weight: 500; }
+.posta[data-estado="ativo"] .posta__cargo { color: var(--act); font-weight: 560; }
+.posta[data-estado="feito"] .posta__cargo { color: var(--ink); }
+.posta__modelo {
+  font-family: var(--mono); font-size: var(--t-micro); color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+.posta__nivel { font-size: var(--t-micro); color: var(--ink-3); }
+/* O setor e o unico dado da posta que muda com a escolha do usuario, entao ele
+   le mais claro que o nivel, que e fixo. */
+.posta__rede { font-size: var(--t-micro); color: var(--ink-2); font-weight: 500; }
+
+/* Barra viva: a trilha gruda no topo enquanto a campanha roda, porque e a
+   primeira coisa que a pessoa procura quando volta depois de minutos fora. */
+.relay-barra {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  background: var(--card-2);
+  border: 1px solid var(--line-soft); border-radius: var(--r-lg);
+  padding: 0 var(--s4) var(--s3);
+  margin-bottom: var(--s5);
+  box-shadow: var(--lift);
+}
+.relay-barra__topo {
+  display: flex; align-items: center; gap: var(--s3);
+  padding-top: var(--s3); flex-wrap: wrap;
+}
+.relay-barra__titulo { font-size: var(--t-sm); font-weight: 560; color: var(--ink); }
+.relay-barra .relay { padding-top: var(--s4); }
+
+/* Vertical quando nao ha largura: a trilha vira uma coluna com fio a esquerda. */
+@media (max-width: 620px) {
+  .relay { grid-auto-flow: row; grid-auto-columns: auto; gap: var(--s4); padding-left: var(--s4); }
+  .relay::before, .relay::after {
+    left: 7px; right: auto; top: var(--s5); bottom: var(--s3); height: auto; width: 2px;
+  }
+  .relay::after { transform-origin: top; transform: scaleY(var(--percurso, 0)); }
+  .posta,
+  .relay[data-rede="true"] .posta { grid-template-columns: 16px 1fr; grid-template-rows: auto; justify-items: start; text-align: left; gap: 2px var(--s3); padding: 0; }
+  .posta__cargo, .posta__modelo, .posta__nivel, .posta__rede { grid-column: 2; }
+}
+
+/* ══ despacho em transito ════════════════════════════════════════════════ */
+
+.despacho {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg); background: var(--card);
+  padding: var(--s4); display: grid; gap: var(--s2);
+}
+.despacho__de {
+  font-size: var(--t-micro); font-weight: 560; color: var(--act);
+  text-transform: none;
+}
+.despacho__texto {
+  color: var(--ink-2); font-size: var(--t-sm); line-height: 1.55;
+  white-space: pre-wrap; max-height: 11lh; overflow: hidden;
+  mask-image: linear-gradient(to bottom, #000 72%, transparent);
+}
+
+/* ══ modelo ══════════════════════════════════════════════════════════════ */
+
+.modelo {
+  display: grid; grid-template-columns: 1fr auto; gap: var(--s4);
+  padding: var(--s3) 0; border-bottom: 1px solid var(--line-soft);
+  transition: opacity var(--mid) var(--ease);
+}
+.modelo:last-child { border-bottom: 0; }
+.modelo[data-fora="true"] { opacity: 0.5; }
+.modelo__id { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.modelo__nome { color: var(--ink); font-weight: 540; }
+.modelo__tag { font-family: var(--mono); font-size: var(--t-micro); color: var(--ink-3); }
+.modelo__nota { font-size: var(--t-sm); color: var(--ink-3); margin-top: 3px; max-width: 58ch; }
+.modelo__num { text-align: right; display: grid; gap: 1px; align-content: start; }
+.modelo__peso { color: var(--ink); font-weight: 560; font-variant-numeric: tabular-nums; }
+.modelo__vel { font-family: var(--mono); font-size: var(--t-micro); color: var(--ink-3); }
+.modelo__vel[data-rapido="true"] { color: var(--ok); font-weight: 500; }
+
+@media (max-width: 560px) {
+  .modelo { grid-template-columns: 1fr; gap: var(--s2); }
+  .modelo__num { text-align: left; grid-auto-flow: column; justify-content: start; gap: var(--s3); }
+}
+
+/* ══ peca publicada ══════════════════════════════════════════════════════ */
+
+.peca {
+  border: 1px solid var(--line-soft); border-radius: var(--r-lg);
+  overflow: hidden; background: var(--card-2); box-shadow: var(--lift);
+}
+.peca__arte { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--sunken); border-bottom: 1px solid var(--line-soft); }
+.peca__corpo { padding: var(--s4); display: grid; gap: var(--s3); }
+.peca__legenda { white-space: pre-wrap; color: var(--ink-2); font-size: var(--t-sm); line-height: 1.55; }
+.peca__tags { font-family: var(--mono); font-size: var(--t-micro); color: var(--act); overflow-wrap: anywhere; }
+
+/* ══ grafo ═══════════════════════════════════════════════════════════════ */
+
+.grafo-wrap { position: relative; border: 1px solid var(--line-soft); border-radius: var(--r-lg); background: var(--card); overflow: hidden; }
+.grafo { display: block; width: 100%; height: clamp(320px, 44vh, 520px); cursor: grab; }
+.grafo:active { cursor: grabbing; }
+.grafo-dica { display: block; margin-top: var(--s3); font-size: var(--t-sm); color: var(--ink-3); }
+
+/* ══ primeira execucao ═══════════════════════════════════════════════════ */
+
+.sonda {
+  display: grid; grid-template-columns: 20px 1fr auto; gap: var(--s3);
+  align-items: start; padding: var(--s3) 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.sonda:last-child { border-bottom: 0; }
+.sonda__icone { display: grid; place-items: center; padding-top: 1px; color: var(--ink-3); }
+.sonda[data-estado="rodando"] .sonda__icone { color: var(--act); }
+.sonda[data-estado="ok"] .sonda__icone { color: var(--ok); }
+.sonda[data-estado="aviso"] .sonda__icone { color: var(--warn); }
+.sonda[data-estado="falhou"] .sonda__icone { color: var(--alert); }
+.sonda__titulo { color: var(--ink); font-weight: 520; }
+.sonda__resultado { font-size: var(--t-sm); color: var(--ink-3); margin-top: 2px; }
+.sonda[data-estado="espera"] { opacity: 0.45; }
+
+.girar { animation: girar 1s linear infinite; transform-origin: center; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* Entrada em cascata: cada item entra logo depois do anterior, sem que a
+   pagina fique escondida esperando a animacao. */
+.cascata > * { animation: sobe var(--slow) var(--ease) backwards; }
+.cascata > *:nth-child(1) { animation-delay: 0ms; }
+.cascata > *:nth-child(2) { animation-delay: 50ms; }
+.cascata > *:nth-child(3) { animation-delay: 100ms; }
+.cascata > *:nth-child(4) { animation-delay: 150ms; }
+.cascata > *:nth-child(5) { animation-delay: 200ms; }
+.cascata > *:nth-child(6) { animation-delay: 250ms; }
+.cascata > *:nth-child(n+7) { animation-delay: 300ms; }
+@keyframes sobe { from { opacity: 0; transform: translateY(8px); } }
+
+/* ══ trocador de idioma ══════════════════════════════════════════════════ */
+
+.lang { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--r-md); padding: 2px; gap: 2px; background: var(--card-2); }
+.lang button {
+  font-size: var(--t-micro); font-weight: 500; padding: 4px 9px;
+  border-radius: var(--r-sm); color: var(--ink-3);
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.lang button:hover { color: var(--ink); }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* ══ elenco ══════════════════════════════════════════════════════════════ */
+
+/* Mesma gramática da trilha de revezamento: os cargos são uma sequência, e a
+   sequência é o que o produto faz. Grade de cartões iguais esconderia isso. */
+.elenco {
+  display: grid;
+  grid-template-columns: repeat(var(--postas), 1fr);
+  gap: var(--s4);
+  position: relative;
+  padding-top: var(--s5);
+}
+/* A marca da vaga fica no inicio da coluna, nao no centro dela como na trilha
+   de revezamento. A linha por isso comeca no proprio primeiro marcador e para
+   no ultimo, em vez de nos centros das colunas das pontas. */
+.elenco::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: calc(100% / var(--postas) - 6px);
+  top: calc(var(--s5) + 5px);
+  height: 2px; border-radius: var(--r-pill);
+  background: var(--line);
+}
+
+.vaga {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  position: relative;
+  padding-right: var(--s3);
+}
+.vaga__marca {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--act); border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--act);
+  margin-bottom: 10px;
+}
+.vaga[data-vazia="true"] .vaga__marca { background: var(--alert); box-shadow: 0 0 0 1px var(--alert); }
+
+.vaga__cargo { font-size: var(--t-sm); color: var(--ink-3); }
+.vaga__modelo { color: var(--ink); font-size: var(--t-lead); font-weight: 560; letter-spacing: -0.018em; }
+.vaga__tag { font-family: var(--mono); font-size: var(--t-micro); color: var(--ink-3); overflow-wrap: anywhere; }
+.vaga__vel { font-family: var(--mono); font-size: var(--t-sm); color: var(--act); font-weight: 500; }
+.vaga__selos { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+
+/* Sem largura para quatro colunas, a trilha vira lista com fio à esquerda. */
+@media (max-width: 900px) {
+  .elenco { grid-template-columns: 1fr; gap: var(--s5); padding-left: var(--s4); padding-top: var(--s4); }
+  .elenco::before {
+    left: 5px; right: auto; top: var(--s4); bottom: 10px; height: auto; width: 2px;
+    background: var(--line);
+  }
+  .vaga { padding-left: 0; }
+  .vaga__marca { position: absolute; left: -21px; top: 3px; margin: 0; }
+}
+
+/* ══ auditoria: uma peca no ranking ══════════════════════════════════════ */
+
+/* A barra vem antes dos numeros de proposito: a diferenca entre 3,1x e 0,4x
+   precisa ser vista antes de ser lida, porque e ela que decide a proxima
+   campanha. O numero fica ao lado para quem quer o valor exato. */
+.linha-peca {
+  display: grid; gap: 5px;
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.linha-peca:last-child { border-bottom: 0; }
+
+.linha-peca__topo { display: flex; align-items: baseline; gap: var(--s3); }
+.linha-peca__conceito {
+  color: var(--ink); font-weight: 500; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.linha-peca__mult { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.linha-peca__mult[data-forte="true"] { color: var(--act); font-weight: 560; }
+
+.linha-peca__barra {
+  height: 5px; border-radius: var(--r-pill);
+  background: var(--sunken); overflow: hidden;
+}
+.linha-peca__barra > div {
+  height: 100%; border-radius: var(--r-pill);
+  background: var(--ink-3);
+  transition: width var(--slow) var(--ease);
+}
+.linha-peca__barra > div[data-forte="true"] { background: var(--act); }
+
+.linha-peca__pe {
+  display: flex; gap: var(--s3); flex-wrap: wrap;
+  font-size: var(--t-micro); color: var(--ink-3);
+}
+
+/* ══ modal ═══════════════════════════════════════════════════════════════ */
+
+/* Sem fechar no clique de fora nem no Escape: a campanha esta parada num canal
+   esperando a resposta, e fechar sem responder deixaria tudo travado ate o
+   tempo limite. As duas saidas sao os dois botoes. */
+.veu {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  background: oklch(0.12 0.01 250 / 0.72);
+  backdrop-filter: blur(3px);
+  display: grid; place-items: center;
+  padding: var(--s4);
+}
+.modal {
+  width: min(100%, 480px);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: var(--s5);
+  display: grid; gap: var(--s4);
+  box-shadow: 0 24px 64px oklch(0 0 0 / 0.45);
+  max-height: 88dvh; overflow-y: auto;
+}
+.modal__campo { display: grid; gap: 3px; }
+.modal__campo p { color: var(--ink); }
+
+.vaga__nota {
+  font-size: var(--t-micro); color: var(--ink-3);
+  line-height: 1.45; max-width: 30ch; margin-top: 2px;
+}
+.vaga__modelo { display: inline-flex; align-items: center; gap: 6px; }
+
+/* A skill embutida nao tem interruptor nem lixeira: mostrar controle que nao
+   funciona e pior que nao mostrar. A borda de acao a distingue das que a
+   pessoa escreveu, sem precisar de rotulo extra. */
+.skill--embutida {
+  background: var(--sunken);
+  border-left: 2px solid var(--act);
+  border-radius: var(--r-sm) var(--r-md) var(--r-md) var(--r-sm);
+}
+.skill--embutida .skill__nome { color: var(--ink); font-weight: 560; }
+
+/* "opcional" ao lado do cargo: minusculo e sem cor de acao, porque e uma
+   ressalva e nao um destaque. */
+.vaga__opcional {
+  font-style: normal; font-size: var(--t-micro);
+  color: var(--ink-3); margin-left: 6px;
+  padding: 1px 6px; border-radius: var(--r-pill);
+  background: var(--sunken);
+}
+
+/* A rede colada ao botao de coletar: sem ela, clicar coletava de uma rede que
+   a pessoa nao escolheu. */
+.coleta { display: flex; align-items: center; gap: var(--s2); }
+.coleta > *:first-child { min-width: 132px; }
+
+/* ══ historico: uma execucao ═════════════════════════════════════════════ */
+
+/* O objetivo e o titulo, nao a data: e por ele que a pessoa reconhece a
+   campanha. Cortado numa linha, porque objetivo longo empurraria os selos de
+   estado para fora da vista. */
+.run__titulo {
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.run__meta {
+  display: flex; gap: var(--s3); flex-wrap: wrap;
+  font-size: var(--t-micro); color: var(--ink-3);
+  margin-top: calc(var(--s3) * -1);
+}
+
+/* Grade de pecas: a arte manda, entao a coluna nunca fica mais estreita que
+   uma imagem quadrada legivel. */
+.galeria {
+  display: grid; gap: var(--s4);
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+}

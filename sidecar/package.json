@@ -1,0 +1,13 @@
+{
+  "name": "postly-sidecar",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Sidecar Playwright: o unico processo do sistema que abre navegador",
+  "scripts": {
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
