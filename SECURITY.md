@@ -35,6 +35,17 @@ com uma chave de API paga. Interessa especialmente:
   máquina, com o seu contexto, e a saída passa por auditoria de outro cargo
   antes de virar publicação.
 
+## Alerta conhecido, sem correção disponível
+
+`RUSTSEC` reporta unsoundness nos `Iterator` de `glib::VariantStrIter` em
+versões abaixo da 0.20. O projeto usa `glib` 0.18.5, e não por escolha: ele
+entra por `tauri → muda → gtk → atk → glib`, e o Tauri 2.11.5 — a versão mais
+recente — fixa `gtk` 0.18, que fixa `glib` 0.18. Não há como subir sem que o
+Tauri suba primeiro.
+
+O alerta fica aberto de propósito, para fechar sozinho quando a atualização
+chegar. Nenhuma rota deste projeto chama `VariantStrIter`.
+
 ## Versões
 
 O projeto está em 0.x. Correção de segurança sai na versão seguinte; não há
