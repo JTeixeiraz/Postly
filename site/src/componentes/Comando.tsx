@@ -1,33 +1,29 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { useIdioma } from "../i18n";
 
 const REPO = "JTeixeiraz/Postly";
 
-interface Sistema {
-  id: string;
-  nome: string;
-  comando: string;
-  nota: string;
-}
+/** O nome do sistema e o comando não são texto de página: "Linux" se escreve
+ *  igual nos dois idiomas, e um comando traduzido deixa de colar no
+ *  terminal. Só a nota abaixo dele muda. */
+type Slug = "linux" | "macos" | "windows";
 
-const SISTEMAS: Sistema[] = [
+const SISTEMAS: { id: Slug; nome: string; comando: string }[] = [
   {
     id: "linux",
     nome: "Linux",
     comando: `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/scripts/instalar.sh | bash`,
-    nota: "Instala um AppImage em ~/.local/bin. Roda em qualquer distro e não pede root.",
   },
   {
     id: "macos",
     nome: "macOS",
     comando: `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/scripts/instalar.sh | bash`,
-    nota: "O mesmo comando. Na primeira abertura, clique com o botão direito no app e escolha Abrir.",
   },
   {
     id: "windows",
     nome: "Windows",
     comando: `winget install --id JTeixeiraz.Postly`,
-    nota: "Ainda não publicado no winget: por enquanto baixe o .msi na página de releases.",
   },
 ];
 
@@ -40,7 +36,8 @@ const SISTEMAS: Sistema[] = [
  *  visitante em contexto não seguro (um `file://`, uma prévia local) clicaria
  *  no botão e nada aconteceria, sem erro nenhum. */
 export default function Comando({ compacto = false }: { compacto?: boolean }) {
-  const [sistema, setSistema] = useState<Sistema>(SISTEMAS[0]);
+  const { d } = useIdioma();
+  const [sistema, setSistema] = useState(SISTEMAS[0]);
   const [copiado, setCopiado] = useState(false);
 
   const copiar = async () => {
@@ -66,7 +63,7 @@ export default function Comando({ compacto = false }: { compacto?: boolean }) {
 
   return (
     <div className="comando" data-compacto={compacto}>
-      <div className="comando__abas" role="tablist" aria-label="Sistema operacional">
+      <div className="comando__abas" role="tablist" aria-label={d.comando.rotulo}>
         {SISTEMAS.map((s) => (
           <button
             key={s.id}
@@ -105,13 +102,13 @@ export default function Comando({ compacto = false }: { compacto?: boolean }) {
               exit={{ opacity: 0, y: -5 }}
               transition={{ duration: 0.16 }}
             >
-              {copiado ? "copiado" : "copiar"}
+              {copiado ? d.comando.copiado : d.comando.copiar}
             </motion.span>
           </AnimatePresence>
         </button>
       </div>
 
-      <p className="comando__nota">{sistema.nota}</p>
+      <p className="comando__nota">{d.comando.notas[sistema.id]}</p>
     </div>
   );
 }

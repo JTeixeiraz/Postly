@@ -1,13 +1,14 @@
 import { type ReactNode } from "react";
 import { motion } from "motion/react";
 import { IconChip, IconLayers, IconRelay, IconGraph } from "../app/Icons";
+import { useIdioma } from "../i18n";
 
 export type Aba = "modelos" | "campanha" | "cerebro";
 
-const ABAS: { id: Aba; rotulo: string; icone: typeof IconChip }[] = [
-  { id: "modelos", rotulo: "Modelos", icone: IconLayers },
-  { id: "campanha", rotulo: "Campanha", icone: IconRelay },
-  { id: "cerebro", rotulo: "Cérebro", icone: IconGraph },
+const ABAS: { id: Aba; icone: typeof IconChip }[] = [
+  { id: "modelos", icone: IconLayers },
+  { id: "campanha", icone: IconRelay },
+  { id: "cerebro", icone: IconGraph },
 ];
 
 /** A janela do aplicativo, viva.
@@ -25,6 +26,7 @@ export default function Janela({
   onAba: (a: Aba) => void;
   children: ReactNode;
 }) {
+  const { idioma, trocar, d } = useIdioma();
   return (
     <div className="janela">
       <div className="vitrine">
@@ -38,7 +40,7 @@ export default function Janela({
             </div>
 
             <nav className="abas">
-              {ABAS.map(({ id, rotulo, icone: Icone }) => (
+              {ABAS.map(({ id, icone: Icone }) => (
                 <button
                   key={id}
                   className="aba"
@@ -53,7 +55,7 @@ export default function Janela({
                     />
                   )}
                   <Icone size={14} />
-                  <span>{rotulo}</span>
+                  <span>{d.vitrine.abas[id]}</span>
                 </button>
               ))}
             </nav>
@@ -63,11 +65,18 @@ export default function Janela({
                 <div className="meter" style={{ width: 52 }}>
                   <div className="meter__fill" style={{ width: "34%" }} />
                 </div>
-                <span className="ram-topo__txt num">21,5 GB livre</span>
+                <span className="ram-topo__txt num">{d.vitrine.ram}</span>
               </div>
+              {/* Era decoração: dois botões sem efeito. Agora troca o idioma
+                  da página inteira, então a vitrine demonstra também este
+                  recurso do aplicativo em vez de fingi-lo. */}
               <div className="lang">
-                <button aria-pressed="true">PT</button>
-                <button aria-pressed="false">EN</button>
+                <button aria-pressed={idioma === "pt"} onClick={() => trocar("pt")}>
+                  PT
+                </button>
+                <button aria-pressed={idioma === "en"} onClick={() => trocar("en")}>
+                  EN
+                </button>
               </div>
             </div>
           </header>

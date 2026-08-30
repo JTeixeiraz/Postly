@@ -80,7 +80,14 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+/* `scroll-padding-top` porque o cabeçalho é sticky: sem ele toda âncora
+   — #como, #telas, #claude — para com o título escondido atrás da barra, e
+   quem clica no menu acha que caiu no lugar errado. O valor é a altura da
+   barra mais um respiro. */
+html {
+  scroll-behavior: smooth; -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--s4) * 2 + 42px + var(--s4));
+}
 
 body {
   margin: 0;

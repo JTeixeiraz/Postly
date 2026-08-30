@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from "motion/react";
+import { useIdioma } from "../i18n";
 
 export interface Posta {
   cargo: string;
@@ -16,11 +17,12 @@ export interface Posta {
  *  motion, todas aparecem acesas de uma vez: o estado final é o correto, então
  *  a página nunca fica pela metade. */
 export default function Trilha({ postas }: { postas: Posta[] }) {
+  const { d } = useIdioma();
   const parado = useReducedMotion();
   const passo = 0.55;
 
   return (
-    <div className="trilha" role="img" aria-label={`Percurso: ${postas.map((p) => p.cargo).join(", então ")}`}>
+    <div className="trilha" role="img" aria-label={d.trilhaRotulo(postas.map((p) => p.cargo).join(d.trilhaEntao))}>
       <div className="trilha__fio" aria-hidden />
       <motion.div
         className="trilha__aceso"

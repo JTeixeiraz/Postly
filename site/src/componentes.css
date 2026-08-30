@@ -494,3 +494,78 @@
   .cabecalho__nav a { padding-block: 11px; }
   .cabecalho__marca { padding-block: 8px; }
 }
+
+/* ══ seletor de idioma ═══════════════════════════════════════════════════ */
+
+/* A mesma forma do seletor que existe dentro do aplicativo: dois botões num
+   trilho, o ativo em relevo. Quem já usou o Postly reconhece o controle. */
+.lingua {
+  display: flex; flex: none; gap: 2px;
+  background: var(--fora-2); border: 1px solid var(--fora-linha);
+  border-radius: var(--r-pill); padding: 3px;
+}
+.lingua__op {
+  border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: var(--t-micro); font-weight: 600; letter-spacing: 0.02em;
+  color: var(--fora-ink-3);
+  padding: 6px 11px; border-radius: var(--r-pill);
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.lingua__op:hover { color: var(--fora-ink); }
+.lingua__op[aria-pressed="true"] {
+  background: var(--fora); color: var(--fora-ink);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.08);
+}
+
+/* ══ Claude Code ═════════════════════════════════════════════════════════ */
+
+/* O coral da marca da Anthropic, não o lime do Postly: a seção fala de um
+   sistema de fora, e pintá-la com o acento da casa sugeriria que é parte
+   dele. O tom sobre papel é escurecido para dar 4,6:1 contra o branco — o
+   coral da marca, no valor original, não se lê como texto. */
+.pilula--claude {
+  border-color: oklch(0.640 0.130 42 / 0.32);
+  background: oklch(0.700 0.150 42 / 0.13);
+  color: oklch(0.520 0.135 42);
+  justify-self: start;
+}
+.pilula--claude svg { color: oklch(0.560 0.150 42); }
+
+.claude__grade {
+  display: grid; gap: var(--s5);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-bottom: var(--s5);
+}
+.claude__item { display: grid; gap: 10px; align-content: start; }
+/* A nota fala do painel inteiro, não da primeira coluna. Sem o traço ela cai
+   sob o primeiro cartão e é lida como continuação dele — que é justamente o
+   cartão errado, porque o assunto dela é a assinatura, o segundo. */
+.claude .nota-medida {
+  border-top: 1px solid var(--line-soft);
+  padding-top: var(--s4); margin-top: var(--s4); max-width: 84ch;
+}
+.claude__item h3 { font-size: var(--t-body); color: var(--ink); }
+.claude__item p { font-size: var(--t-sm); color: var(--ink-3); line-height: 1.6; }
+/* O glifo dentro do cartão escuro usa o coral cheio: ali ele tem contraste de
+   sobra e é o único ponto de cor que não é o lime da casa. */
+.claude__marca {
+  display: grid; place-items: center;
+  width: 34px; height: 34px; border-radius: var(--r-md);
+  background: oklch(0.700 0.150 42 / 0.16);
+  color: oklch(0.780 0.150 42);
+}
+
+/* Marca de terceiro pede a ressalva à vista, não escondida no rodapé. */
+.ressalva {
+  margin-top: var(--s4);
+  font-size: var(--t-micro); color: var(--fora-ink-3); line-height: 1.6;
+  max-width: 68ch;
+}
+
+@media (max-width: 900px) {
+  /* Num cabeçalho estreito o seletor divide a linha com a marca, e a
+     navegação passa para baixo dos dois. */
+  .cabecalho { flex-wrap: wrap; row-gap: var(--s3); }
+  .cabecalho__nav { order: 3; width: 100%; margin-left: 0; justify-content: center; }
+  .lingua { margin-left: auto; }
+}

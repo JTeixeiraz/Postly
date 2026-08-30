@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { useIdioma } from "../i18n";
 
 /** O vídeo de apresentação, carregado sob demanda.
  *
@@ -11,6 +12,7 @@ import { AnimatePresence, motion } from "motion/react";
  *  Depois de iniciado ele vira um player nativo — controles próprios seriam
  *  mais um sistema para manter, e o do navegador já é acessível e conhecido. */
 export default function Apresentacao() {
+  const { d } = useIdioma();
   const [tocando, setTocando] = useState(false);
   const ref = useRef<HTMLVideoElement>(null);
 
@@ -37,7 +39,7 @@ export default function Apresentacao() {
               key="capa"
               className="video__capa"
               onClick={() => setTocando(true)}
-              aria-label="Assistir à apresentação narrada, de 48 segundos"
+              aria-label={d.video.assistir}
               initial={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
@@ -48,7 +50,7 @@ export default function Apresentacao() {
                   <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
                 </svg>
               </span>
-              <span className="video__duracao">48 s</span>
+              <span className="video__duracao">{d.video.duracao}</span>
             </motion.button>
           )}
         </AnimatePresence>

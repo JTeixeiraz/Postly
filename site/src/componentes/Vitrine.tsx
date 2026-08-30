@@ -2,12 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import Janela, { type Aba } from "../vitrine/Janela";
 import { TelaCampanha, TelaCerebro, TelaModelos } from "../vitrine/Telas";
-
-const LEGENDA: Record<Aba, string> = {
-  modelos: "O catálogo ranqueia por velocidade medida, não por tamanho de arquivo. Baixar e remover acontecem daqui.",
-  campanha: "A trilha mostra onde o despacho está. Cada turno leva minutos, então dá para sair e voltar.",
-  cerebro: "Arraste os nodes. A vizinhança à direita é exatamente o que um agente recebe ao consultar.",
-};
+import { useIdioma } from "../i18n";
 
 /** O aplicativo rodando dentro da página.
  *
@@ -15,6 +10,7 @@ const LEGENDA: Record<Aba, string> = {
  *  canvas com a física de forças que roda no produto. Um print mostraria a
  *  mesma tela parada, e o que este produto faz é justamente se mover. */
 export default function Vitrine() {
+  const { d } = useIdioma();
   const [aba, setAba] = useState<Aba>("modelos");
   // O turno em que a trilha está, para a campanha não ficar num quadro morto.
   const [turno, setTurno] = useState(1);
@@ -38,10 +34,10 @@ export default function Vitrine() {
       </Janela>
 
       <div className="vitrine-bloco__pe">
-        <p className="vitrine-bloco__legenda">{LEGENDA[aba]}</p>
+        <p className="vitrine-bloco__legenda">{d.telas.legendas[aba]}</p>
         {aba === "campanha" && (
           <button className="acao acao--fantasma" onClick={() => setTurno((t) => (t + 1) % 5)}>
-            Avançar o turno
+            {d.telas.avancar}
           </button>
         )}
       </div>

@@ -21,71 +21,63 @@ export const MODELOS: ModeloCatalogo[] = [
     params_b: 30, active_params_b: 3, moe: true,
     weights_bytes: 19_000_000_000, footprint_bytes: 20_100_000_000,
     estimated_tps: 5.7, installed: true,
-    notes: "Só os especialistas ativos passam pela CPU — por isso é o mais rápido aqui.",
   }),
   modelo({
     tag: "gpt-oss:20b", family: "OpenAI", label: "GPT-OSS 20B (MoE)",
     params_b: 20, active_params_b: 3.6, moe: true,
     weights_bytes: 14_000_000_000, footprint_bytes: 15_400_000_000,
     estimated_tps: 4.9,
-    notes: "Raciocínio forte com pegada modesta. Bom para o cargo que decide.",
   }),
   modelo({
     tag: "llama3.3:70b", family: "Meta", label: "Llama 3.3 70B",
     params_b: 70, active_params_b: 70,
     weights_bytes: 43_000_000_000, footprint_bytes: 45_200_000_000,
     estimated_tps: 0.3, supported: false, fits_now: false,
-    reason: "Não cabe: precisa de 45,2 GB e há 21,5 GB livres.",
-    notes: "Denso e caro. Só faz sentido com muita VRAM.",
   }),
   modelo({
     tag: "gemma3:4b", family: "Google", label: "Gemma 3 4B",
     params_b: 4, active_params_b: 4, tier: "baixo",
     weights_bytes: 3_300_000_000, footprint_bytes: 3_900_000_000,
     estimated_tps: 12.4, installed: true, vision: true,
-    notes: "Cumpre briefing pronto sem inventar. Enxerga imagem.",
   }),
   modelo({
     tag: "deepseek-r1:14b", family: "DeepSeek", label: "DeepSeek R1 14B",
     params_b: 14, active_params_b: 14, tier: "medio",
     weights_bytes: 9_000_000_000, footprint_bytes: 9_800_000_000,
     estimated_tps: 1.1,
-    notes: "Pensa antes de responder. Serve bem ao auditor.",
   }),
   modelo({
     tag: "mistral-small:24b", family: "Mistral", label: "Mistral Small 24B",
     params_b: 24, active_params_b: 24, tier: "medio",
     weights_bytes: 14_000_000_000, footprint_bytes: 15_100_000_000,
     estimated_tps: 0.7, fits_now: false,
-    notes: "Cabe no disco, mas não na memória livre agora.",
   }),
   modelo({
     tag: "phi-4:14b", family: "Microsoft", label: "Phi-4 14B",
     params_b: 14, active_params_b: 14, tier: "medio",
     weights_bytes: 9_100_000_000, footprint_bytes: 9_900_000_000,
     estimated_tps: 1.2,
-    notes: "Pequeno e obediente. Bom custo por token.",
   }),
   modelo({
     tag: "granite3.3:8b", family: "IBM", label: "Granite 3.3 8B",
     params_b: 8, active_params_b: 8, tier: "baixo",
     weights_bytes: 4_900_000_000, footprint_bytes: 5_500_000_000,
     estimated_tps: 3.8,
-    notes: "Licença permissiva e saída previsível.",
   }),
 ];
 
-/** Os quatro cargos, na ordem em que o despacho passa. */
-export const POSTAS = [
-  { cargo: "Diretor Geral", modelo: "qwen3:30b-a3b", nivel: "alto", nota: "decide a linha" },
-  { cargo: "Gerente de Setor", modelo: "qwen3:30b-a3b", nivel: "alto", nota: "Instagram" },
-  { cargo: "Criador de Conteúdo", modelo: "gemma3:4b", nivel: "baixo", nota: "executa o briefing" },
-  { cargo: "Auditor", modelo: "deepseek-r1:14b", nivel: "médio", nota: "julga a peça" },
+/** Os quatro cargos, na ordem em que o despacho passa. O cargo e a nota vêm
+ *  do dicionário; a etiqueta do modelo, não — ela é a mesma em toda língua. */
+export const MODELOS_DAS_POSTAS = [
+  "qwen3:30b-a3b",
+  "qwen3:30b-a3b",
+  "gemma3:4b",
+  "deepseek-r1:14b",
 ];
 
 /** Um cérebro depois de algumas campanhas: os pesos não são redondos porque
  *  nasceram de reforço e decaimento, não de alguém digitando. */
-export const GRAFO: GrafoCerebro = {
+const GRAFO_BASE: GrafoCerebro = {
   schema_version: 1,
   updated_at: Date.now(),
   nodes: Object.fromEntries(
@@ -112,3 +104,27 @@ export const GRAFO: GrafoCerebro = {
     { from: "tom_de_voz", to: "linkedin", type: "ajusta", weight: 0.46, uses: 3, last_used: 0 },
   ],
 };
+
+/** O mesmo grafo com os nomes no idioma da página.
+ *
+ *  O canvas desenha o próprio id do node — não há campo de rótulo separado —
+ *  então traduzir aqui é o que faz o Cérebro falar a língua de quem lê. Os
+ *  pesos e a topologia não mudam: só os nomes. */
+export function grafoDe(
+  nomes: Record<string, string>,
+  relacoes: Record<string, string>
+): GrafoCerebro {
+  const n = (id: string) => nomes[id] ?? id;
+  return {
+    ...GRAFO_BASE,
+    nodes: Object.fromEntries(
+      Object.entries(GRAFO_BASE.nodes).map(([id, no]) => [n(id), no])
+    ),
+    edges: GRAFO_BASE.edges.map((e) => ({
+      ...e,
+      from: n(e.from),
+      to: n(e.to),
+      type: relacoes[e.type] ?? e.type,
+    })),
+  };
+}
