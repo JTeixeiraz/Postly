@@ -97,14 +97,101 @@ pub struct TurnoClaude {
     pub custo_usd: f64,
 }
 
+/// Onde esta o `claude` desta maquina.
+///
+/// PROCURAR SO NO PATH NAO BASTA, e isto foi medido: o instalador oficial poe
+/// o binario em `~/.local/bin`, que entra no PATH pelo perfil do shell
+/// (`.zshrc`, `.profile`). Um aplicativo aberto pelo icone do menu recebe o
+/// ambiente da sessao grafica, que nao le esses arquivos — e o PATH dele nao
+/// tem `~/.local/bin`. O resultado seria a tela dizer "nao encontrado" para
+/// quem tem o Claude Code instalado e funcionando, e so funcionar para quem
+/// abrisse o app de um terminal.
+///
+/// Entao a busca tem tres degraus, do mais barato ao mais caro:
+///
+///   1. o PATH do processo             — resolve quando veio de um terminal
+///   2. o shell de LOGIN da pessoa     — carrega o perfil, acha o resto
+///   3. os caminhos conhecidos         — rede final, se o shell falhar
+///
+/// O sucesso e memorizado: um binario que apareceu nao some, e rodar um shell
+/// de login a cada turno custaria mais que o turno. A falha nao e memorizada,
+/// porque a pessoa pode instalar o Claude Code com o app aberto.
+static ENCONTRADO: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+
+pub fn localizar() -> Option<std::path::PathBuf> {
+    if let Some(p) = ENCONTRADO.get() {
+        return Some(p.clone());
+    }
+    let achado = no_path()
+        .or_else(perguntar_ao_shell)
+        .or_else(nos_lugares_conhecidos)?;
+    let _ = ENCONTRADO.set(achado.clone());
+    Some(achado)
+}
+
+fn no_path() -> Option<std::path::PathBuf> {
+    crate::platform::current().which("claude")
+}
+
+/// Pergunta ao shell de login onde esta o `claude`.
+///
+/// `-l` e o que importa: faz o shell ler o perfil do usuario, que e onde o
+/// PATH completo e montado. Sem ele, o shell herda o mesmo ambiente pobre do
+/// processo e a pergunta nao acrescenta nada.
+///
+/// Nao existe no Windows, onde nao ha shell de login com perfil equivalente —
+/// la o degrau 3 faz o trabalho.
+fn perguntar_ao_shell() -> Option<std::path::PathBuf> {
+    if crate::platform::current().id() == crate::platform::Platform::Windows {
+        return None;
+    }
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
+    let saida = std::process::Command::new(&shell)
+        .args(["-lc", "command -v claude"])
+        .output()
+        .ok()?;
+    if !saida.status.success() {
+        return None;
+    }
+    let caminho = String::from_utf8_lossy(&saida.stdout).trim().to_string();
+    let p = std::path::PathBuf::from(caminho);
+    p.is_file().then_some(p)
+}
+
+/// Onde os instaladores costumam deixar o binario.
+///
+/// Vale como rede final: um shell configurado de forma incomum pode nao
+/// responder, e o caminho continua existindo.
+fn nos_lugares_conhecidos() -> Option<std::path::PathBuf> {
+    let casa = dirs::home_dir()?;
+    let candidatos: Vec<std::path::PathBuf> =
+        if crate::platform::current().id() == crate::platform::Platform::Windows {
+            vec![
+                casa.join("AppData/Roaming/npm/claude.cmd"),
+                casa.join("AppData/Local/Programs/claude/claude.exe"),
+                casa.join(".local/bin/claude.exe"),
+            ]
+        } else {
+            vec![
+                casa.join(".local/bin/claude"),
+                casa.join(".claude/local/claude"),
+                casa.join(".bun/bin/claude"),
+                casa.join(".npm-global/bin/claude"),
+                std::path::PathBuf::from("/usr/local/bin/claude"),
+                std::path::PathBuf::from("/opt/homebrew/bin/claude"),
+            ]
+        };
+    candidatos.into_iter().find(|p| p.is_file())
+}
+
 /// Esta maquina tem o Claude Code instalado e autenticado?
 pub fn disponivel() -> bool {
-    crate::platform::current().which("claude").is_some()
+    localizar().is_some()
 }
 
 /// Versao do CLI, quando ele responde.
 pub async fn versao() -> Option<String> {
-    let saida = Command::new("claude")
+    let saida = Command::new(localizar()?)
         .arg("--version")
         .output()
         .await
@@ -123,14 +210,14 @@ pub async fn turno(
     prompt: &str,
     timeout_s: u64,
 ) -> Result<TurnoClaude, String> {
-    if !disponivel() {
+    let Some(binario) = localizar() else {
         return Err(crate::idioma::msg(
-            "Claude Code nao encontrado no PATH. Instale em claude.com/code ou volte para o Ollama.",
-            "Claude Code was not found on PATH. Install it from claude.com/code or switch back to Ollama.",
+            "Claude Code nao encontrado nesta maquina. Instale em claude.com/code ou volte para o Ollama.",
+            "Claude Code was not found on this machine. Install it from claude.com/code or switch back to Ollama.",
         ));
-    }
+    };
 
-    let mut filho = Command::new("claude");
+    let mut filho = Command::new(binario);
     for v in CREDENCIAIS_DE_FORA {
         filho.env_remove(v);
     }

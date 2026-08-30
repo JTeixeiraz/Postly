@@ -182,8 +182,8 @@ pub async fn status_provedor() -> StatusProvedor {
 pub fn definir_provedor(provedor: crate::prefs::Provedor) -> Result<crate::prefs::Prefs, String> {
     if provedor == crate::prefs::Provedor::ClaudeCode && !crate::claude::disponivel() {
         return Err(crate::idioma::msg(
-            "Claude Code nao encontrado no PATH.",
-            "Claude Code was not found on PATH.",
+            "Claude Code nao encontrado nesta maquina. Instale em claude.com/code.",
+            "Claude Code was not found on this machine. Install it from claude.com/code.",
         ));
     }
     let mut p = crate::prefs::load();

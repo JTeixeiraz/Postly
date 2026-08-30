@@ -39,11 +39,18 @@ export default function Provedor({
     setErro(null);
     try {
       await api.definirProvedor(p);
+    } catch (e) {
+      setErro(String(e));
+    }
+    // O status é relido mesmo quando a troca falha: o clique também vale como
+    // "procura de novo", e quem acabou de instalar o Claude Code precisa ver a
+    // tela mudar de ideia sem reabrir o aplicativo.
+    try {
       const novo = await api.statusProvedor();
       setStatus(novo);
       onTrocar?.(novo);
-    } catch (e) {
-      setErro(String(e));
+    } catch {
+      // Status indisponível não apaga o erro da troca, que é o que importa.
     }
   };
 
@@ -52,7 +59,6 @@ export default function Provedor({
     titulo: string;
     porque: string;
     nota?: string;
-    bloqueado?: boolean;
   }[] = [
     { id: "ollama", titulo: d.provider.ollama, porque: d.provider.ollamaWhy },
     {
@@ -61,8 +67,11 @@ export default function Provedor({
       porque: d.provider.claudeWhy,
       nota: status.claude_disponivel
         ? f(d.provider.claudeFound, { v: status.claude_versao ?? "?" })
-        : d.provider.claudeMissing,
-      bloqueado: !status.claude_disponivel,
+        : `${d.provider.claudeMissing} ${d.provider.claudeProcurar}`,
+      // De propósito SEM `disabled`. Um botão desabilitado não responde ao
+      // clique, e a pessoa que acabou de instalar o Claude Code ficaria
+      // batendo nele sem entender. Clicável, ele reconsulta — e a busca não
+      // memoriza a falha justamente para esse caso.
     },
   ];
 
@@ -79,7 +88,6 @@ export default function Provedor({
             className="choice"
             data-on={status.provedor === o.id}
             aria-pressed={status.provedor === o.id}
-            disabled={o.bloqueado}
             onClick={() => void escolher(o.id)}
           >
             <span className="choice__marca" aria-hidden />
@@ -87,7 +95,10 @@ export default function Provedor({
               <span className="choice__title">{o.titulo}</span>
               <div className="hint">{o.porque}</div>
               {o.nota && (
-                <div className="hint" data-alerta={o.bloqueado}>
+                <div
+                  className="hint"
+                  data-alerta={o.id === "claude_code" && !status.claude_disponivel}
+                >
                   {o.nota}
                 </div>
               )}
