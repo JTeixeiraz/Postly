@@ -6,33 +6,51 @@
   position: sticky; top: 0; z-index: var(--z-topo);
   display: flex; align-items: center; gap: var(--s5);
   padding: var(--s4) clamp(20px, 5vw, 56px);
-  background: oklch(0.190 0.006 250 / 0.82);
+  /* Papel translúcido, como a moldura do aplicativo. */
+  background: oklch(0.995 0 0 / 0.86);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
   transition: border-color var(--mid) var(--ease);
 }
 /* A borda só aparece quando há conteúdo passando por baixo. Sem isto ela
    desenha uma linha solta contra o topo da página parada. */
-.cabecalho:not(:first-child) { border-bottom-color: var(--line-soft); }
+.cabecalho:not(:first-child) { border-bottom-color: var(--fora-linha); }
 
 .cabecalho__marca {
-  display: inline-flex; align-items: center; gap: 9px;
-  color: var(--act); text-decoration: none;
-  font-weight: 640; letter-spacing: -0.025em; font-size: 17px;
+  display: flex; align-items: center; gap: 9px;
+  color: var(--fora-ink); text-decoration: none; flex: none;
 }
-.cabecalho__marca span { color: var(--ink); }
+.cabecalho__marca span {
+  color: var(--fora-ink);
+  font-size: 17px; font-weight: 640; letter-spacing: -0.026em;
+}
 
-.cabecalho__nav { margin-left: auto; display: flex; align-items: center; gap: var(--s5); }
-.cabecalho__nav a {
-  font-size: var(--t-sm); color: var(--ink-2); text-decoration: none;
-  transition: color var(--fast) var(--ease);
+/* A navegação é uma pílula, como as abas do aplicativo: mesma forma, mesma
+   altura, mesmo lugar na tela. Quem clicar em instalar vai reconhecer. */
+.cabecalho__nav {
+  margin-left: auto; display: flex; align-items: center; gap: 2px;
+  background: var(--fora-2); border-radius: var(--r-pill); padding: 4px;
 }
-.cabecalho__nav a:hover { color: var(--ink); }
-.cabecalho__nav .acao { font-size: var(--t-sm); padding: 9px 17px; }
+.cabecalho__nav a {
+  color: var(--fora-ink-2); text-decoration: none;
+  font-size: var(--t-sm); font-weight: 500;
+  padding: 8px 15px; border-radius: var(--r-pill);
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.cabecalho__nav a:hover { color: var(--fora-ink); background: oklch(0.995 0 0); }
+/* O último item sai da pílula: ele é ação, não navegação. */
+.cabecalho__nav .acao {
+  margin-left: var(--s2); font-size: var(--t-sm); padding: 9px 18px;
+  background: var(--act); border-color: var(--act); color: var(--act-ink); font-weight: 600;
+}
+.cabecalho__nav .acao:hover { background: oklch(0.920 0.200 124); border-color: oklch(0.920 0.200 124); }
 
 @media (max-width: 720px) {
   /* Numa tela estreita sobra o essencial: a marca e o caminho para instalar. */
+  .cabecalho { gap: var(--s3); }
   .cabecalho__nav a:not(.acao):not([href="#instalacao"]) { display: none; }
+  .cabecalho__nav a { padding-block: 11px; }
+  .cabecalho__marca { padding-block: 8px; }
 }
 
 /* ══ abertura ════════════════════════════════════════════════════════════ */
@@ -139,7 +157,7 @@
 }
 .comando__copiar:hover { background: var(--act); color: var(--act-ink); }
 
-.comando__nota { font-size: var(--t-sm); color: var(--ink-3); max-width: 62ch; }
+.comando__nota { font-size: var(--t-sm); color: var(--fora-ink-3); max-width: 62ch; }
 .comando[data-compacto="true"] .comando__nota { display: none; }
 
 /* ══ prosa ═══════════════════════════════════════════════════════════════ */
@@ -148,7 +166,7 @@
 .prosa p { font-size: var(--t-body); }
 
 .nota-medida {
-  margin-top: var(--s5); font-size: var(--t-sm); color: var(--ink-3);
+  margin-top: var(--s5); font-size: var(--t-sm); color: var(--fora-ink-3);
   max-width: 72ch; line-height: 1.6;
 }
 
@@ -160,16 +178,16 @@
 .passos li {
   display: grid; grid-template-columns: auto 1fr; gap: var(--s5);
   padding: var(--s5) 0;
-  border-top: 1px solid var(--line-soft);
+  border-top: 1px solid var(--fora-linha);
   align-items: start;
 }
-.passos li:last-child { border-bottom: 1px solid var(--line-soft); }
+.passos li:last-child { border-bottom: 1px solid var(--fora-linha); }
 .passos__n {
-  font-size: var(--t-h3); color: var(--act); font-weight: 500;
+  font-size: var(--t-h3); color: var(--act-escuro); font-weight: 500;
   line-height: 1.15; min-width: 2ch;
 }
 .passos h3 { margin-bottom: 7px; }
-.passos p { color: var(--ink-2); max-width: 62ch; }
+.passos p { color: var(--fora-ink-2); max-width: 62ch; }
 
 @media (max-width: 620px) {
   .passos li { gap: var(--s4); }
@@ -264,7 +282,7 @@
   grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
 }
 .requisitos h3 { font-size: var(--t-body); margin-bottom: 6px; }
-.requisitos p { font-size: var(--t-sm); color: var(--ink-3); line-height: 1.55; }
+.requisitos p { font-size: var(--t-sm); color: var(--fora-ink-3); line-height: 1.55; }
 
 /* ══ rodapé ══════════════════════════════════════════════════════════════ */
 
@@ -273,27 +291,31 @@
   display: flex; align-items: center; gap: var(--s5); flex-wrap: wrap;
   padding: var(--s6) clamp(20px, 5vw, 56px);
   max-width: 1240px; margin-inline: auto;
-  border-top: 1px solid var(--line-soft);
+  border-top: 1px solid var(--fora-linha);
 }
 .rodape__marca {
   display: inline-flex; align-items: center; gap: 9px;
-  color: var(--act); font-weight: 620; letter-spacing: -0.02em;
+  color: var(--act-escuro); font-weight: 620; letter-spacing: -0.02em;
 }
-.rodape__marca span { color: var(--ink); }
-.rodape__nota { margin-left: auto; font-size: var(--t-sm); color: var(--ink-3); }
-.rodape__nota a { color: var(--ink-2); text-decoration-color: var(--line); }
-.rodape__nota a:hover { color: var(--act); }
+.rodape__marca span { color: var(--fora-ink); }
+.rodape__nota { margin-left: auto; font-size: var(--t-sm); color: var(--fora-ink-3); }
+.rodape__nota a { color: var(--fora-ink-2); text-decoration-color: var(--fora-linha); }
+.rodape__nota a:hover { color: var(--act-escuro); }
 
 /* ══ vídeo de apresentação ═══════════════════════════════════════════════ */
 
+.video-painel { display: grid; gap: clamp(24px, 3vw, 40px); }
+.video-painel__texto { display: grid; gap: var(--s4); max-width: 62ch; }
+
 .video__moldura {
   position: relative;
-  border: 1px solid var(--line-soft);
   border-radius: var(--r-lg);
   overflow: hidden;
   background: var(--sunken);
-  box-shadow: var(--lift);
   aspect-ratio: 16 / 9;
+  /* Anel claro em vez de borda escura: dentro de um painel escuro, uma borda
+     escura desaparece e o vídeo vira um buraco no cartão. */
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.10);
 }
 .video__quadro { display: block; width: 100%; height: 100%; object-fit: cover; }
 
@@ -302,39 +324,44 @@
   padding: 0; border: 0; background: none; cursor: pointer;
   position: relative;
 }
-/* Véu leve: o pôster é o fecho do vídeo, e o botão precisa vencer o texto
-   que já está desenhado ali dentro. */
+/* Escurecimento por gradiente, não véu chapado: o pôster é uma tela do
+   produto e merece continuar legível — o que precisa vencer é só a região do
+   botão. */
 .video__capa::after {
   content: ""; position: absolute; inset: 0;
-  background: oklch(0.19 0.006 250 / 0.34);
-  transition: background var(--fast) var(--ease);
+  background: radial-gradient(circle at 50% 50%, oklch(0.19 0.006 250 / 0.62) 0, oklch(0.19 0.006 250 / 0.12) 46%, transparent 70%);
+  transition: opacity var(--mid) var(--ease);
 }
-.video__capa:hover::after { background: oklch(0.19 0.006 250 / 0.16); }
+.video__capa:hover::after { opacity: 0.6; }
 
 .video__play {
   position: absolute; inset: 0; margin: auto;
-  width: 66px; height: 66px; z-index: 1;
+  width: clamp(62px, 6vw, 84px); aspect-ratio: 1; z-index: 1;
   display: grid; place-items: center;
   border-radius: 50%;
   background: var(--act); color: var(--act-ink);
   /* O deslocamento compensa o centro óptico do triângulo, que não é o
      geométrico: centralizado no cálculo, ele parece encostado à esquerda. */
-  padding-left: 4px;
-  transition: transform var(--fast) var(--ease);
+  padding-left: 5px;
+  box-shadow: 0 0 0 0 oklch(0.880 0.200 124 / 0.34);
+  transition: transform var(--mid) var(--ease), box-shadow var(--mid) var(--ease);
 }
-.video__capa:hover .video__play { transform: scale(1.06); }
+.video__capa:hover .video__play {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 14px oklch(0.880 0.200 124 / 0.14);
+}
 .video__capa:active .video__play { transform: scale(0.97); }
 
 .video__duracao {
-  position: absolute; right: 14px; bottom: 12px; z-index: 1;
+  position: absolute; right: 16px; bottom: 14px; z-index: 1;
   font-family: var(--mono); font-size: var(--t-micro);
-  padding: 4px 9px; border-radius: var(--r-pill);
-  background: oklch(0.19 0.006 250 / 0.72); color: var(--ink-2);
+  padding: 6px 11px; border-radius: var(--r-pill);
+  background: oklch(0.19 0.006 250 / 0.78); color: var(--ink-2);
   backdrop-filter: blur(6px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .video__capa:hover .video__play { transform: none; }
+  .video__capa:hover .video__play { transform: none; box-shadow: none; }
 }
 
 /* ══ janela do aplicativo, ao vivo ═══════════════════════════════════════ */
@@ -395,32 +422,45 @@
   .vitrine-bloco__pe { position: sticky; left: 0; }
 }
 
-/* ══ herói com fundo ═════════════════════════════════════════════════════ */
+/* ══ herói ═══════════════════════════════════════════════════════════════ */
 
-.heroi { position: relative; overflow: hidden; }
+.heroi { padding-top: clamp(24px, 3vw, 44px); padding-bottom: var(--s8); }
+
+/* O painel do herói é o cartão do aplicativo em tamanho de capa. */
+.heroi__painel {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(40px, 5vw, 84px) clamp(28px, 4vw, 72px) clamp(36px, 4vw, 64px);
+}
 .heroi__fundo {
   position: absolute; inset: 0 0 auto 0;
   pointer-events: none; z-index: 0;
   /* A trama some para baixo e para as bordas: ela é ambiente, e um fundo que
-     disputa com o texto que está por cima deixa de ser fundo. */
+     disputa com o texto por cima deixa de ser fundo. */
   mask-image:
-    linear-gradient(to bottom, #000 0%, #000 42%, transparent 92%),
-    radial-gradient(ellipse 76% 62% at 50% 34%, #000 30%, transparent 78%);
+    linear-gradient(to bottom, #000 0%, #000 46%, transparent 94%),
+    radial-gradient(ellipse 78% 66% at 62% 32%, #000 28%, transparent 76%);
   mask-composite: intersect;
-  opacity: 0.62;
+  opacity: 0.7;
 }
-.heroi .secao__interno { position: relative; z-index: 1; }
+.heroi__interno { position: relative; z-index: 1; display: grid; gap: var(--s7); }
 .trama { display: block; width: 100%; }
 
-/* ══ faixa em curva ══════════════════════════════════════════════════════ */
+/* ══ faixa em curva ═════════════════════════════════════════════════════ */
 
+/* A faixa marca a passagem entre a capa e o argumento. Fica sobre papel, e a
+   altura é a do desenho — travar a altura por fora foi o que cortava as
+   letras em cima e embaixo. */
 .faixa {
-  border-block: 1px solid var(--line-soft);
-  background: var(--card);
+  border-block: 1px solid var(--fora-linha);
+  background: var(--fora-2);
   margin-block: var(--s8);
   overflow: hidden;
+  /* O recorte lateral evita que a primeira e a última repetição apareçam
+     nascendo: a frase entra e sai, não pisca. */
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
-.faixa .texto-loop { margin-block: -2%; }
+.faixa .texto-loop { max-width: 1600px; margin-inline: auto; }
 
 /* ══ o cartão com brilho dentro do fluxo ═════════════════════════════════ */
 
@@ -442,7 +482,7 @@
 }
 .vitrine-bloco__legenda {
   flex: 1; min-width: 260px;
-  color: var(--ink-3); font-size: var(--t-sm); line-height: 1.5; margin: 0;
+  color: var(--fora-ink-3); font-size: var(--t-sm); line-height: 1.5; margin: 0;
 }
 
 /* ══ alvos de toque ══════════════════════════════════════════════════════ */

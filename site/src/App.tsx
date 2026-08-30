@@ -105,11 +105,13 @@ export default function App() {
 
       {/* ── abertura ─────────────────────────────────────────────── */}
       <section className="secao heroi" id="inicio">
+        <div className="secao__interno">
+        <div className="painel heroi__painel">
         {/* A trama roda atrás do conteúdo, não em cima: é ambiente. */}
         <div className="heroi__fundo" aria-hidden>
-          <Trama altura={720} />
+          <Trama altura={760} />
         </div>
-        <div className="secao__interno heroi__interno">
+        <div className="heroi__interno">
         <motion.div
           className="heroi__texto"
           initial={{ opacity: 0, y: 18 }}
@@ -147,6 +149,8 @@ export default function App() {
 
         <Trilha postas={CARGOS} />
         </div>
+        </div>
+        </div>
       </section>
 
       {/* ── faixa ────────────────────────────────────────────────── */}
@@ -157,15 +161,17 @@ export default function App() {
       </div>
 
       {/* ── apresentação ─────────────────────────────────────────── */}
-      <Secao id="video" estreita>
-        <div className="secao__titulo">
-          <h2>Quarenta segundos</h2>
-          <p>
-            O projeto inteiro, do problema ao comando de instalação. Sem narração — dá para
-            assistir com o som desligado.
-          </p>
+      <Secao id="video">
+        <div className="painel video-painel">
+          <div className="video-painel__texto">
+            <h2>Quarenta segundos</h2>
+            <p>
+              O projeto inteiro, do problema ao comando de instalação. Sem narração — dá para
+              assistir com o som desligado.
+            </p>
+          </div>
+          <Apresentacao />
         </div>
-        <Apresentacao />
       </Secao>
 
       {/* ── por que existe ───────────────────────────────────────── */}
@@ -255,6 +261,7 @@ export default function App() {
           </p>
         </div>
 
+        <div className="painel">
         <div className="duelo">
           <div className="duelo__lado">
             <span className="duelo__nome mono">qwen3:14b</span>
@@ -293,6 +300,7 @@ export default function App() {
           ocupa o dobro de memória gera quase dez vezes mais rápido, porque só os especialistas
           ativos passam pela CPU. Otimizar por tamanho de arquivo leva à escolha errada.
         </p>
+        </div>
       </Secao>
 
       {/* ── as telas, ao vivo ────────────────────────────────────── */}
@@ -336,6 +344,7 @@ export default function App() {
           <h2>O que sai da sua máquina</h2>
         </div>
 
+        <div className="painel">
         <div className="fluxo">
           <div className="fluxo__col">
             <span className="fluxo__rotulo">sai</span>
@@ -360,6 +369,7 @@ export default function App() {
           contra backup, sincronização de nuvem e alguém lendo o disco. Não protege contra um
           programa rodando com o seu usuário.
         </p>
+        </div>
       </Secao>
 
       {/* ── instalação ───────────────────────────────────────────── */}

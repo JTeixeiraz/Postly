@@ -1,19 +1,26 @@
 /* Postly — sistema visual do site.
  *
- * Os tokens são os mesmos do aplicativo, não uma reinterpretação: quem clica
- * em instalar precisa reconhecer o que abriu. Identidade preservada vence
- * exploração.
+ * A estrutura é a do aplicativo, não uma releitura dela: papel branco em
+ * volta, e o conteúdo dentro de cartões escuros de canto largo. É como o
+ * Postly abre — a navegação sobre o papel, o painel no cartão. Um site todo
+ * escuro apresentando um produto que abre claro é uma promessa quebrada na
+ * primeira tela.
  *
- * O que muda aqui é a ESCALA. O app é um painel de operação, denso porque a
- * pessoa vai passar horas nele. O site é lido uma vez, rolando: tipografia
- * maior, respiro maior, e uma ideia dominante por dobra.
+ * O que muda em relação ao app é a ESCALA. O app é um painel de operação,
+ * denso porque a pessoa vai passar horas nele. O site é lido uma vez,
+ * rolando: tipografia maior, respiro maior, uma ideia por dobra.
  */
 
-@import "@fontsource-variable/geist/index.css";
-@import "@fontsource-variable/geist-mono/index.css";
-
 :root {
-  /* --- superfície: os três degraus do app --- */
+  /* --- papel: o que fica em volta, exatamente como no app --- */
+  --fora:        oklch(0.995 0 0);
+  --fora-2:      oklch(0.968 0.002 250);
+  --fora-ink:    oklch(0.255 0.010 250);
+  --fora-ink-2:  oklch(0.455 0.008 250);
+  --fora-ink-3:  oklch(0.560 0.008 250);
+  --fora-linha:  oklch(0.905 0.003 250);
+
+  /* --- cartão escuro: os três degraus do app, para o conteúdo --- */
   --bg:        oklch(0.190 0.006 250);
   --card:      oklch(0.238 0.008 250);
   --card-2:    oklch(0.288 0.009 250);
@@ -21,10 +28,14 @@
   --line:      oklch(0.335 0.010 250);
   --line-soft: oklch(0.285 0.008 250);
 
-  /* --- tinta --- */
+  /* --- tinta sobre o cartão escuro --- */
   --ink:   oklch(0.975 0.002 250);
   --ink-2: oklch(0.790 0.006 250);
   --ink-3: oklch(0.659 0.006 250);
+
+  /* --- ação sobre papel: o lime puro tem 0,88 de luminosidade e não se lê
+         sobre branco, então o texto de ação no claro usa a versão profunda --- */
+  --act-escuro: oklch(0.520 0.155 128);
 
   /* --- ação: um acento, um significado --- */
   --act:      oklch(0.880 0.200 124);
@@ -54,6 +65,9 @@
   --s9: clamp(72px, 9vw, 152px);
 
   --r-sm: 7px; --r-md: 11px; --r-lg: 18px; --r-xl: 26px; --r-pill: 999px;
+  /* O canto do cartão grande é o do app: largo o bastante para ler como
+     "painel", não como caixa de formulário. */
+  --r-painel: 24px;
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --fast: 140ms; --mid: 280ms; --slow: 620ms;
@@ -70,18 +84,18 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--ink-2);
+  /* Papel, como o aplicativo. O escuro entra nos cartões. */
+  background: var(--fora);
+  color: var(--fora-ink-2);
   font-family: var(--sans);
   font-size: var(--t-body);
-  /* Texto claro sobre fundo escuro pesa menos e pede mais respiro. */
-  line-height: 1.62;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
 }
 
-h1, h2, h3 { color: var(--ink); margin: 0; text-wrap: balance; }
+h1, h2, h3 { color: var(--fora-ink); margin: 0; text-wrap: balance; }
 h1 { font-size: var(--t-h1); font-weight: 680; letter-spacing: -0.038em; line-height: 0.98; }
 h2 { font-size: var(--t-h2); font-weight: 620; letter-spacing: -0.028em; line-height: 1.08; }
 h3 { font-size: var(--t-h3); font-weight: 580; letter-spacing: -0.018em; line-height: 1.2; }
@@ -90,9 +104,10 @@ p  { margin: 0; text-wrap: pretty; max-width: 68ch; }
 a { color: inherit; }
 img { max-width: 100%; display: block; }
 ::selection { background: var(--act); color: var(--act-ink); }
+::focus-visible { outline-color: var(--act-escuro); }
 
 :focus-visible {
-  outline: 2px solid var(--act);
+  outline: 2px solid var(--act-escuro);
   outline-offset: 3px;
   border-radius: var(--r-sm);
 }
@@ -127,14 +142,14 @@ img { max-width: 100%; display: block; }
 }
 .espinha__fio {
   position: absolute; inset: 0;
-  background: var(--line-soft);
+  background: var(--fora-linha);
   border-radius: var(--r-pill);
 }
 /* Cresce por transform, nunca por height: height reflui a página a cada
    quadro do scroll. */
 .espinha__aceso {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, var(--act), oklch(0.880 0.200 124 / 0.25));
+  background: linear-gradient(180deg, var(--act-escuro), oklch(0.520 0.155 128 / 0.22));
   border-radius: var(--r-pill);
   transform-origin: top;
 }
@@ -172,18 +187,37 @@ img { max-width: 100%; display: block; }
   top: var(--s9);
   width: 14px; height: 14px;
   border-radius: 50%;
-  background: var(--bg);
-  border: 2px solid var(--line);
+  background: var(--fora);
+  border: 2px solid var(--fora-linha);
   z-index: var(--z-conteudo);
   transition: border-color var(--slow) var(--ease), background var(--slow) var(--ease);
 }
-.espinha__posta[data-passou="true"] { border-color: var(--act); background: var(--act); }
+.espinha__posta[data-passou="true"] { border-color: var(--act-escuro); background: var(--act-escuro); }
 @media (max-width: 900px) { .espinha__posta { display: none; } }
 
 .secao__titulo { display: grid; gap: var(--s4); margin-bottom: var(--s6); }
-.secao__titulo p { font-size: var(--t-lead); color: var(--ink-2); max-width: 58ch; }
+.secao__titulo p { font-size: var(--t-lead); color: var(--fora-ink-2); max-width: 58ch; }
 
-/* ══ cartão ══════════════════════════════════════════════════════════════ */
+/* ══ painel ══════════════════════════════════════════════════════════════
+   O cartão escuro de canto largo é a assinatura do aplicativo: papel em volta,
+   painel no meio. Aqui ele carrega o que é denso — demonstração, números,
+   comparação — enquanto o texto corrido fica no papel. A alternância dá o
+   ritmo que uma página toda escura não tem. */
+
+.painel {
+  background: var(--bg);
+  border-radius: var(--r-painel);
+  padding: clamp(24px, 3.4vw, 52px);
+  color: var(--ink-2);
+  box-shadow: 0 1px 3px oklch(0.2 0.01 250 / 0.10), 0 16px 44px oklch(0.2 0.01 250 / 0.13);
+}
+.painel h1, .painel h2, .painel h3 { color: var(--ink); }
+.painel .secao__titulo p, .painel p, .painel li { color: var(--ink-2); }
+.painel .hint, .painel .nota-medida { color: var(--ink-3); }
+/* Dentro do painel a tinta volta à escada do cartão escuro: qualquer coisa
+   que herde a cor do papel some aqui. */
+.painel { color: var(--ink-2); }
+.painel .pilula { border-color: var(--line); color: var(--ink-2); background: var(--card-2); }
 
 .cartao {
   background: var(--card);
@@ -197,22 +231,30 @@ img { max-width: 100%; display: block; }
 .acao {
   display: inline-flex; align-items: center; justify-content: center; gap: 9px;
   padding: 13px 24px; border-radius: var(--r-pill);
-  border: 1px solid var(--line); background: var(--card-2); color: var(--ink);
+  border: 1px solid var(--fora-linha); background: var(--fora); color: var(--fora-ink);
   font: inherit; font-size: var(--t-sm); font-weight: 540;
   text-decoration: none; cursor: pointer; white-space: nowrap;
   transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease),
               transform var(--fast) var(--ease);
 }
-.acao:hover { border-color: var(--ink-3); background: var(--line-soft); }
+.acao:hover { border-color: var(--fora-ink-3); background: var(--fora-2); }
 .acao:active { transform: translateY(1px); }
 
+/* A ação forte é o lime do app: sobre papel ele é a única mancha saturada, e
+   é isso que faz o botão de instalar ser achado sem procurar. */
 .acao--forte {
   background: var(--act); border-color: var(--act); color: var(--act-ink); font-weight: 600;
 }
 .acao--forte:hover { background: oklch(0.920 0.200 124); border-color: oklch(0.920 0.200 124); }
 
-.acao--fantasma { background: none; border-color: transparent; color: var(--ink-2); }
-.acao--fantasma:hover { color: var(--ink); background: var(--card-2); border-color: transparent; }
+.acao--fantasma { background: none; border-color: transparent; color: var(--fora-ink-2); }
+.acao--fantasma:hover { color: var(--fora-ink); background: var(--fora-2); border-color: transparent; }
+
+/* Dentro de um painel escuro os botões voltam à escada de tinta do app. */
+.painel .acao { border-color: var(--line); background: var(--card-2); color: var(--ink); }
+.painel .acao:hover { border-color: var(--ink-3); background: var(--line-soft); }
+.painel .acao--fantasma { background: none; border-color: transparent; color: var(--ink-2); }
+.painel .acao--fantasma:hover { color: var(--ink); background: var(--card-2); }
 
 /* ══ pílula ══════════════════════════════════════════════════════════════ */
 
@@ -220,12 +262,20 @@ img { max-width: 100%; display: block; }
   display: inline-flex; align-items: center; gap: 7px;
   font-size: var(--t-micro); font-weight: 520; line-height: 1;
   padding: 7px 13px; border-radius: var(--r-pill);
-  border: 1px solid var(--line); color: var(--ink-2); background: var(--card-2);
+  border: 1px solid var(--fora-linha); color: var(--fora-ink-2); background: var(--fora-2);
   white-space: nowrap;
 }
-.pilula__ponto { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); flex: none; }
-.pilula[data-tom="acao"] { border-color: transparent; background: var(--act-wash); color: var(--act); }
-.pilula[data-tom="acao"] .pilula__ponto { background: var(--act); }
+.pilula__ponto { width: 6px; height: 6px; border-radius: 50%; background: var(--fora-ink-3); flex: none; }
+/* Sobre papel o lime puro não se lê: o fundo lavado fica, mas a tinta desce
+   para a versão profunda, que dá 4,9:1 contra ele. */
+.pilula[data-tom="acao"] {
+  border-color: oklch(0.520 0.155 128 / 0.28);
+  background: oklch(0.880 0.200 124 / 0.16);
+  color: var(--act-escuro);
+}
+.pilula[data-tom="acao"] .pilula__ponto { background: var(--act-escuro); }
+.painel .pilula[data-tom="acao"] { border-color: transparent; background: var(--act-wash); color: var(--act); }
+.painel .pilula[data-tom="acao"] .pilula__ponto { background: var(--act); }
 
 /* ══ movimento ═══════════════════════════════════════════════════════════
    Sem motion, a página continua legível e completa. Nada aqui depende de

@@ -3,25 +3,34 @@ import { gsap } from "gsap";
 import "./TextLoop.css";
 
 const L = 1200;
-// Altura justa para a onda: um viewBox alto deixa o texto num terço central
-// com vazio em cima e embaixo, e a faixa vira um vão na página.
-const A = 110;
-const CY = A / 2;
+
+/** Altura da caixa de desenho.
+ *
+ *  Duas parcelas: a letra (ascendente, descendente e a folga do acento — a
+ *  frase tem "MÁQUINA") e a onda, que desloca o baseline. Uma Bézier
+ *  quadrática não alcança o próprio ponto de controle, então a onda ocupa
+ *  cerca de metade da amplitude pedida. */
+const alturaDaCaixa = (tamanho: number, amplitude: number) =>
+  Math.ceil(tamanho * 2 + amplitude);
 
 /** Texto correndo por uma curva.
  *
- *  De reactbits.dev, com a onda achatada e a faixa removida: o original desenha
- *  uma fita colorida atrás das letras, e aqui a faixa competiria com o acento
- *  que já marca a ação. Fica só o texto, ondulando entre as seções.
+ *  De reactbits.dev, com a faixa colorida removida — ela competiria com o
+ *  único acento do sistema — e com o laço refeito.
  *
- *  Dois `<textPath>` alternados dão a volta sem emenda: quando o primeiro sai
- *  pela direita, o segundo já entrou pela esquerda. */
+ *  O original alterna dois `<textPath>`, um deles em `startOffset` negativo.
+ *  Fora do intervalo do caminho o navegador não tem curva para seguir e
+ *  projeta as letras onde quiser: aqui elas subiam 25 unidades acima da caixa
+ *  e apareciam decapitadas na borda de cima. Este usa um `<textPath>` só, com
+ *  texto repetido além do necessário e deslocamento sempre positivo, indo da
+ *  largura de uma repetição de volta a zero. O emendo é invisível porque o
+ *  que entra é uma cópia idêntica do que saiu. */
 export default function TextLoop({
   texto = "código aberto",
   separador = "✦",
   velocidade = 46,
-  amplitude = 26,
-  tamanho = 30,
+  amplitude = 34,
+  tamanho = 34,
 }: {
   texto?: string;
   separador?: string;
@@ -29,19 +38,32 @@ export default function TextLoop({
   amplitude?: number;
   tamanho?: number;
 }) {
-  const raizRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const medidaRef = useRef<SVGTextElement>(null);
-  const aRef = useRef<SVGTextPathElement>(null);
-  const bRef = useRef<SVGTextPathElement>(null);
-  const [m, setM] = useState({ comprimento: 0, repeticoes: 1 });
+  const correnteRef = useRef<SVGTextPathElement>(null);
+  const [m, setM] = useState({ comprimento: 0, unidade: 0, repeticoes: 2 });
 
   const id = `loop-${useId().replace(/:/g, "")}`;
-  const d = useMemo(
-    () =>
-      `M -320 ${CY} Q -160 ${CY - amplitude} 0 ${CY} T 320 ${CY} T 640 ${CY} T 960 ${CY} T ${L + 320} ${CY}`,
-    [amplitude]
-  );
+  const A = alturaDaCaixa(tamanho, amplitude);
+  const CY = A / 2;
+
+  /* O caminho começa MUITO antes da área visível.
+   *
+   *  O deslocamento é a distância ao longo do caminho onde o texto começa, e
+   *  ele varre uma repetição inteira a cada volta. Se o caminho começasse na
+   *  borda esquerda, no meio do ciclo o texto estaria começando lá pelo meio
+   *  da faixa e a metade esquerda ficaria vazia. Com a entrada bem atrás,
+   *  qualquer deslocamento do ciclo ainda deixa letras cobrindo x = 0. */
+  const d = useMemo(() => {
+    const PASSO = 320;
+    const inicio = -(Math.ceil(1600 / PASSO) * PASSO);
+    const partes = [`M ${inicio} ${CY}`, `Q ${inicio + PASSO / 2} ${CY - amplitude} ${inicio + PASSO} ${CY}`];
+    for (let x = inicio + PASSO; x < L + PASSO; x += PASSO) {
+      partes.push(`T ${x + PASSO} ${CY}`);
+    }
+    return partes.join(" ");
+  }, [amplitude, CY]);
+
   const unidade = useMemo(
     () => `${texto.toUpperCase()} ${separador} `,
     [texto, separador]
@@ -54,11 +76,18 @@ export default function TextLoop({
     const medir = () => {
       try {
         const comprimento = p.getTotalLength();
-        const largura = med.getComputedTextLength();
-        if (!comprimento || !largura) return;
-        setM({ comprimento, repeticoes: Math.max(1, Math.round(comprimento / largura)) });
+        const larguraUnidade = med.getComputedTextLength();
+        if (!comprimento || !larguraUnidade) return;
+        // Uma repetição a mais do que cabe: no fim do ciclo o deslocamento
+        // chega a zero e a cauda precisa continuar cobrindo o caminho.
+        const repeticoes = Math.ceil(comprimento / larguraUnidade) + 2;
+        setM((v) =>
+          v.comprimento === comprimento && v.unidade === larguraUnidade
+            ? v
+            : { comprimento, unidade: larguraUnidade, repeticoes }
+        );
       } catch {
-        /* o path ainda não foi medido pelo navegador */
+        /* o navegador ainda não mediu o caminho */
       }
     };
     medir();
@@ -66,23 +95,18 @@ export default function TextLoop({
   }, [d, unidade, tamanho]);
 
   useEffect(() => {
-    const { comprimento } = m;
-    const a = aRef.current;
-    const b = bRef.current;
-    if (!a || !b || !comprimento) return;
+    const alvo = correnteRef.current;
+    if (!alvo || !m.unidade) return;
 
-    const aplicar = (o: number) => {
-      a.setAttribute("startOffset", String(o));
-      b.setAttribute("startOffset", String(o >= 0 ? o - comprimento : o + comprimento));
-    };
-    aplicar(0);
+    const aplicar = (o: number) => alvo.setAttribute("startOffset", String(o));
+    aplicar(m.unidade);
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const estado = { o: 0 };
+    const estado = { o: m.unidade };
     const t = gsap.to(estado, {
-      o: comprimento,
-      duration: comprimento / velocidade,
+      o: 0,
+      duration: m.unidade / velocidade,
       ease: "none",
       repeat: -1,
       onUpdate: () => aplicar(estado.o),
@@ -90,29 +114,22 @@ export default function TextLoop({
     return () => void t.kill();
   }, [m, velocidade]);
 
-  const corrente = unidade.repeat(m.repeticoes);
   const estilo = { fontSize: `${tamanho}px`, fontWeight: 560, letterSpacing: "1px" };
 
   return (
-    <div ref={raizRef} className="texto-loop" aria-hidden>
+    <div className="texto-loop" aria-hidden>
       <svg viewBox={`0 0 ${L} ${A}`} preserveAspectRatio="xMidYMid meet">
         <path ref={pathRef} id={id} d={d} fill="none" />
+
         <text ref={medidaRef} className="texto-loop__medida" style={estilo}>
           {unidade}
         </text>
-        {[aRef, bRef].map((r, i) => (
-          <text key={i} className="texto-loop__texto" style={estilo} dominantBaseline="central">
-            <textPath
-              ref={r}
-              href={`#${id}`}
-              startOffset={0}
-              textLength={m.comprimento || undefined}
-              lengthAdjust="spacing"
-            >
-              {corrente}
-            </textPath>
-          </text>
-        ))}
+
+        <text className="texto-loop__texto" style={estilo} dominantBaseline="central">
+          <textPath ref={correnteRef} href={`#${id}`} startOffset={0}>
+            {unidade.repeat(m.repeticoes)}
+          </textPath>
+        </text>
       </svg>
     </div>
   );

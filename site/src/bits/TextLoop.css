@@ -1,6 +1,6 @@
 .texto-loop { position: relative; width: 100%; overflow: hidden; }
 .texto-loop svg { display: block; width: 100%; height: auto; overflow: hidden; }
-.texto-loop__texto { user-select: none; fill: var(--ink-3); }
+.texto-loop__texto { user-select: none; fill: var(--fora-ink-3); }
 /* Uma repetição em destaque a cada volta seria ruído; o acento entra só na
    palavra que importa, marcada no texto de origem. */
 .texto-loop__medida { visibility: hidden; pointer-events: none; }
