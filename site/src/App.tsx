@@ -304,12 +304,10 @@ export default function App() {
         </div>
 
         <div className="painel claude">
-          {/* A arte veio como adesivo, com contorno branco e sombra. A máscara
-              foi refeita a partir do que É desenho (o laranja do corpo e o
-              preto dos olhos) em vez de tentar apagar o branco — assim some
-              também o antialiasing da borda, que sobrevive a qualquer limiar
-              de cor. Decorativa: quem usa leitor de tela já recebeu a marca no
-              texto da pílula e no título. */}
+          {/* Adesivo, com o contorno branco e a sombra que vieram na arte: é
+              a estética do mascote, e recortar o contorno tira justamente o
+              que faz ele parecer colado na tela. Decorativa — quem usa leitor
+              de tela já recebeu a marca no texto da pílula e no título. */}
           <img
             className="claude__mascote"
             src="claude-code.png"

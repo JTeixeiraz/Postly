@@ -582,8 +582,11 @@
 .claude { position: relative; }
 .claude__mascote {
   position: absolute; right: var(--s6); bottom: var(--s6);
-  width: 118px; height: auto;
-  opacity: 0.9;
+  width: 122px; height: auto;
+  /* Inclinação de adesivo colado à mão, e sombra projetada para ele descolar
+     do painel. Opacidade não entra: adesivo meio transparente vira decalque. */
+  transform: rotate(-7deg);
+  filter: drop-shadow(0 8px 20px oklch(0 0 0 / 0.45));
   pointer-events: none;
 }
 @media (max-width: 900px) { .claude__mascote { display: none; } }
