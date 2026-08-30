@@ -170,6 +170,7 @@ export default function App() {
                 className="aba"
                 aria-current={atual ? "page" : undefined}
                 disabled={bloqueado}
+                title={rotulos[id]}
                 onClick={() => avancar(id)}
               >
                 {/* A pilula ativa e um elemento so, compartilhado entre as
@@ -183,7 +184,7 @@ export default function App() {
                   />
                 )}
                 <Icone size={15} />
-                <span>{rotulos[id]}</span>
+                <span className="aba__rot">{rotulos[id]}</span>
                 {id === "preparo" && diag?.ollama?.state && diag.ollama.state !== "pronto" && (
                   <span className="aba__badge" aria-hidden />
                 )}

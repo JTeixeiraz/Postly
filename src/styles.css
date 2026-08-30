@@ -233,7 +233,11 @@ button { cursor: pointer; background: none; border: 0; padding: 0; }
 }
 .abas::-webkit-scrollbar { display: none; }
 
+/* `flex: none` importa: sem ele o flex encolhia cada aba antes de o container
+   rolar, e `white-space: nowrap` transformava o aperto em palavra cortada no
+   meio — "Preparaçã", "Históric". Agora a aba guarda o tamanho do seu rótulo. */
 .aba {
+  flex: none;
   display: flex; align-items: center; gap: 8px;
   padding: 7px 15px; border-radius: var(--r-pill);
   color: var(--ink-2); font-size: var(--t-sm); font-weight: 500;
@@ -254,6 +258,14 @@ button { cursor: pointer; background: none; border: 0; padding: 0; }
   position: absolute; inset: 0; z-index: 0;
   background: var(--act); border-radius: var(--r-pill);
 }
+/* Os seis rótulos por extenso pedem 681px, e a janela abre com 1280: ao lado
+   do guia, da memória e do resto do topo eles não cabem. Abaixo de 1600 só a
+   aba em que se está continua escrita — as outras viram ícone, com o nome no
+   `title`. Rolar a barra escondia abas; encolher cortava palavras. */
+@media (max-width: 1599px) {
+  .aba:not([aria-current="page"]) .aba__rot { display: none; }
+}
+
 .aba__badge { width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
 .aba[aria-current="page"] .aba__badge { background: var(--act-ink); }
 
