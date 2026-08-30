@@ -183,7 +183,14 @@ use tauri::{AppHandle, Emitter};
 /// explicito: janela fechada, tempo esgotado, canal perdido. Uma campanha que
 /// se prende sozinha esperando por ninguem e pior que uma que para e diz por
 /// que — os turnos ja rodados ficam gravados de qualquer jeito.
-pub async fn pausar_e_esperar(app: &AppHandle, state: &crate::state::AppState, l: &Limite) -> bool {
+/// Generica sobre o runtime porque o de producao abre janela e o de teste
+/// nao. Sem isso, este caminho — que decide se uma campanha para ou espera
+/// horas — so poderia ser conferido estourando a cota de proposito.
+pub async fn pausar_e_esperar<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    state: &crate::state::AppState,
+    l: &Limite,
+) -> bool {
     let (tx, rx) = tokio::sync::oneshot::channel::<bool>();
     {
         let Ok(mut vaga) = state.resposta_limite.lock() else {

@@ -40,6 +40,9 @@ dirs = "6"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+# A feature `test` do Tauri da um AppHandle de verdade sem abrir janela. Sem
+# ela, o caminho do aviso de cota so poderia ser exercitado a olho.
+tauri = { version = "2", features = ["test"] }
 
 [profile.release]
 opt-level = "z"
