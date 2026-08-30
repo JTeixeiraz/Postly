@@ -17,9 +17,11 @@
   transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease), color var(--fast) var(--ease);
 }
 .chip:hover { border-color: var(--ink-3); color: var(--ink); }
-.chip[data-on="true"] { background: var(--act); border-color: var(--act); color: var(--bg); }
+/* `--act-ink` e não `--bg`: no tema claro o fundo é papel, e papel sobre
+   lime dá 1,2:1. A tinta do acento é escura nos dois temas. */
+.chip[data-on="true"] { background: var(--act); border-color: var(--act); color: var(--act-ink); }
 
-.btn[data-on="true"] { background: var(--act); border-color: var(--act); color: var(--bg); }
+.btn[data-on="true"] { background: var(--act); border-color: var(--act); color: var(--act-ink); }
 .btn[data-on="true"]:hover:not(:disabled) { background: var(--bg); border-color: var(--bg); }
 
 /* Escolha manual por cargo. */
@@ -44,7 +46,7 @@
   background: var(--line-soft); border-radius: var(--r-pill); overflow: hidden;
 }
 .modelo__barra span {
-  display: block; height: 100%; background: var(--act);
+  display: block; height: 100%; background: var(--act-txt);
   transform-origin: left; transition: transform var(--mid) var(--ease);
 }
 
@@ -60,7 +62,7 @@
 .guia { display: grid; gap: 7px; }
 .guia__topo { display: flex; align-items: baseline; gap: var(--s2); }
 .guia__titulo { font-size: var(--t-micro); font-weight: 560; color: var(--ink); }
-.guia__conta { font-size: var(--t-micro); color: var(--act); margin-left: auto; font-variant-numeric: tabular-nums; }
+.guia__conta { font-size: var(--t-micro); color: var(--act-txt); margin-left: auto; font-variant-numeric: tabular-nums; }
 
 .guia__lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .guia__item > button,
@@ -91,7 +93,7 @@
 .ajuste { display: grid; gap: 7px; background: var(--card-2); border-radius: var(--r-md); padding: var(--s4); }
 .ajuste__topo { display: flex; align-items: baseline; gap: var(--s2); }
 .ajuste__nome { font-size: var(--t-sm); font-weight: 540; color: var(--ink); }
-.ajuste__valor { margin-left: auto; font-size: var(--t-sm); color: var(--act); font-weight: 500; }
+.ajuste__valor { margin-left: auto; font-size: var(--t-sm); color: var(--act-txt); font-weight: 500; }
 .ajuste__nota { font-size: var(--t-micro); color: var(--ink-3); line-height: 1.45; }
 
 /* ══ referencias e identidade ════════════════════════════════════════════ */
@@ -146,9 +148,9 @@
 .provisao { display: grid; gap: 8px; background: var(--card-2); border-radius: var(--r-md); padding: var(--s4); margin-top: var(--s4); }
 .provisao__topo { display: flex; align-items: baseline; gap: var(--s2); }
 .provisao__nome { font-size: var(--t-sm); font-weight: 540; color: var(--ink); }
-.provisao__pct { margin-left: auto; font-size: var(--t-sm); color: var(--act); font-weight: 560; }
+.provisao__pct { margin-left: auto; font-size: var(--t-sm); color: var(--act-txt); font-weight: 560; }
 .provisao__barra { position: relative; height: 6px; background: var(--sunken); border-radius: var(--r-pill); overflow: hidden; }
-.provisao__barra span { display: block; height: 100%; background: var(--act); border-radius: var(--r-pill); transition: width var(--mid) var(--ease); }
+.provisao__barra span { display: block; height: 100%; background: var(--act-txt); border-radius: var(--r-pill); transition: width var(--mid) var(--ease); }
 /* Sem percentual, a barra corre: o instalador esta trabalhando, so nao diz
    quanto falta. */
 .provisao__barra[data-indeterminado="true"] span { width: 34%; animation: corre 1.3s var(--ease) infinite; }
@@ -159,7 +161,7 @@
 
 .plano { display: grid; gap: var(--s3); grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); }
 .plano__num { display: grid; gap: 2px; background: var(--card-2); border-radius: var(--r-md); padding: 12px 14px; }
-.plano__valor { font-size: 21px; font-weight: 560; color: var(--act); letter-spacing: -0.02em; line-height: 1.1; }
+.plano__valor { font-size: 21px; font-weight: 560; color: var(--act-txt); letter-spacing: -0.02em; line-height: 1.1; }
 .plano__rot { font-size: var(--t-micro); color: var(--ink-3); line-height: 1.3; }
 
 /* Chave ja configurada: uma linha, nao um cartao. */
@@ -220,7 +222,7 @@
   transition: border-color var(--fast) var(--ease), color var(--fast) var(--ease);
 }
 .guia-topo__gatilho:hover { color: var(--ink); border-color: var(--line); }
-.guia-topo__conta { color: var(--act); font-weight: 560; font-variant-numeric: tabular-nums; }
+.guia-topo__conta { color: var(--act-txt); font-weight: 560; font-variant-numeric: tabular-nums; }
 
 /* Anel de progresso: o quanto ja foi, sem gastar uma barra inteira. */
 .guia-topo__anel {
@@ -283,3 +285,43 @@
 .skill-editor { display: grid; gap: var(--s3); background: var(--card-2); border-radius: var(--r-md); padding: var(--s4); }
 .skill-editor textarea { min-height: 120px; font-size: var(--t-sm); }
 .hint[data-alerta="true"] { color: var(--warn); }
+
+/* ══ interruptor de tema ═════════════════════════════════════════════════ */
+
+/* Um trilho com a marca deslizando de um lado ao outro. A alternativa — dois
+   ícones que trocam no lugar — não diz que existem dois estados, só pisca. */
+.tema {
+  position: relative;
+  width: 52px; height: 28px; flex: none;
+  display: flex; align-items: center;
+  padding: 3px;
+  border: 1px solid var(--fora-linha);
+  border-radius: var(--r-pill);
+  background: var(--fora);
+  cursor: pointer;
+  transition: border-color var(--fast) var(--ease);
+}
+.tema:hover { border-color: var(--fora-ink-2); }
+
+.tema__marca {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--act);
+  /* Acima dos glifos: a marca cobre o ícone do lado em que está, e o que
+     sobra visível é o destino do clique. */
+  position: relative; z-index: 1;
+}
+
+.tema__glifos {
+  position: absolute; inset: 3px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding-inline: 5px;
+  color: var(--fora-ink-2);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tema__marca { transition: none; }
+}
+
+/* O modal de atualização precisa de largura para as notas de versão. */
+.modal--atualizacao { width: min(100%, 560px); }

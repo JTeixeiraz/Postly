@@ -9,6 +9,7 @@ import GuiaTopo from "./components/GuiaTopo";
 import type { Passo } from "./components/Guia";
 import Tour from "./components/Tour";
 import Skills from "./components/Skills";
+import Tema from "./components/Tema";
 import ModalAtualizacao from "./components/ModalAtualizacao";
 import ModalFalha from "./components/ModalFalha";
 import ModalMotion from "./components/ModalMotion";
@@ -203,6 +204,7 @@ export default function App() {
           )}
           <Skills />
           <Tour />
+          <Tema />
           <Lang />
         </div>
       </header>

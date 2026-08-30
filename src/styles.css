@@ -43,6 +43,13 @@
   --act-hover:  oklch(0.920 0.200 124);
   --act-ink:    oklch(0.240 0.070 124);
   --act-wash:   oklch(0.320 0.070 124);
+  /* O acento quando NADA escrito pousa em cima dele: texto, traço, ponto,
+     barra de progresso. No escuro é o mesmo lime; no claro ele precisa descer,
+     porque lime sobre papel dá 1,2:1 — abaixo do mínimo de 3:1 para elemento
+     gráfico, e o traço some para quem enxerga pouco. Onde o lime é FUNDO com
+     `--act-ink` por cima (botão, pílula ativa, caixa marcada) ele continua
+     brilhante nos dois temas: ali quem carrega o contraste é a tinta. */
+  --act-txt:    oklch(0.880 0.200 124);
 
   /* --- a moldura: o app e um cartao escuro pousado sobre papel branco --- */
   --fora:       oklch(0.995 0 0);
@@ -92,7 +99,7 @@
   --fast: 130ms; --mid: 240ms; --slow: 460ms;
 
   color-scheme: dark;
-  accent-color: var(--act);
+  accent-color: var(--act-txt);
 }
 
 * { box-sizing: border-box; min-width: 0; }
@@ -118,12 +125,67 @@ p  { margin: 0; text-wrap: pretty; max-width: 68ch; }
 
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: 0; padding: 0; }
-:focus-visible { outline: 2px solid var(--act); outline-offset: 2px; border-radius: var(--r-sm); }
+/* O anel de foco é o único caminho de quem navega por teclado: se ele some no
+   tema claro, a tela inteira fica sem rastro. Daí `--act-txt` e não `--act`. */
+:focus-visible { outline: 2px solid var(--act-txt); outline-offset: 2px; border-radius: var(--r-sm); }
 
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-feature-settings: "zero" 1; }
 .mono { font-family: var(--mono); }
 .dim { color: var(--ink-3); }
 .hint { color: var(--ink-3); font-size: var(--t-sm); line-height: 1.45; }
+
+/* ══ tema claro ══════════════════════════════════════════════════════════
+   A mesma gramática, invertida: o cartão que era carvão vira papel, e a
+   moldura que era papel vira carvão. Só os tokens de superfície e tinta
+   mudam — quem escreveu `var(--card)` continua certo nos dois temas, e é
+   por isso que a troca não exige tocar em nenhum componente.
+
+   Os valores não são o espelho aritmético dos escuros: perto do branco a
+   luminância comprime, e inverter no olho derrubaria o contraste do texto
+   de apoio. Cada par foi calculado para os mesmos mínimos do tema escuro. */
+
+:root[data-tema="claro"] {
+  --bg:         oklch(0.995 0 0);
+  --card:       oklch(0.965 0.003 250);
+  --card-2:     oklch(0.935 0.004 250);
+  --sunken:     oklch(0.955 0.003 250);
+  /* As bordas pesam mais aqui: no claro o degrau entre superfícies fica em
+     1,1:1 contra 1,27:1 do escuro, e sem a linha os cartões se dissolvem. */
+  --line:       oklch(0.865 0.006 250);
+  --line-soft:  oklch(0.912 0.004 250);
+  --line-strong: oklch(0.660 0.010 250);
+
+  --ink:        oklch(0.230 0.010 250);
+  --ink-2:      oklch(0.440 0.008 250);
+  --ink-3:      oklch(0.520 0.008 250);
+
+  /* O lime continua servindo de FUNDO (botão, pílula ativa) com tinta escura
+     por cima; o que muda é o acento solto — texto e traço. */
+  --act-txt:    oklch(0.530 0.170 128);
+  --act-wash:   oklch(0.945 0.060 124);
+
+  /* A moldura inverte junto: papel fora, carvão dentro passa a ser o oposto. */
+  --fora:       oklch(0.175 0.008 250);
+  --fora-ink:   oklch(0.960 0.002 250);
+  --fora-ink-2: oklch(0.740 0.006 250);
+  --fora-linha: oklch(0.320 0.010 250);
+
+  /* O cartão de resultado era claro sobre escuro; no tema claro ele inverte
+     para continuar sendo o destaque mais forte da tela. */
+  --light:      oklch(0.215 0.008 250);
+  --light-ink:  oklch(0.975 0.002 250);
+  --light-ink2: oklch(0.760 0.006 250);
+  --light-line: oklch(0.330 0.008 250);
+
+  --ok:         oklch(0.500 0.140 150);
+  --ok-wash:    oklch(0.945 0.045 150);
+  --warn:       oklch(0.540 0.130 68);
+  --warn-wash:  oklch(0.950 0.050 78);
+  --alert:      oklch(0.510 0.180 27);
+  --alert-wash: oklch(0.950 0.040 27);
+
+  color-scheme: light;
+}
 
 /* ══ concha ══════════════════════════════════════════════════════════════ */
 
@@ -301,8 +363,8 @@ button { cursor: pointer; background: none; border: 0; padding: 0; }
 .tag__dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); flex: none; }
 .tag[data-tone="ok"]    { border-color: transparent; background: var(--ok-wash); color: var(--ok); }
 .tag[data-tone="ok"] .tag__dot { background: var(--ok); }
-.tag[data-tone="live"]  { border-color: transparent; background: var(--act-wash); color: var(--act); }
-.tag[data-tone="live"] .tag__dot { background: var(--act); animation: pulse 1.8s var(--ease) infinite; }
+.tag[data-tone="live"]  { border-color: transparent; background: var(--act-wash); color: var(--act-txt); }
+.tag[data-tone="live"] .tag__dot { background: var(--act-txt); animation: pulse 1.8s var(--ease) infinite; }
 .tag[data-tone="warn"]  { border-color: transparent; background: var(--warn-wash); color: var(--warn); }
 .tag[data-tone="warn"] .tag__dot { background: var(--warn); }
 .tag[data-tone="alert"] { border-color: transparent; background: var(--alert-wash); color: var(--alert); }
@@ -375,7 +437,7 @@ input[type="checkbox"]:hover:not(:checked) { border-color: var(--ink-3); }
 input[type="checkbox"]:checked { background: var(--act); border-color: var(--act); }
 input[type="checkbox"]:checked::after { transform: scale(1); }
 
-input[type="range"] { accent-color: var(--act); width: 100%; }
+input[type="range"] { accent-color: var(--act-txt); width: 100%; }
 
 .choice {
   display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start;

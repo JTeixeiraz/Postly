@@ -33,7 +33,7 @@
   left: calc(100% / var(--postas) / 2);
   right: calc(100% / var(--postas) / 2);
   top: calc(var(--s5) + 7px);
-  height: 2px; background: var(--act); border-radius: var(--r-pill);
+  height: 2px; background: var(--act-txt); border-radius: var(--r-pill);
   transform-origin: left;
   transform: scaleX(var(--percurso, 0));
   transition: transform var(--slow) var(--ease);
@@ -53,20 +53,20 @@
 
 .posta__marca {
   width: 16px; height: 16px; justify-self: center; border-radius: 50%;
-  background: var(--bg); border: 2px solid var(--act);
+  background: var(--bg); border: 2px solid var(--act-txt);
   display: grid; place-items: center;
   transition: border-color var(--mid) var(--ease), background var(--mid) var(--ease);
 }
 .posta__marca::after {
   content: ""; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--act); transition: background var(--mid) var(--ease), transform var(--mid) var(--ease);
+  background: var(--act-txt); transition: background var(--mid) var(--ease), transform var(--mid) var(--ease);
 }
 
 .posta[data-estado="feito"] .posta__marca { border-color: var(--ok); background: var(--ok); }
 .posta[data-estado="feito"] .posta__marca::after { background: var(--bg); }
 
-.posta[data-estado="ativo"] .posta__marca { border-color: var(--act); background: var(--bg); }
-.posta[data-estado="ativo"] .posta__marca::after { background: var(--act); transform: scale(1.25); }
+.posta[data-estado="ativo"] .posta__marca { border-color: var(--act-txt); background: var(--bg); }
+.posta[data-estado="ativo"] .posta__marca::after { background: var(--act-txt); transform: scale(1.25); }
 /* O halo respira enquanto o modelo pensa: e o unico sinal de vida durante os
    minutos em que nao ha nada para mostrar. */
 .posta[data-estado="ativo"] .posta__marca { animation: respira 2.2s var(--ease) infinite; }
@@ -79,7 +79,7 @@
 .posta[data-estado="falhou"] .posta__marca::after { background: var(--bg); }
 
 .posta__cargo { font-size: var(--t-sm); color: var(--ink-2); line-height: 1.25; font-weight: 500; }
-.posta[data-estado="ativo"] .posta__cargo { color: var(--act); font-weight: 560; }
+.posta[data-estado="ativo"] .posta__cargo { color: var(--act-txt); font-weight: 560; }
 .posta[data-estado="feito"] .posta__cargo { color: var(--ink); }
 .posta__modelo {
   font-family: var(--mono); font-size: var(--t-micro); color: var(--ink-3);
@@ -127,7 +127,7 @@
   padding: var(--s4); display: grid; gap: var(--s2);
 }
 .despacho__de {
-  font-size: var(--t-micro); font-weight: 560; color: var(--act);
+  font-size: var(--t-micro); font-weight: 560; color: var(--act-txt);
   text-transform: none;
 }
 .despacho__texto {
@@ -168,7 +168,7 @@
 .peca__arte { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--sunken); border-bottom: 1px solid var(--line-soft); }
 .peca__corpo { padding: var(--s4); display: grid; gap: var(--s3); }
 .peca__legenda { white-space: pre-wrap; color: var(--ink-2); font-size: var(--t-sm); line-height: 1.55; }
-.peca__tags { font-family: var(--mono); font-size: var(--t-micro); color: var(--act); overflow-wrap: anywhere; }
+.peca__tags { font-family: var(--mono); font-size: var(--t-micro); color: var(--act-txt); overflow-wrap: anywhere; }
 
 /* ══ grafo ═══════════════════════════════════════════════════════════════ */
 
@@ -186,7 +186,7 @@
 }
 .sonda:last-child { border-bottom: 0; }
 .sonda__icone { display: grid; place-items: center; padding-top: 1px; color: var(--ink-3); }
-.sonda[data-estado="rodando"] .sonda__icone { color: var(--act); }
+.sonda[data-estado="rodando"] .sonda__icone { color: var(--act-txt); }
 .sonda[data-estado="ok"] .sonda__icone { color: var(--ok); }
 .sonda[data-estado="aviso"] .sonda__icone { color: var(--warn); }
 .sonda[data-estado="falhou"] .sonda__icone { color: var(--alert); }
@@ -253,8 +253,8 @@
 }
 .vaga__marca {
   width: 12px; height: 12px; border-radius: 50%;
-  background: var(--act); border: 2px solid var(--bg);
-  box-shadow: 0 0 0 1px var(--act);
+  background: var(--act-txt); border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--act-txt);
   margin-bottom: 10px;
 }
 .vaga[data-vazia="true"] .vaga__marca { background: var(--alert); box-shadow: 0 0 0 1px var(--alert); }
@@ -262,7 +262,7 @@
 .vaga__cargo { font-size: var(--t-sm); color: var(--ink-3); }
 .vaga__modelo { color: var(--ink); font-size: var(--t-lead); font-weight: 560; letter-spacing: -0.018em; }
 .vaga__tag { font-family: var(--mono); font-size: var(--t-micro); color: var(--ink-3); overflow-wrap: anywhere; }
-.vaga__vel { font-family: var(--mono); font-size: var(--t-sm); color: var(--act); font-weight: 500; }
+.vaga__vel { font-family: var(--mono); font-size: var(--t-sm); color: var(--act-txt); font-weight: 500; }
 .vaga__selos { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
 
 /* Sem largura para quatro colunas, a trilha vira lista com fio à esquerda. */
@@ -294,7 +294,7 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .linha-peca__mult { color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.linha-peca__mult[data-forte="true"] { color: var(--act); font-weight: 560; }
+.linha-peca__mult[data-forte="true"] { color: var(--act-txt); font-weight: 560; }
 
 .linha-peca__barra {
   height: 5px; border-radius: var(--r-pill);
@@ -305,7 +305,7 @@
   background: var(--ink-3);
   transition: width var(--slow) var(--ease);
 }
-.linha-peca__barra > div[data-forte="true"] { background: var(--act); }
+.linha-peca__barra > div[data-forte="true"] { background: var(--act-txt); }
 
 .linha-peca__pe {
   display: flex; gap: var(--s3); flex-wrap: wrap;
@@ -348,7 +348,7 @@
    pessoa escreveu, sem precisar de rotulo extra. */
 .skill--embutida {
   background: var(--sunken);
-  border-left: 2px solid var(--act);
+  border-left: 2px solid var(--act-txt);
   border-radius: var(--r-sm) var(--r-md) var(--r-md) var(--r-sm);
 }
 .skill--embutida .skill__nome { color: var(--ink); font-weight: 560; }
@@ -443,7 +443,7 @@
   border-radius: var(--r-md);
 }
 .modal__selo[data-tone="alert"] { background: var(--alert-wash); color: var(--alert); }
-.modal__selo[data-tone="live"] { background: var(--act-wash); color: var(--act); }
+.modal__selo[data-tone="live"] { background: var(--act-wash); color: var(--act-txt); }
 
 /* A mensagem crua tem altura própria: ela é para ser lida e copiada, não para
    empurrar os botões para fora da tela. */
