@@ -95,6 +95,12 @@ export default function App() {
   // O portão existe só para guiar a primeira execução. Chegar na campanha
   // significa que o preparo terminou, e a partir daí ele sai da frente: cérebro
   // e histórico são ferramentas, não etapas.
+  //
+  // TODA navegação passa por aqui, inclusive o clique na aba. Antes o botão
+  // "Continuar" chamava esta função e a aba chamava `setTela` direto, então
+  // quem andava pelo cabeçalho chegava na tela sem mover o portão — e era
+  // obrigado a voltar e apertar o botão para destravar o que já tinha
+  // alcançado. Dois caminhos para o mesmo lugar precisam fazer a mesma coisa.
   const avancar = (destino: Tela) => {
     setLiberado((n) =>
       destino === "campanha"
@@ -161,7 +167,7 @@ export default function App() {
                 className="aba"
                 aria-current={atual ? "page" : undefined}
                 disabled={bloqueado}
-                onClick={() => setTela(id)}
+                onClick={() => avancar(id)}
               >
                 {/* A pilula ativa e um elemento so, compartilhado entre as
                     abas: o layoutId faz ela deslizar de uma para outra em vez
