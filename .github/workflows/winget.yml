@@ -130,10 +130,45 @@ jobs:
           name: winget-manifests-${{ steps.alvo.outputs.versao }}
           path: manifests/
 
+      # O checklist do winget-pkgs pede explicitamente que não haja outro PR
+      # aberto para o mesmo pacote, e a razão é prática: dois PRs alterando o
+      # mesmo diretório conflitam entre si e um deles é fechado sem revisão.
+      # Uma versão nova enquanto a anterior ainda está na fila é o caso normal
+      # de um pacote recém-submetido, não um erro — por isso aqui o trabalho é
+      # pulado com aviso, e não reprovado.
+      - name: Já existe PR aberto para o pacote?
+        id: fila
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          abertos=$(gh pr list --repo microsoft/winget-pkgs \
+            --search "JTeixeiraz.Postly in:title is:open" \
+            --json number,title --jq '.[] | "#\(.number) \(.title)"' || true)
+          if [ -n "$abertos" ]; then
+            echo "livre=nao" >> "$GITHUB_OUTPUT"
+            { echo "### PR do winget não foi aberto"
+              echo
+              echo "Já existe PR em revisão para \`JTeixeiraz.Postly\`:"
+              echo
+              echo '```'
+              echo "$abertos"
+              echo '```'
+              echo
+              echo "Os manifestos desta versão estão no artefato desta execução."
+              echo "Assim que aquele PR for mergeado, rode este workflow à mão"
+              echo "com \`ensaio: false\` para submeter esta versão."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "livre=sim" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Abrir o PR no winget-pkgs
         # O ensaio é o padrão do disparo manual: publicar num repositório de
         # terceiro não deve ser o efeito de apertar um botão por engano.
-        if: github.event_name == 'release' || inputs.ensaio == false
+        if: >-
+          steps.fila.outputs.livre == 'sim' &&
+          (github.event_name == 'release' || inputs.ensaio == false)
         shell: pwsh
         run: |
           if (-not $env:WINGET_TOKEN) {
