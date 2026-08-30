@@ -53,7 +53,11 @@ fn percentual(linha: &str) -> Option<f32> {
     if !viu_digito {
         return None;
     }
-    linha[ini..pos].replace(',', ".").parse::<f32>().ok().filter(|p| (0.0..=100.0).contains(p))
+    linha[ini..pos]
+        .replace(',', ".")
+        .parse::<f32>()
+        .ok()
+        .filter(|p| (0.0..=100.0).contains(p))
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]

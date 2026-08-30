@@ -30,7 +30,11 @@ pub async fn version() -> Option<String> {
         .timeout(Duration::from_secs(3))
         .build()
         .ok()?;
-    let resp = client.get(format!("{BASE_URL}/api/version")).send().await.ok()?;
+    let resp = client
+        .get(format!("{BASE_URL}/api/version"))
+        .send()
+        .await
+        .ok()?;
     resp.json::<VersionResponse>().await.ok().map(|v| v.version)
 }
 
@@ -139,7 +143,11 @@ pub struct GenerateOptions {
 
 impl Default for GenerateOptions {
     fn default() -> Self {
-        Self { temperature: 0.7, num_ctx: 8192, num_predict: 2048 }
+        Self {
+            temperature: 0.7,
+            num_ctx: 8192,
+            num_predict: 2048,
+        }
     }
 }
 

@@ -40,7 +40,10 @@ fn limiar_corta_na_consulta_e_nao_no_modelo() {
 
     assert!(nomes.contains(&"politica"));
     assert!(nomes.contains(&"schema"));
-    assert!(!nomes.contains(&"runner"), "0.34 esta abaixo do limiar 0.5 e nao pode passar");
+    assert!(
+        !nomes.contains(&"runner"),
+        "0.34 esta abaixo do limiar 0.5 e nao pode passar"
+    );
 }
 
 #[test]
@@ -53,7 +56,10 @@ fn top_k_limita_a_vizinhanca() {
 fn peso_efetivo_e_o_produto_do_caminho() {
     let g = grafo_exemplo();
     let alcancados = g.traverse("api", 2, 0.01, 10);
-    let longe = alcancados.iter().find(|n| n.node == "longe").expect("alcancavel em 2 saltos");
+    let longe = alcancados
+        .iter()
+        .find(|n| n.node == "longe")
+        .expect("alcancavel em 2 saltos");
 
     // api -> runner (0.34) -> longe (0.60)
     let esperado = 0.34_f32 * 0.60;
@@ -90,7 +96,10 @@ fn uma_interacao_nao_desloca_o_peso_alem_do_teto() {
         "uma unica interacao moveu o peso em {}, acima do teto de 0.05",
         depois - antes
     );
-    assert!(depois > antes, "o reforco precisa mover o peso na direcao pedida");
+    assert!(
+        depois > antes,
+        "o reforco precisa mover o peso na direcao pedida"
+    );
 }
 
 #[test]
@@ -103,7 +112,10 @@ fn peso_nunca_satura_em_um() {
         g.reinforce("a", "b", 0.05);
     }
     let peso = g.edges[0].weight;
-    assert!(peso < 1.0, "peso saturou em {peso}: a ordenacao perde sentido");
+    assert!(
+        peso < 1.0,
+        "peso saturou em {peso}: a ordenacao perde sentido"
+    );
 }
 
 #[test]
@@ -117,7 +129,10 @@ fn decaimento_remove_aresta_morta() {
 
     let removidas = g.decay();
     assert_eq!(removidas, 1);
-    assert!(g.edges.is_empty(), "aresta abaixo do piso precisa sair do grafo");
+    assert!(
+        g.edges.is_empty(),
+        "aresta abaixo do piso precisa sair do grafo"
+    );
 }
 
 #[test]
@@ -125,7 +140,9 @@ fn remover_node_leva_junto_as_arestas() {
     let mut g = grafo_exemplo();
     assert!(g.remove_node("runner"));
     assert!(
-        !g.edges.iter().any(|e| e.from == "runner" || e.to == "runner"),
+        !g.edges
+            .iter()
+            .any(|e| e.from == "runner" || e.to == "runner"),
         "aresta orfa sobreviveu a remocao do node"
     );
 }
@@ -145,7 +162,10 @@ fn ida_e_volta_pelo_bloco_de_prompt_preserva_os_pesos() {
     let g = grafo_exemplo();
     let vistas = g.recall(&["camada".to_string()], 3);
     let bloco = Graph::as_prompt_block(&vistas);
-    assert!(bloco.contains("0.92"), "o peso precisa chegar ao prompt: {bloco}");
+    assert!(
+        bloco.contains("0.92"),
+        "o peso precisa chegar ao prompt: {bloco}"
+    );
 }
 
 /// O artefato em disco: serializa, compacta, grava, le de volta.
@@ -158,7 +178,10 @@ async fn o_artefato_faz_ida_e_volta_pelo_disco_compactado() {
     use postly_lib::brain::store::{artifact_path, BrainHandle};
 
     let handle = BrainHandle::load();
-    let marca = format!("prova_{}", chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0));
+    let marca = format!(
+        "prova_{}",
+        chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0)
+    );
     let contexto = "Texto sentinela que nao pode aparecer em claro no arquivo.";
 
     handle
@@ -170,7 +193,11 @@ async fn o_artefato_faz_ida_e_volta_pelo_disco_compactado() {
         .expect("a escrita precisa persistir");
 
     let bytes = std::fs::read(artifact_path()).expect("o artefato precisa existir em disco");
-    assert_eq!(&bytes[..4], b"AGB1", "o cabecalho identifica a versao do artefato");
+    assert_eq!(
+        &bytes[..4],
+        b"AGB1",
+        "o cabecalho identifica a versao do artefato"
+    );
     assert!(
         !String::from_utf8_lossy(&bytes).contains(contexto),
         "o contexto apareceu em claro: o artefato nao esta compactado"
@@ -191,11 +218,16 @@ async fn o_artefato_faz_ida_e_volta_pelo_disco_compactado() {
     assert!(
         stats.compressed_bytes < stats.raw_bytes,
         "compactado ({}) precisa ser menor que serializado ({})",
-        stats.compressed_bytes, stats.raw_bytes
+        stats.compressed_bytes,
+        stats.raw_bytes
     );
     println!(
         "cerebro: {} nodes, {} arestas, {} bytes serializados -> {} bytes em disco ({:.0}%)",
-        stats.nodes, stats.edges, stats.raw_bytes, stats.compressed_bytes, stats.ratio * 100.0
+        stats.nodes,
+        stats.edges,
+        stats.raw_bytes,
+        stats.compressed_bytes,
+        stats.ratio * 100.0
     );
 
     // Nao deixa lixo no cerebro real da maquina.

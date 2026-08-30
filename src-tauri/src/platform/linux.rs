@@ -56,14 +56,26 @@ impl PlatformStrategy for LinuxStrategy {
         let cache = dirs::cache_dir().unwrap_or_else(|| PathBuf::from("."));
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
         [
-            target("Miniaturas do gerenciador de arquivos", cache.join("thumbnails"), true),
+            target(
+                "Miniaturas do gerenciador de arquivos",
+                cache.join("thumbnails"),
+                true,
+            ),
             target("Cache do Chromium", cache.join("chromium"), true),
             target("Cache do Google Chrome", cache.join("google-chrome"), true),
             target("Cache do Mozilla", cache.join("mozilla"), true),
             target("Cache do pip", cache.join("pip"), true),
             target("Cache do npm", home.join(".npm/_cacache"), true),
-            target("Builds antigos do Cargo", home.join(".cargo/registry/cache"), true),
-            target("Journal e crash dumps do usuario", cache.join("crash"), true),
+            target(
+                "Builds antigos do Cargo",
+                home.join(".cargo/registry/cache"),
+                true,
+            ),
+            target(
+                "Journal e crash dumps do usuario",
+                cache.join("crash"),
+                true,
+            ),
         ]
         .into_iter()
         .flatten()
@@ -102,7 +114,10 @@ impl PlatformStrategy for LinuxStrategy {
 
         if let Some(saida) = super::sonda(
             "nvidia-smi",
-            &["--query-gpu=name,memory.total,memory.free", "--format=csv,noheader,nounits"],
+            &[
+                "--query-gpu=name,memory.total,memory.free",
+                "--format=csv,noheader,nounits",
+            ],
         ) {
             placas.extend(parse_nvidia_smi(&saida));
         }
@@ -144,9 +159,7 @@ impl PlatformStrategy for LinuxStrategy {
 
 fn which_exists(binary: &str) -> bool {
     std::env::var_os("PATH")
-        .map(|path| {
-            std::env::split_paths(&path).any(|dir| dir.join(binary).is_file())
-        })
+        .map(|path| std::env::split_paths(&path).any(|dir| dir.join(binary).is_file()))
         .unwrap_or(false)
 }
 

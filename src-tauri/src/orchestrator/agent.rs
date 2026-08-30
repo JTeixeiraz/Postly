@@ -170,7 +170,9 @@ impl<'a> AgentTurn<'a> {
             warnings.push(warn.clone());
         }
 
-        let already = installed.iter().any(|t| t == spec.tag || t.trim_end_matches(":latest") == spec.tag);
+        let already = installed
+            .iter()
+            .any(|t| t == spec.tag || t.trim_end_matches(":latest") == spec.tag);
         emit(
             self.app,
             StageEvent {
@@ -223,7 +225,11 @@ impl<'a> AgentTurn<'a> {
             self.app,
             StageEvent {
                 model: Some(spec.tag.to_string()),
-                ..base(Stage::Pensando, format!("{} trabalhando", role_label), ram.available_bytes)
+                ..base(
+                    Stage::Pensando,
+                    format!("{} trabalhando", role_label),
+                    ram.available_bytes,
+                )
             },
         );
 
@@ -245,14 +251,25 @@ impl<'a> AgentTurn<'a> {
             options,
             self.json_mode,
             pensar,
-            if spec.vision { self.images.clone() } else { Vec::new() },
+            if spec.vision {
+                self.images.clone()
+            } else {
+                Vec::new()
+            },
         )
         .await;
 
         let response = match response {
             Ok(r) => r,
             Err(e) => {
-                emit(self.app, base(Stage::Falhou, e.clone(), hardware::snapshot().available_bytes));
+                emit(
+                    self.app,
+                    base(
+                        Stage::Falhou,
+                        e.clone(),
+                        hardware::snapshot().available_bytes,
+                    ),
+                );
                 let _ = client::unload(spec.tag).await;
                 return Err(e);
             }
@@ -268,7 +285,14 @@ impl<'a> AgentTurn<'a> {
                     spec.label
                 )
             };
-            emit(self.app, base(Stage::Falhou, motivo.clone(), hardware::snapshot().available_bytes));
+            emit(
+                self.app,
+                base(
+                    Stage::Falhou,
+                    motivo.clone(),
+                    hardware::snapshot().available_bytes,
+                ),
+            );
             return Err(motivo);
         }
 
@@ -300,7 +324,11 @@ impl<'a> AgentTurn<'a> {
         if let Some(w) = handoff_warning {
             warnings.push(w);
         }
-        let json = if self.json_mode { prompts::extract_json(&raw) } else { None };
+        let json = if self.json_mode {
+            prompts::extract_json(&raw)
+        } else {
+            None
+        };
         if self.json_mode && json.is_none() {
             warnings.push("O modelo nao devolveu JSON valido nesta rodada.".to_string());
         }
@@ -413,7 +441,11 @@ impl<'a> AgentTurn<'a> {
         if let Some(w) = handoff_warning {
             warnings.push(w);
         }
-        let json = if self.json_mode { prompts::extract_json(&raw) } else { None };
+        let json = if self.json_mode {
+            prompts::extract_json(&raw)
+        } else {
+            None
+        };
         if self.json_mode && json.is_none() {
             warnings.push(crate::idioma::msg(
                 "O modelo nao devolveu JSON valido nesta rodada.",

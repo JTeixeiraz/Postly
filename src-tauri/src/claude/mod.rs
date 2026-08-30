@@ -104,7 +104,11 @@ pub fn disponivel() -> bool {
 
 /// Versao do CLI, quando ele responde.
 pub async fn versao() -> Option<String> {
-    let saida = Command::new("claude").arg("--version").output().await.ok()?;
+    let saida = Command::new("claude")
+        .arg("--version")
+        .output()
+        .await
+        .ok()?;
     if !saida.status.success() {
         return None;
     }
@@ -183,13 +187,20 @@ pub async fn turno(
         ));
     }
 
-    let resposta: RespostaCli = serde_json::from_str(bruto.trim())
-        .map_err(|e| format!("resposta ilegivel do Claude Code: {e} :: {}", &bruto.chars().take(200).collect::<String>()))?;
+    let resposta: RespostaCli = serde_json::from_str(bruto.trim()).map_err(|e| {
+        format!(
+            "resposta ilegivel do Claude Code: {e} :: {}",
+            bruto.chars().take(200).collect::<String>()
+        )
+    })?;
 
     if resposta.is_error {
         return Err(format!(
             "{} ({})",
-            crate::idioma::msg("O Claude Code recusou o turno", "Claude Code refused the turn"),
+            crate::idioma::msg(
+                "O Claude Code recusou o turno",
+                "Claude Code refused the turn"
+            ),
             resposta.subtype.unwrap_or_else(|| "sem detalhe".into())
         ));
     }

@@ -3,9 +3,9 @@
 //! Duas nocoes de orcamento convivem aqui e nao devem ser confundidas:
 //!
 //! - `max_budget_bytes`  -> baseado na RAM que a maquina TEM. E o que define quais
-//!                          modelos aparecem no catalogo da primeira inicializacao.
+//!   modelos aparecem no catalogo da primeira inicializacao.
 //! - `live_budget_bytes` -> baseado na RAM DISPONIVEL agora. E o que decide, a cada
-//!                          troca de agente, qual modelo pode subir sem derrubar o PC.
+//!   troca de agente, qual modelo pode subir sem derrubar o PC.
 
 pub mod accelerator;
 
@@ -101,7 +101,7 @@ pub fn top_consumers(limit: usize) -> Vec<ProcessHog> {
         })
         .filter(|p| p.memory_bytes > 64 * 1024 * 1024)
         .collect();
-    hogs.sort_by(|a, b| b.memory_bytes.cmp(&a.memory_bytes));
+    hogs.sort_by_key(|p| std::cmp::Reverse(p.memory_bytes));
     hogs.truncate(limit);
     hogs
 }
@@ -149,7 +149,10 @@ pub fn optimize(paths: &[String], allow_elevation: bool) -> OptimizeReport {
             continue;
         }
         if !target.safe {
-            failures.push(format!("{}: marcado como destrutivo, ignorado", target.label));
+            failures.push(format!(
+                "{}: marcado como destrutivo, ignorado",
+                target.label
+            ));
             continue;
         }
         match clear_dir_contents(std::path::Path::new(&target.path)) {
@@ -275,13 +278,11 @@ pub fn compute_profile() -> ComputeProfile {
         // Uma placa grande num PC pequeno ainda amplia o que da para carregar.
         max_budget_bytes: ram.max_budget_bytes.max(accelerated_budget),
         accelerated_budget_bytes: accelerated_budget,
-        live_budget_bytes: ram.live_budget_bytes.max(
-            if mode == ComputeMode::Dedicada {
-                (vram_free as f64 * VRAM_BUDGET_RATIO) as u64
-            } else {
-                0
-            },
-        ),
+        live_budget_bytes: ram.live_budget_bytes.max(if mode == ComputeMode::Dedicada {
+            (vram_free as f64 * VRAM_BUDGET_RATIO) as u64
+        } else {
+            0
+        }),
         prefers_moe: mode.prefers_moe(),
         throughput_constant: mode.throughput_constant(),
         accelerators,

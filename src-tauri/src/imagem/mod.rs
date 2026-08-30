@@ -87,7 +87,13 @@ impl ProvedorImagem {
     }
 
     pub fn todos() -> [Self; 5] {
-        [Self::Gemini, Self::OpenAi, Self::Flux, Self::Stability, Self::Higgsfield]
+        [
+            Self::Gemini,
+            Self::OpenAi,
+            Self::Flux,
+            Self::Stability,
+            Self::Higgsfield,
+        ]
     }
 }
 
@@ -210,10 +216,7 @@ pub async fn gerar(
     if chave.trim().is_empty() {
         return Err(format!(
             "{} {}.",
-            crate::idioma::msg(
-                "Nenhuma chave configurada para",
-                "No key configured for"
-            ),
+            crate::idioma::msg("Nenhuma chave configurada para", "No key configured for"),
             provedor.label()
         ));
     }
@@ -222,7 +225,9 @@ pub async fn gerar(
         ProvedorImagem::Gemini => {
             crate::gemini::generate_image(&chave, prompt, aspect_ratio, qualidade, out_dir).await
         }
-        ProvedorImagem::OpenAi => openai::gerar(&chave, prompt, aspect_ratio, qualidade, out_dir).await,
+        ProvedorImagem::OpenAi => {
+            openai::gerar(&chave, prompt, aspect_ratio, qualidade, out_dir).await
+        }
         ProvedorImagem::Flux => bfl::gerar(&chave, prompt, aspect_ratio, qualidade, out_dir).await,
         ProvedorImagem::Stability => {
             stability::gerar(&chave, prompt, aspect_ratio, qualidade, out_dir).await
@@ -260,7 +265,8 @@ mod testes {
         assert_eq!(achar_url(&v).as_deref(), Some("https://x.com/b.png"));
 
         // `url` vence os irmaos, mesmo que outro campo tambem seja um link.
-        let v = serde_json::json!({ "thumb": "https://x.com/t.jpg", "url": "https://x.com/full.jpg" });
+        let v =
+            serde_json::json!({ "thumb": "https://x.com/t.jpg", "url": "https://x.com/full.jpg" });
         assert_eq!(achar_url(&v).as_deref(), Some("https://x.com/full.jpg"));
 
         // Texto que nao e link nao pode ser confundido com um.
@@ -276,8 +282,14 @@ mod testes {
             assert_eq!(h % 32, 0, "altura de {ar} nao e multiplo de 32");
         }
         // A orientacao precisa bater com a proporcao pedida.
-        assert!(dimensoes("9:16").1 > dimensoes("9:16").0, "9:16 tem que ser vertical");
-        assert!(dimensoes("16:9").0 > dimensoes("16:9").1, "16:9 tem que ser horizontal");
+        assert!(
+            dimensoes("9:16").1 > dimensoes("9:16").0,
+            "9:16 tem que ser vertical"
+        );
+        assert!(
+            dimensoes("16:9").0 > dimensoes("16:9").1,
+            "16:9 tem que ser horizontal"
+        );
         assert_eq!(dimensoes("1:1").0, dimensoes("1:1").1);
     }
 

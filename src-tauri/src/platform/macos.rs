@@ -23,7 +23,11 @@ impl PlatformStrategy for MacOsStrategy {
         if std::path::Path::new("/opt/homebrew/bin/brew").exists()
             || std::path::Path::new("/usr/local/bin/brew").exists()
         {
-            vec![Step::new("Instalar Ollama via Homebrew", "brew", &["install", "ollama"])]
+            vec![Step::new(
+                "Instalar Ollama via Homebrew",
+                "brew",
+                &["install", "ollama"],
+            )]
         } else {
             vec![Step::new(
                 "Instalar Ollama (script oficial)",
@@ -52,9 +56,17 @@ impl PlatformStrategy for MacOsStrategy {
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
         [
             target("Caches do usuario", cache.clone(), true),
-            target("Cache do Safari", home.join("Library/Caches/com.apple.Safari"), true),
+            target(
+                "Cache do Safari",
+                home.join("Library/Caches/com.apple.Safari"),
+                true,
+            ),
             target("Cache do npm", home.join(".npm/_cacache"), true),
-            target("Dados derivados do Xcode", home.join("Library/Developer/Xcode/DerivedData"), true),
+            target(
+                "Dados derivados do Xcode",
+                home.join("Library/Developer/Xcode/DerivedData"),
+                true,
+            ),
         ]
         .into_iter()
         .flatten()

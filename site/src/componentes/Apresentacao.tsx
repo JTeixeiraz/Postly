@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 
 /** O vídeo de apresentação, carregado sob demanda.
  *
- *  São 6 MB. Numa landing page isso é a diferença entre a página abrir e a
+ *  São 4 MB, com narração e trilha. Numa landing page isso é a diferença entre a página abrir e a
  *  página esperar, então o que carrega junto é o pôster de 20 KB e o `<video>`
  *  só nasce quando alguém aperta o play. `preload="none"` não bastaria: o
  *  elemento ainda assim resolve o arquivo em alguns navegadores.
@@ -37,7 +37,7 @@ export default function Apresentacao() {
               key="capa"
               className="video__capa"
               onClick={() => setTocando(true)}
-              aria-label="Assistir à apresentação de 40 segundos"
+              aria-label="Assistir à apresentação narrada, de 48 segundos"
               initial={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
@@ -48,7 +48,7 @@ export default function Apresentacao() {
                   <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
                 </svg>
               </span>
-              <span className="video__duracao">40 s</span>
+              <span className="video__duracao">48 s</span>
             </motion.button>
           )}
         </AnimatePresence>

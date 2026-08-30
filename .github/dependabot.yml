@@ -1,0 +1,25 @@
+# Avisa quando uma dependência ganha CVE ou fica para trás.
+#
+# Três ecossistemas porque o projeto tem três: o app em Rust, o sidecar e o
+# site/vídeo em Node, e as próprias Actions — que são código de terceiro
+# rodando com o token do repositório e por isso ficam fixadas e vigiadas.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directories: ["/", "/sidecar", "/site", "/video"]
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      # Atualização de patch em lote: dez PRs por semana para subir versão de
+      # ponto vira ruído e ninguém revisa nenhum deles.
+      patches:
+        update-types: ["patch"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }

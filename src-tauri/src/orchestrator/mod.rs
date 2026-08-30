@@ -10,13 +10,12 @@
 //!   * so existe quando ha mais de uma rede na campanha.
 
 pub mod agent;
+pub mod movimento;
 pub mod prompts;
 pub mod roles;
-pub mod movimento;
-mod tipos;
 mod support;
+mod tipos;
 pub mod transcript;
-
 
 use tauri::AppHandle;
 
@@ -25,13 +24,13 @@ use roles::{Network, Role};
 pub use tipos::{CampaignReport, CampaignRequest, PecaFinal};
 
 use crate::brain::Graph;
-use movimento::{descrever_peca, juntar, motivo_do_movimento, pedir_movimento};
-use support::{com_idioma, descrever_pecas, termos as termos_do_objetivo, gravar_no_cerebro, juntar_correcoes, montar_legenda, observar, parse_pecas};
 use crate::state::AppState;
 use crate::vault;
-
-
-
+use movimento::{descrever_peca, juntar, motivo_do_movimento, pedir_movimento};
+use support::{
+    com_idioma, descrever_pecas, gravar_no_cerebro, juntar_correcoes, montar_legenda, observar,
+    parse_pecas, termos as termos_do_objetivo,
+};
 
 pub async fn run_campaign(
     app: AppHandle,
@@ -130,7 +129,10 @@ pub async fn run_campaign(
             // O desempenho medido entra no system, nao no prompt: e regra de
             // como decidir, nao dado da tarefa desta campanha.
             system: com_idioma(
-                juntar(prompts::system_gerente(*rede), crate::metricas::bloco_de_desempenho(rede.slug())),
+                juntar(
+                    prompts::system_gerente(*rede),
+                    crate::metricas::bloco_de_desempenho(rede.slug()),
+                ),
                 &req.idioma,
             ),
             prompt: prompts::prompt_gerente(
@@ -188,14 +190,14 @@ pub async fn run_campaign(
         let criacao = turn.execute().await?;
         avisos.extend(criacao.warnings);
 
-        let json = criacao
-            .json
-            .ok_or_else(|| crate::idioma::msg(
+        let json = criacao.json.ok_or_else(|| {
+            crate::idioma::msg(
                 "O Criador nao devolveu JSON valido. Tente de novo ou use um modelo \
                  maior no nivel de execucao.",
                 "The Creator did not return valid JSON. Try again or pick a larger \
                  model for the execution tier.",
-            ))?;
+            )
+        })?;
         pecas = parse_pecas(&json, &req.redes)?;
 
         // 4. A imagem e obrigatoria e nasce aqui, antes da auditoria: o auditor
@@ -258,8 +260,14 @@ pub async fn run_campaign(
         let auditoria = turn.execute().await?;
         avisos.extend(auditoria.warnings);
 
-        let parecer = auditoria.json.clone().unwrap_or_else(|| serde_json::json!({}));
-        let auditor_aprovou = parecer.get("aprovado").and_then(|v| v.as_bool()).unwrap_or(false);
+        let parecer = auditoria
+            .json
+            .clone()
+            .unwrap_or_else(|| serde_json::json!({}));
+        let auditor_aprovou = parecer
+            .get("aprovado")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
         parecer_auditor = parecer
             .get("mensagem_para_gerente")
             .and_then(|v| v.as_str())
@@ -270,10 +278,18 @@ pub async fn run_campaign(
         //    quando ha varias redes) decide.
         step += 1;
         let (role_decisor, system, network) = if multi {
-            (Role::DiretorGeral, com_idioma(prompts::system_diretor_validacao(), &req.idioma), None)
+            (
+                Role::DiretorGeral,
+                com_idioma(prompts::system_diretor_validacao(), &req.idioma),
+                None,
+            )
         } else {
             let rede = req.redes[0];
-            (Role::GerenteSetor, com_idioma(prompts::system_gerente_validacao(rede), &req.idioma), Some(rede))
+            (
+                Role::GerenteSetor,
+                com_idioma(prompts::system_gerente_validacao(rede), &req.idioma),
+                Some(rede),
+            )
         };
         let turn = AgentTurn {
             app: &app,
@@ -282,7 +298,11 @@ pub async fn run_campaign(
             role: role_decisor,
             network,
             system,
-            prompt: prompts::prompt_gerente_validacao(&briefings_texto, &pecas_texto, &parecer_auditor),
+            prompt: prompts::prompt_gerente_validacao(
+                &briefings_texto,
+                &pecas_texto,
+                &parecer_auditor,
+            ),
             json_mode: true,
             pensar: false,
             images: Vec::new(),
@@ -291,7 +311,10 @@ pub async fn run_campaign(
         avisos.extend(decisao.warnings);
 
         let veredito = decisao.json.unwrap_or_else(|| serde_json::json!({}));
-        let decisor_aprovou = veredito.get("aprovado").and_then(|v| v.as_bool()).unwrap_or(false);
+        let decisor_aprovou = veredito
+            .get("aprovado")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
 
         if auditor_aprovou && decisor_aprovou {
             aprovado = true;

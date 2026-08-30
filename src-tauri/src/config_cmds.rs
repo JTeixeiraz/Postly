@@ -166,7 +166,11 @@ pub async fn status_provedor() -> StatusProvedor {
     StatusProvedor {
         provedor: crate::prefs::load().provedor,
         claude_disponivel: disponivel,
-        claude_versao: if disponivel { crate::claude::versao().await } else { None },
+        claude_versao: if disponivel {
+            crate::claude::versao().await
+        } else {
+            None
+        },
         claude_caminho: crate::platform::current()
             .which("claude")
             .map(|p| p.display().to_string()),
@@ -199,7 +203,10 @@ pub fn salvar_skill(
     ativa: bool,
 ) -> Result<crate::prefs::Prefs, String> {
     if nome.trim().is_empty() {
-        return Err(crate::idioma::msg("De um nome a skill.", "Give the skill a name."));
+        return Err(crate::idioma::msg(
+            "De um nome a skill.",
+            "Give the skill a name.",
+        ));
     }
     let mut p = crate::prefs::load();
     match p.skills.iter_mut().find(|s| s.id == id) {

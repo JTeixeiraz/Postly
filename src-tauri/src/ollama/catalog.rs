@@ -381,7 +381,11 @@ pub fn build(profile: &ComputeProfile, installed: &[String]) -> Vec<CatalogEntry
             let accelerated = profile.accelerated_budget_bytes > 0
                 && footprint <= profile.accelerated_budget_bytes;
             let tps = estimated_tokens_per_second(
-                if accelerated { profile.mode } else { ComputeMode::Cpu },
+                if accelerated {
+                    profile.mode
+                } else {
+                    ComputeMode::Cpu
+                },
                 spec.active_params_b,
             );
 

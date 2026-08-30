@@ -79,15 +79,18 @@ fn explicar(status: reqwest::StatusCode, corpo: &[u8]) -> String {
                 .and_then(|e| e.get(0))
                 .and_then(|e| e.as_str())
                 .map(|s| s.to_string())
-                .or_else(|| v.get("message").and_then(|m| m.as_str()).map(|s| s.to_string()))
+                .or_else(|| {
+                    v.get("message")
+                        .and_then(|m| m.as_str())
+                        .map(|s| s.to_string())
+                })
         })
         .unwrap_or_else(|| texto.chars().take(200).collect());
 
     match status {
-        reqwest::StatusCode::UNAUTHORIZED => crate::idioma::msg(
-            "A Stability recusou a chave.",
-            "Stability refused the key.",
-        ),
+        reqwest::StatusCode::UNAUTHORIZED => {
+            crate::idioma::msg("A Stability recusou a chave.", "Stability refused the key.")
+        }
         reqwest::StatusCode::PAYMENT_REQUIRED => crate::idioma::msg(
             "Sem creditos na Stability. Recarregue em platform.stability.ai.",
             "No credits at Stability. Top up at platform.stability.ai.",

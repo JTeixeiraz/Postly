@@ -55,7 +55,11 @@ pub async fn diagnostico() -> Diagnostico {
             roles::Network::X,
         ]
         .iter()
-        .map(|n| RedeInfo { slug: n.slug(), label: n.label(), formato: n.format_hint() })
+        .map(|n| RedeInfo {
+            slug: n.slug(),
+            label: n.label(),
+            formato: n.format_hint(),
+        })
         .collect(),
     }
 }
@@ -134,7 +138,9 @@ pub async fn otimizar(caminhos: Vec<String>, permitir_elevacao: bool) -> Optimiz
     let descarregados = client::unload_all().await;
     let mut report = hardware::optimize(&caminhos, permitir_elevacao);
     for modelo in descarregados {
-        report.actions.insert(0, format!("Modelo {modelo} removido da memoria"));
+        report
+            .actions
+            .insert(0, format!("Modelo {modelo} removido da memoria"));
     }
     report.after = hardware::snapshot();
     report
@@ -322,7 +328,9 @@ pub async fn fechar_navegador(state: State<'_, AppState>) -> Result<(), String> 
 // ---------------------------------------------------------------- cerebro
 
 #[tauri::command]
-pub async fn cerebro_stats(state: State<'_, AppState>) -> Result<crate::brain::store::BrainStats, String> {
+pub async fn cerebro_stats(
+    state: State<'_, AppState>,
+) -> Result<crate::brain::store::BrainStats, String> {
     Ok(state.brain.stats().await)
 }
 
@@ -341,7 +349,10 @@ pub async fn cerebro_node(
     peso_minimo: f32,
     top_k: usize,
 ) -> Result<Option<NodeView>, String> {
-    Ok(state.brain.read(|g| g.neighbors(&id, peso_minimo, top_k)).await)
+    Ok(state
+        .brain
+        .read(|g| g.neighbors(&id, peso_minimo, top_k))
+        .await)
 }
 
 #[tauri::command]
@@ -374,7 +385,10 @@ pub async fn cerebro_escrever_node(
     tipo: String,
     contexto: String,
 ) -> Result<crate::brain::store::BrainStats, String> {
-    state.brain.write(|g| g.upsert_node(&id, &tipo, &contexto)).await?;
+    state
+        .brain
+        .write(|g| g.upsert_node(&id, &tipo, &contexto))
+        .await?;
     Ok(state.brain.stats().await)
 }
 

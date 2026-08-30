@@ -14,18 +14,18 @@
 
 pub mod auditoria_cmds;
 pub mod brain;
-pub mod claude;
 pub mod browser;
+pub mod claude;
 pub mod commands;
 pub mod config_cmds;
 pub mod gemini;
 pub mod hardware;
-pub mod imagem;
 pub mod idioma;
+pub mod imagem;
+pub mod metricas;
 pub mod ollama;
 pub mod orchestrator;
 pub mod platform;
-pub mod metricas;
 pub mod prefs;
 pub mod referencias;
 pub mod state;

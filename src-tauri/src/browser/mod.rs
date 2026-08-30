@@ -61,7 +61,8 @@ impl BrowserBridge {
     }
 
     fn id(&self) -> u64 {
-        self.next_id.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        self.next_id
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed)
     }
 
     /// Sobe o sidecar sob demanda. Enquanto nenhum agente precisar de navegador,
@@ -93,12 +94,25 @@ impl BrowserBridge {
             .map_err(|e| format!("falha ao subir o sidecar do Playwright: {e}"))?;
 
         let stdin = child.stdin.take().ok_or("stdin do sidecar indisponivel")?;
-        let stdout = BufReader::new(child.stdout.take().ok_or("stdout do sidecar indisponivel")?);
-        *guard = Some(Channel { child, stdin, stdout });
+        let stdout = BufReader::new(
+            child
+                .stdout
+                .take()
+                .ok_or("stdout do sidecar indisponivel")?,
+        );
+        *guard = Some(Channel {
+            child,
+            stdin,
+            stdout,
+        });
         Ok(())
     }
 
-    async fn call(&self, cmd: &'static str, payload: serde_json::Value) -> Result<serde_json::Value, String> {
+    async fn call(
+        &self,
+        cmd: &'static str,
+        payload: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
         let mut guard = self.channel.lock().await;
         self.ensure(&mut guard).await?;
         let channel = guard.as_mut().ok_or("canal do sidecar nao inicializado")?;
@@ -137,7 +151,9 @@ impl BrowserBridge {
             return if resp.ok {
                 Ok(resp.data)
             } else {
-                Err(resp.error.unwrap_or_else(|| "erro desconhecido no sidecar".into()))
+                Err(resp
+                    .error
+                    .unwrap_or_else(|| "erro desconhecido no sidecar".into()))
             };
         }
     }
@@ -156,12 +172,24 @@ impl BrowserBridge {
             )
             .await?;
         Ok(BrowserSession {
-            logged_in: data.get("loggedIn").and_then(|v| v.as_bool()).unwrap_or(false),
-            url: data.get("url").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
+            logged_in: data
+                .get("loggedIn")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false),
+            url: data
+                .get("url")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string(),
         })
     }
 
-    pub async fn login(&self, network: Network, username: &str, password: &str) -> Result<BrowserSession, String> {
+    pub async fn login(
+        &self,
+        network: Network,
+        username: &str,
+        password: &str,
+    ) -> Result<BrowserSession, String> {
         let data = self
             .call(
                 "login",
@@ -173,8 +201,15 @@ impl BrowserBridge {
             )
             .await?;
         Ok(BrowserSession {
-            logged_in: data.get("loggedIn").and_then(|v| v.as_bool()).unwrap_or(false),
-            url: data.get("url").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
+            logged_in: data
+                .get("loggedIn")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false),
+            url: data
+                .get("url")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string(),
         })
     }
 
@@ -182,7 +217,10 @@ impl BrowserBridge {
     /// mostrando agora. Vira texto e entra no prompt.
     pub async fn research(&self, network: Network, limit: u32) -> Result<String, String> {
         let data = self
-            .call("research", serde_json::json!({ "network": network.slug(), "limit": limit }))
+            .call(
+                "research",
+                serde_json::json!({ "network": network.slug(), "limit": limit }),
+            )
             .await?;
         Ok(data
             .get("report")
@@ -197,12 +235,15 @@ impl BrowserBridge {
     /// oferece o registro manual, que e o caminho que nunca quebra.
     pub async fn metrics(&self, network: Network, limit: u32) -> Result<Vec<PostColhido>, String> {
         let data = self
-            .call("metrics", serde_json::json!({ "network": network.slug(), "limit": limit }))
+            .call(
+                "metrics",
+                serde_json::json!({ "network": network.slug(), "limit": limit }),
+            )
             .await?;
-        Ok(serde_json::from_value(
-            data.get("posts").cloned().unwrap_or(serde_json::json!([])),
+        Ok(
+            serde_json::from_value(data.get("posts").cloned().unwrap_or(serde_json::json!([])))
+                .unwrap_or_default(),
         )
-        .unwrap_or_default())
     }
 
     pub async fn publish(
@@ -224,9 +265,19 @@ impl BrowserBridge {
             )
             .await?;
         Ok(PublishOutcome {
-            published: data.get("published").and_then(|v| v.as_bool()).unwrap_or(false),
-            detail: data.get("detail").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-            screenshot: data.get("screenshot").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            published: data
+                .get("published")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false),
+            detail: data
+                .get("detail")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string(),
+            screenshot: data
+                .get("screenshot")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
         })
     }
 
@@ -234,7 +285,9 @@ impl BrowserBridge {
     pub async fn shutdown(&self) {
         let mut guard = self.channel.lock().await;
         if guard.is_some() {
-            let _ = self.call_locked(&mut guard, "shutdown", serde_json::json!({})).await;
+            let _ = self
+                .call_locked(&mut guard, "shutdown", serde_json::json!({}))
+                .await;
         }
         if let Some(mut channel) = guard.take() {
             let _ = channel.child.kill().await;
@@ -247,8 +300,14 @@ impl BrowserBridge {
         cmd: &'static str,
         payload: serde_json::Value,
     ) -> Result<(), String> {
-        let Some(channel) = guard.as_mut() else { return Ok(()) };
-        let request = Request { id: self.id(), cmd, payload };
+        let Some(channel) = guard.as_mut() else {
+            return Ok(());
+        };
+        let request = Request {
+            id: self.id(),
+            cmd,
+            payload,
+        };
         let mut line = serde_json::to_string(&request).map_err(|e| e.to_string())?;
         line.push('\n');
         let _ = channel.stdin.write_all(line.as_bytes()).await;

@@ -226,7 +226,9 @@ pub fn ler_rede(regs: &[Registro], rede: &str) -> LeituraDaRede {
     let n = com_taxa.len();
 
     let multiplo = |t: f64| if med > 0.0 { t / med } else { 0.0 };
-    let melhor = com_taxa.first().map(|(r, t)| (r.conceito.clone(), multiplo(*t)));
+    let melhor = com_taxa
+        .first()
+        .map(|(r, t)| (r.conceito.clone(), multiplo(*t)));
     let pior = com_taxa.last().map(|(r, _)| r.conceito.clone());
 
     let (melhor_conceito, multiplo_da_melhor) = melhor.unwrap_or_default();
@@ -370,7 +372,9 @@ mod testes {
         let regs = vec![reg("instagram", "a", 1000, 500)];
         let l = ler_rede(&regs, "instagram");
         assert_eq!(l.veredito, Veredito::SemBase);
-        assert!(bloco_de_desempenho("instagram").is_empty() || l.publicacoes < MINIMO_PARA_COMPARAR);
+        assert!(
+            bloco_de_desempenho("instagram").is_empty() || l.publicacoes < MINIMO_PARA_COMPARAR
+        );
     }
 
     #[test]

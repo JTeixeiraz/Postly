@@ -7,3 +7,12 @@ dist
 # pelo site, e ter duas cópias de 6 MB no histórico não ajuda ninguém.
 out
 
+
+# A narração e a trilha ficam fora do repositório.
+#
+# O vídeo renderizado usa os dois, e publicar um vídeo é uso normal — o que a
+# maioria das licenças de banco de áudio não permite é redistribuir o ARQUIVO
+# de som isolado, que é exatamente o que versioná-los aqui faria. A trilha veio
+# de outro projeto da casa e a licença não está documentada; até estar, ela não
+# entra. Ver o README para repor.
+public/audio/

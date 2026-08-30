@@ -99,7 +99,11 @@ impl Step {
         if status.success() {
             Ok(texto)
         } else {
-            Err(format!("{}: {}", self.label, crate::platform::ultima_linha_util(&texto)))
+            Err(format!(
+                "{}: {}",
+                self.label,
+                crate::platform::ultima_linha_util(&texto)
+            ))
         }
     }
 
@@ -118,7 +122,11 @@ impl Step {
         if out.status.success() {
             Ok(stdout)
         } else {
-            Err(format!("{}: {}", self.label, if stderr.is_empty() { stdout } else { stderr }))
+            Err(format!(
+                "{}: {}",
+                self.label,
+                if stderr.is_empty() { stdout } else { stderr }
+            ))
         }
     }
 }

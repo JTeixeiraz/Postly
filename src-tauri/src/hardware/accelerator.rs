@@ -144,7 +144,8 @@ pub fn parse_wmic_video(saida: &str) -> Vec<Accelerator> {
                 vram_free_bytes: 0,
                 unified: vendor == Vendor::Intel,
                 usable: false,
-                detail: "Memoria relatada pelo Windows satura em 4 GB; tratada como estimativa.".into(),
+                detail: "Memoria relatada pelo Windows satura em 4 GB; tratada como estimativa."
+                    .into(),
             })
         })
         .collect()
@@ -203,10 +204,24 @@ mod tests {
     #[test]
     fn dedicada_ganha_de_unificada_na_escolha() {
         let lista = vec![
-            Accelerator { vendor: Vendor::Intel, name: "Iris".into(), vram_total_bytes: 32 << 30,
-                vram_free_bytes: 0, unified: true, usable: true, detail: String::new() },
-            Accelerator { vendor: Vendor::Nvidia, name: "RTX".into(), vram_total_bytes: 8 << 30,
-                vram_free_bytes: 0, unified: false, usable: true, detail: String::new() },
+            Accelerator {
+                vendor: Vendor::Intel,
+                name: "Iris".into(),
+                vram_total_bytes: 32 << 30,
+                vram_free_bytes: 0,
+                unified: true,
+                usable: true,
+                detail: String::new(),
+            },
+            Accelerator {
+                vendor: Vendor::Nvidia,
+                name: "RTX".into(),
+                vram_total_bytes: 8 << 30,
+                vram_free_bytes: 0,
+                unified: false,
+                usable: true,
+                detail: String::new(),
+            },
         ];
         assert_eq!(primaria(&lista).unwrap().name, "RTX");
         assert_eq!(modo(&lista), ComputeMode::Dedicada);
@@ -215,8 +230,14 @@ mod tests {
     #[test]
     fn sem_placa_utilizavel_o_modo_e_cpu() {
         let lista = vec![Accelerator {
-            vendor: Vendor::Amd, name: "iGPU".into(), vram_total_bytes: 2 << 30,
-            vram_free_bytes: 0, unified: true, usable: false, detail: String::new() }];
+            vendor: Vendor::Amd,
+            name: "iGPU".into(),
+            vram_total_bytes: 2 << 30,
+            vram_free_bytes: 0,
+            unified: true,
+            usable: false,
+            detail: String::new(),
+        }];
         assert_eq!(modo(&lista), ComputeMode::Cpu);
         assert!(primaria(&lista).is_none());
     }

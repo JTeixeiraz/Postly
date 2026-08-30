@@ -423,9 +423,10 @@ abre" **não usa capturas**: ela roda o aplicativo de verdade dentro da página 
 forças que você arrasta no produto. Os dois rodam antes de todo build, e o
 primeiro falha se uma classe do site passar a colidir com uma do app.
 
-`video/` é a apresentação de 40 segundos, em [Remotion](https://remotion.dev).
-As telas também são desenhadas, não capturadas — e toda animação é função do
-quadro, porque a renderização é determinística.
+`video/` é a apresentação de 48 segundos, em [Remotion](https://remotion.dev),
+com narração e trilha. As telas também são desenhadas, não capturadas — e toda
+animação é função do quadro, porque a renderização é determinística. A duração
+de cada cena é a da fala que a acompanha, mais um respiro.
 
 ```bash
 cd site  && npm install && npm run dev
@@ -451,6 +452,19 @@ contra 165 MB. Numa máquina onde um modelo ocupa 20 GB, isso decide. E o
 Electron traria um segundo Chromium além do que o Playwright já sobe.
 
 ---
+
+## Segurança
+
+Vulnerabilidade se reporta em privado, pela [aba
+Security](https://github.com/JTeixeiraz/Postly/security/advisories/new), nunca
+por issue pública — ver [SECURITY.md](SECURITY.md), que também lista o que
+conta como vulnerabilidade aqui e o que é limitação declarada.
+
+O repositório usa: proteção do branch `main` (sem force-push, sem apagar,
+verificação obrigatória antes do merge), CODEOWNERS, secret scanning com
+bloqueio no push, e Dependabot nos quatro ecossistemas do projeto. Os
+workflows rodam em `pull_request` e nunca em `pull_request_target`: um PR de
+fork é verificado sem nenhum acesso aos segredos do repositório.
 
 ## Contribuindo
 

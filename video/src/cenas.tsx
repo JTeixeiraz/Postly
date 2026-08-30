@@ -3,6 +3,7 @@ import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { C, FONTE, MONO, s } from "./tokens";
 import { Brilho, Linha, Marca, saida, Titulo, useEntrada } from "./pecas";
 import { Moldura, TelaCatalogo, TelaGrafo } from "./janela";
+import { ClaudeCode, Geradores } from "./integracoes";
 
 const PALCO: React.CSSProperties = {
   backgroundColor: C.fundo,
@@ -453,3 +454,24 @@ export const Fecho: React.FC = () => {
     </AbsoluteFill>
   );
 };
+
+
+/* ══ integrações ═════════════════════════════════════════════════════════ */
+
+export const Claude: React.FC = () => (
+  <AbsoluteFill style={{ ...PALCO, justifyContent: "center", padding: "0 88px" }}>
+    <Titulo tamanho={62}>Ou os cargos rodam no seu Claude Code</Titulo>
+    <div style={{ marginTop: 52 }}>
+      <ClaudeCode />
+    </div>
+  </AbsoluteFill>
+);
+
+export const Arte: React.FC = () => (
+  <AbsoluteFill style={{ ...PALCO, justifyContent: "center", alignItems: "center" }}>
+    <Titulo tamanho={62}>E a arte, em quem você escolher</Titulo>
+    <div style={{ marginTop: 56 }}>
+      <Geradores />
+    </div>
+  </AbsoluteFill>
+);

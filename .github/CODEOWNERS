@@ -1,0 +1,13 @@
+# Toda mudança pede revisão do dono do projeto.
+#
+# Sozinho isto não impede nada: só tem efeito com a regra de proteção do
+# branch `main` exigindo revisão do CODEOWNER antes do merge.
+*       @JTeixeiraz
+
+# Estes pesam mais que o resto: mexem em credencial, em execução de processo
+# externo e no que roda com o token do repositório.
+/src-tauri/src/vault.rs      @JTeixeiraz
+/src-tauri/src/claude/       @JTeixeiraz
+/src-tauri/src/imagem/       @JTeixeiraz
+/sidecar/                    @JTeixeiraz
+/.github/workflows/          @JTeixeiraz

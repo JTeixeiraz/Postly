@@ -46,7 +46,10 @@ impl BrainHandle {
     /// Carrega o artefato do disco, ou nasce com o cerebro semente.
     pub fn load() -> Self {
         let graph = read_artifact(&artifact_path()).unwrap_or_else(|_| seed_graph());
-        Self { graph: RwLock::new(graph), disk_lock: Mutex::new(()) }
+        Self {
+            graph: RwLock::new(graph),
+            disk_lock: Mutex::new(()),
+        }
     }
 
     pub async fn read<T>(&self, f: impl FnOnce(&Graph) -> T) -> T {
@@ -86,7 +89,11 @@ impl BrainHandle {
             edges: guard.edge_count(),
             raw_bytes: raw,
             compressed_bytes: compressed,
-            ratio: if raw > 0 { compressed as f32 / raw as f32 } else { 0.0 },
+            ratio: if raw > 0 {
+                compressed as f32 / raw as f32
+            } else {
+                0.0
+            },
             path: artifact.to_string_lossy().to_string(),
             updated_at: guard.updated_at,
         }
@@ -113,8 +120,8 @@ fn encode_raw(graph: &Graph) -> Result<Vec<u8>, String> {
 /// bincode -> zstd, com cabecalho de identificacao.
 fn encode(graph: &Graph) -> Result<Vec<u8>, String> {
     let raw = encode_raw(graph)?;
-    let compressed =
-        zstd::encode_all(&raw[..], ZSTD_LEVEL).map_err(|e| format!("falha ao compactar o cerebro: {e}"))?;
+    let compressed = zstd::encode_all(&raw[..], ZSTD_LEVEL)
+        .map_err(|e| format!("falha ao compactar o cerebro: {e}"))?;
     let mut out = Vec::with_capacity(compressed.len() + 4);
     out.extend_from_slice(MAGIC);
     out.extend_from_slice(&compressed);
@@ -126,7 +133,8 @@ fn decode(bytes: &[u8]) -> Result<Graph, String> {
     if bytes.len() < 4 || &bytes[..4] != MAGIC {
         return Err("artefato do cerebro invalido ou de outra versao".into());
     }
-    let raw = zstd::decode_all(&bytes[4..]).map_err(|e| format!("falha ao descompactar o cerebro: {e}"))?;
+    let raw = zstd::decode_all(&bytes[4..])
+        .map_err(|e| format!("falha ao descompactar o cerebro: {e}"))?;
     bincode::deserialize(&raw).map_err(|e| format!("falha ao desserializar o cerebro: {e}"))
 }
 
@@ -139,7 +147,8 @@ fn read_artifact(path: &Path) -> Result<Graph, String> {
 /// entao nunca existe um artefato pela metade.
 fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
     if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| format!("nao consegui criar {parent:?}: {e}"))?;
+        std::fs::create_dir_all(parent)
+            .map_err(|e| format!("nao consegui criar {parent:?}: {e}"))?;
     }
     let tmp = path.with_extension("zst.tmp");
     {
@@ -177,21 +186,69 @@ fn rotate_snapshot(bytes: &[u8]) -> Result<(), String> {
 fn seed_graph() -> Graph {
     let mut g = Graph::new();
 
-    g.upsert_node("postly", "sistema", "Middleware local que orquestra agentes de IA como funcionarios de marketing.");
-    g.upsert_node("instagram", "rede_social", "Feed visual. Imagem 1:1 ou 4:5, legenda ate 2200 caracteres, hashtags relevantes.");
-    g.upsert_node("facebook", "rede_social", "Alcance amplo e faixa etaria mais alta. Texto conversacional, imagem horizontal.");
-    g.upsert_node("tiktok", "rede_social", "Video vertical 9:16. O gancho vive nos dois primeiros segundos.");
-    g.upsert_node("linkedin", "rede_social", "Publico profissional. A primeira linha precisa segurar antes do corte de 'ver mais'.");
-    g.upsert_node("x", "rede_social", "Texto curto ate 280 caracteres, imagem 16:9, ritmo de conversa.");
+    g.upsert_node(
+        "postly",
+        "sistema",
+        "Middleware local que orquestra agentes de IA como funcionarios de marketing.",
+    );
+    g.upsert_node(
+        "instagram",
+        "rede_social",
+        "Feed visual. Imagem 1:1 ou 4:5, legenda ate 2200 caracteres, hashtags relevantes.",
+    );
+    g.upsert_node(
+        "facebook",
+        "rede_social",
+        "Alcance amplo e faixa etaria mais alta. Texto conversacional, imagem horizontal.",
+    );
+    g.upsert_node(
+        "tiktok",
+        "rede_social",
+        "Video vertical 9:16. O gancho vive nos dois primeiros segundos.",
+    );
+    g.upsert_node(
+        "linkedin",
+        "rede_social",
+        "Publico profissional. A primeira linha precisa segurar antes do corte de 'ver mais'.",
+    );
+    g.upsert_node(
+        "x",
+        "rede_social",
+        "Texto curto ate 280 caracteres, imagem 16:9, ritmo de conversa.",
+    );
 
     g.upsert_node("gerente_setor", "cargo", "Decide a linha criativa a partir de analise de mercado e concorrencia. So envia mensagem ao criador.");
-    g.upsert_node("criador_conteudo", "cargo", "Executa o briefing do gerente: gera prompt de imagem e legenda. Nao decide estrategia.");
-    g.upsert_node("auditor", "cargo", "Verifica alucinacao e aderencia ao briefing, e decide junto com o gerente.");
-    g.upsert_node("diretor_geral", "cargo", "Existe quando ha mais de uma rede. Distribui a estrategia macro para cada gerente.");
+    g.upsert_node(
+        "criador_conteudo",
+        "cargo",
+        "Executa o briefing do gerente: gera prompt de imagem e legenda. Nao decide estrategia.",
+    );
+    g.upsert_node(
+        "auditor",
+        "cargo",
+        "Verifica alucinacao e aderencia ao briefing, e decide junto com o gerente.",
+    );
+    g.upsert_node(
+        "diretor_geral",
+        "cargo",
+        "Existe quando ha mais de uma rede. Distribui a estrategia macro para cada gerente.",
+    );
 
-    g.upsert_node("prova_social", "tatica", "Depoimento, numero de clientes ou resultado concreto reduzem atrito de compra.");
-    g.upsert_node("chamada_para_acao", "tatica", "Toda publicacao comercial termina com uma acao unica e explicita.");
-    g.upsert_node("consistencia_visual", "tatica", "Paleta e tipografia estaveis fazem a marca ser reconhecida antes de ser lida.");
+    g.upsert_node(
+        "prova_social",
+        "tatica",
+        "Depoimento, numero de clientes ou resultado concreto reduzem atrito de compra.",
+    );
+    g.upsert_node(
+        "chamada_para_acao",
+        "tatica",
+        "Toda publicacao comercial termina com uma acao unica e explicita.",
+    );
+    g.upsert_node(
+        "consistencia_visual",
+        "tatica",
+        "Paleta e tipografia estaveis fazem a marca ser reconhecida antes de ser lida.",
+    );
 
     g.upsert_edge("diretor_geral", "gerente_setor", "delega_para", 0.95);
     g.upsert_edge("gerente_setor", "criador_conteudo", "delega_para", 0.95);

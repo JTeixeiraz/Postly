@@ -55,10 +55,22 @@ impl PlatformStrategy for WindowsStrategy {
         let temp = std::env::temp_dir();
         [
             target("Arquivos temporarios do usuario", temp, true),
-            target("Cache do Edge", local.join("Microsoft/Edge/User Data/Default/Cache"), true),
-            target("Cache do Chrome", local.join("Google/Chrome/User Data/Default/Cache"), true),
+            target(
+                "Cache do Edge",
+                local.join("Microsoft/Edge/User Data/Default/Cache"),
+                true,
+            ),
+            target(
+                "Cache do Chrome",
+                local.join("Google/Chrome/User Data/Default/Cache"),
+                true,
+            ),
             target("Cache do npm", local.join("npm-cache"), true),
-            target("Relatorios de erro do Windows", local.join("Microsoft/Windows/WER"), true),
+            target(
+                "Relatorios de erro do Windows",
+                local.join("Microsoft/Windows/WER"),
+                true,
+            ),
         ]
         .into_iter()
         .flatten()
@@ -103,7 +115,10 @@ impl PlatformStrategy for WindowsStrategy {
 
         if let Some(saida) = super::sonda(
             "nvidia-smi",
-            &["--query-gpu=name,memory.total,memory.free", "--format=csv,noheader,nounits"],
+            &[
+                "--query-gpu=name,memory.total,memory.free",
+                "--format=csv,noheader,nounits",
+            ],
         ) {
             placas.extend(parse_nvidia_smi(&saida));
         }

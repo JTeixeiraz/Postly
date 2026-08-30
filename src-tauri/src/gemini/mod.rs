@@ -179,7 +179,7 @@ fn explicar(err: &ApiError) -> String {
             "The Gemini model is overloaded right now. Try again in a few minutes or \
              switch to Fast quality.",
         ),
-        outro if outro.is_empty() => format!("Gemini recusou: {}", primeira_linha(msg)),
+        "" => format!("Gemini recusou: {}", primeira_linha(msg)),
         outro => format!("Gemini recusou ({outro}): {}", primeira_linha(msg)),
     }
 }
@@ -206,8 +206,12 @@ async fn call(api_key: &str, body: serde_json::Value) -> Result<InteractionRespo
 
     let status = resp.status();
     let raw = resp.text().await.map_err(|e| e.to_string())?;
-    let parsed: InteractionResponse = serde_json::from_str(&raw)
-        .map_err(|e| format!("resposta ilegivel do Gemini ({status}): {e} :: {}", truncate(&raw, 400)))?;
+    let parsed: InteractionResponse = serde_json::from_str(&raw).map_err(|e| {
+        format!(
+            "resposta ilegivel do Gemini ({status}): {e} :: {}",
+            truncate(&raw, 400)
+        )
+    })?;
 
     if let Some(err) = &parsed.error {
         return Err(explicar(err));
@@ -269,8 +273,9 @@ pub async fn generate_image(
     });
 
     let resposta = call(api_key, body).await?;
-    let encoded = resposta.image_base64().ok_or_else(|| {
-        match resposta.status.as_deref() {
+    let encoded = resposta
+        .image_base64()
+        .ok_or_else(|| match resposta.status.as_deref() {
             Some("blocked") | Some("filtered") => crate::idioma::msg(
                 "O Gemini bloqueou o pedido por politica de conteudo. Reescreva o \
                  conceito da peca.",
@@ -279,8 +284,7 @@ pub async fn generate_image(
             ),
             Some(outro) => format!("Gemini nao devolveu imagem (status: {outro})."),
             None => "Gemini nao devolveu imagem.".to_string(),
-        }
-    })?;
+        })?;
 
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(encoded.as_bytes())
@@ -307,5 +311,7 @@ pub async fn validate_key(api_key: &str) -> Result<String, String> {
         "model": MODEL_TEXT,
         "input": "Responda apenas: ok"
     });
-    call(api_key, body).await.map(|r| r.text().unwrap_or_else(|| "ok".into()))
+    call(api_key, body)
+        .await
+        .map(|r| r.text().unwrap_or_else(|| "ok".into()))
 }

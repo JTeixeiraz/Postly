@@ -20,7 +20,11 @@ async fn o_corpo_da_requisicao_e_aceito_e_a_resposta_nao_vem_vazia() {
         &modelo,
         Some("Voce responde com uma unica palavra, sem pontuacao."),
         "Responda: ok",
-        GenerateOptions { temperature: 0.1, num_ctx: 2048, num_predict: 32 },
+        GenerateOptions {
+            temperature: 0.1,
+            num_ctx: 2048,
+            num_predict: 32,
+        },
         false,
         // Raciocinio desligado: e o que garante que o orcamento de tokens vai
         // para a resposta e nao para o pensamento.
@@ -52,7 +56,11 @@ async fn o_modelo_sai_da_memoria_depois_de_responder() {
         &modelo,
         None,
         "oi",
-        GenerateOptions { temperature: 0.1, num_ctx: 512, num_predict: 8 },
+        GenerateOptions {
+            temperature: 0.1,
+            num_ctx: 512,
+            num_predict: 8,
+        },
         false,
         false,
         Vec::new(),

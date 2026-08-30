@@ -82,20 +82,30 @@ fn doutrina_marketing() -> &'static str {
 /// Restricoes reais de cada rede, para o texto ja nascer publicavel.
 fn formato_da_rede(network: Network) -> &'static str {
     match network {
-        Network::Instagram => "FORMATO. Legenda ate 2200 caracteres, mas as duas \
+        Network::Instagram => {
+            "FORMATO. Legenda ate 2200 caracteres, mas as duas \
             primeiras linhas sao o que aparece antes do \"mais\": o gancho vive ali. \
-            Ate 30 hashtags, e menos costuma render mais. Link nao clica na legenda.",
-        Network::Facebook => "FORMATO. Texto sem limite pratico, mas o corte acontece \
+            Ate 30 hashtags, e menos costuma render mais. Link nao clica na legenda."
+        }
+        Network::Facebook => {
+            "FORMATO. Texto sem limite pratico, mas o corte acontece \
             perto de 480 caracteres. Link clica normalmente. Publico mais velho que o \
-            do Instagram, tolera texto mais longo e explicativo.",
-        Network::Tiktok => "FORMATO. Legenda ate 2200 caracteres, porem quase ninguem \
+            do Instagram, tolera texto mais longo e explicativo."
+        }
+        Network::Tiktok => {
+            "FORMATO. Legenda ate 2200 caracteres, porem quase ninguem \
             le: o peso esta no que aparece na tela nos tres primeiros segundos. \
-            Escreva a legenda como complemento, nao como argumento principal.",
-        Network::Linkedin => "FORMATO. Ate 3000 caracteres, corte em torno de 210. \
+            Escreva a legenda como complemento, nao como argumento principal."
+        }
+        Network::Linkedin => {
+            "FORMATO. Ate 3000 caracteres, corte em torno de 210. \
             Publico profissional: caso concreto, numero e aprendizado funcionam; \
-            linguagem de anuncio de varejo destoa e reduz alcance.",
-        Network::X => "FORMATO. 280 caracteres no total, incluindo hashtag. Uma ideia \
-            por post. Frase curta, sem rodeio, sem introducao.",
+            linguagem de anuncio de varejo destoa e reduz alcance."
+        }
+        Network::X => {
+            "FORMATO. 280 caracteres no total, incluindo hashtag. Uma ideia \
+            por post. Frase curta, sem rodeio, sem introducao."
+        }
     }
 }
 
@@ -360,7 +370,10 @@ pub fn system_diretor_validacao() -> String {
 pub fn clausula_idioma(idioma: &str) -> String {
     let (nome, exemplo) = match idioma {
         "en" => ("English", "captions, briefings and verdicts in English"),
-        _ => ("portugues do Brasil", "legendas, briefings e pareceres em portugues do Brasil"),
+        _ => (
+            "portugues do Brasil",
+            "legendas, briefings e pareceres em portugues do Brasil",
+        ),
     };
     format!(
         "IDIOMA DA ENTREGA. Tudo que voce escrever para ser lido por uma pessoa ou \

@@ -164,10 +164,10 @@ export default function App() {
       <Secao id="video">
         <div className="painel video-painel">
           <div className="video-painel__texto">
-            <h2>Quarenta segundos</h2>
+            <h2>Menos de um minuto</h2>
             <p>
-              O projeto inteiro, do problema ao comando de instalação. Sem narração — dá para
-              assistir com o som desligado.
+              O projeto inteiro, do problema ao comando de instalação: o revezamento, a inversão
+              do hardware, as integrações e o que nunca sai da sua máquina.
             </p>
           </div>
           <Apresentacao />

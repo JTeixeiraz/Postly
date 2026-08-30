@@ -56,10 +56,7 @@ fn agora() -> String {
 }
 
 fn novo_id() -> String {
-    format!(
-        "m{}",
-        chrono::Utc::now().format("%Y%m%dT%H%M%S%3f")
-    )
+    format!("m{}", chrono::Utc::now().format("%Y%m%dT%H%M%S%3f"))
 }
 
 #[tauri::command]
@@ -78,7 +75,11 @@ pub fn registrar_metrica(m: NovaMetrica) -> Result<Vec<Registro>, String> {
 
     let mut regs = metricas::load();
     let reg = Registro {
-        id: if m.id.trim().is_empty() { novo_id() } else { m.id.clone() },
+        id: if m.id.trim().is_empty() {
+            novo_id()
+        } else {
+            m.id.clone()
+        },
         run_id: m.run_id,
         rede: m.rede,
         publicado_em: m.publicado_em,
@@ -140,7 +141,10 @@ pub async fn coletar_metricas(
         // A URL da publicacao e a unica identidade estavel entre coletas. Sem
         // ela, cada raspagem duplicaria o historico inteiro e a mediana viraria
         // ficcao.
-        if let Some(i) = regs.iter().position(|r| !r.url.is_empty() && r.url == c.url) {
+        if let Some(i) = regs
+            .iter()
+            .position(|r| !r.url.is_empty() && r.url == c.url)
+        {
             // Registro que ja existe so tem os numeros atualizados: um valor
             // digitado a mao (alcance, tipicamente) nao pode ser apagado por
             // uma coleta que nao sabe le-lo.
@@ -199,23 +203,18 @@ pub async fn analisar_desempenho() -> Result<String, String> {
     let system = crate::idioma::msg(SYSTEM_ANALISE_PT, SYSTEM_ANALISE_EN);
     let prompt = format!(
         "{}\n\n{tabela}",
-        crate::idioma::msg(
-            "Analise o historico abaixo.",
-            "Analyse the history below."
-        )
+        crate::idioma::msg("Analise o historico abaixo.", "Analyse the history below.")
     );
 
     match crate::prefs::load().provedor {
-        crate::prefs::Provedor::ClaudeCode => {
-            crate::claude::turno(
-                crate::orchestrator::roles::Tier::Alto,
-                &system,
-                &prompt,
-                600,
-            )
-            .await
-            .map(|t| t.texto)
-        }
+        crate::prefs::Provedor::ClaudeCode => crate::claude::turno(
+            crate::orchestrator::roles::Tier::Alto,
+            &system,
+            &prompt,
+            600,
+        )
+        .await
+        .map(|t| t.texto),
         crate::prefs::Provedor::Ollama => {
             let perfil = crate::hardware::compute_profile();
             let instalados = crate::ollama::client::installed_models().await;

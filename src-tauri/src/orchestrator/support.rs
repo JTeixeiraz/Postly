@@ -49,7 +49,10 @@ pub async fn observar(
     }
 
     state.browser.research(rede, 8).await.unwrap_or_else(|e| {
-        avisos.push(format!("Observacao de campo em {} falhou: {e}", rede.label()));
+        avisos.push(format!(
+            "Observacao de campo em {} falhou: {e}",
+            rede.label()
+        ));
         String::new()
     })
 }
@@ -84,7 +87,13 @@ pub fn parse_pecas(json: &serde_json::Value, redes: &[Network]) -> Result<Vec<Pe
             .map(|a| {
                 a.iter()
                     .filter_map(|h| h.as_str())
-                    .map(|h| if h.starts_with('#') { h.to_string() } else { format!("#{h}") })
+                    .map(|h| {
+                        if h.starts_with('#') {
+                            h.to_string()
+                        } else {
+                            format!("#{h}")
+                        }
+                    })
                     .collect()
             })
             .unwrap_or_default();
@@ -147,7 +156,12 @@ pub fn juntar_correcoes(parecer: &serde_json::Value, veredito: &serde_json::Valu
     let listar = |v: &serde_json::Value, key: &str| -> Vec<String> {
         v.get(key)
             .and_then(|x| x.as_array())
-            .map(|a| a.iter().filter_map(|i| i.as_str()).map(|s| format!("- {s}")).collect())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|i| i.as_str())
+                    .map(|s| format!("- {s}"))
+                    .collect()
+            })
             .unwrap_or_default()
     };
     let mut linhas = Vec::new();
@@ -159,7 +173,8 @@ pub fn juntar_correcoes(parecer: &serde_json::Value, veredito: &serde_json::Valu
         linhas.push(format!("- Decisao do gestor: {motivo}"));
     }
     if linhas.is_empty() {
-        "- A rodada foi reprovada sem correcao explicita. Refaca com mais aderencia ao briefing.".to_string()
+        "- A rodada foi reprovada sem correcao explicita. Refaca com mais aderencia ao briefing."
+            .to_string()
     } else {
         linhas.join("\n")
     }

@@ -62,13 +62,9 @@ pub async fn gerar(
     }
 
     // gpt-image devolve base64 por padrao; `url` existe em modelos antigos.
-    let dado = corpo
-        .get("data")
-        .and_then(|d| d.get(0))
-        .ok_or_else(|| crate::idioma::msg(
-            "A OpenAI nao devolveu imagem.",
-            "OpenAI returned no image.",
-        ))?;
+    let dado = corpo.get("data").and_then(|d| d.get(0)).ok_or_else(|| {
+        crate::idioma::msg("A OpenAI nao devolveu imagem.", "OpenAI returned no image.")
+    })?;
 
     let bytes = if let Some(b64) = dado.get("b64_json").and_then(|v| v.as_str()) {
         use base64::Engine;

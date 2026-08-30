@@ -38,7 +38,11 @@ pub fn start_run(objetivo: &str, redes: &[Network]) -> Result<RunPaths, String> 
          ## Objetivo do usuario\n\n{}\n\n\
          ---\n\n## Linha do tempo\n\n",
         chrono::Local::now().format("%d/%m/%Y %H:%M:%S"),
-        redes.iter().map(|r| r.label()).collect::<Vec<_>>().join(", "),
+        redes
+            .iter()
+            .map(|r| r.label())
+            .collect::<Vec<_>>()
+            .join(", "),
         objetivo.trim()
     );
     std::fs::write(&index, header).map_err(|e| e.to_string())?;
@@ -91,8 +95,14 @@ pub fn write_turn(run: &RunPaths, record: &TurnRecord) -> Result<String, String>
         "- **Orcamento de RAM na hora de subir:** {}\n",
         crate::hardware::human(record.ram_budget_bytes)
     ));
-    body.push_str(&format!("- **Duracao:** {:.1}s\n", record.elapsed_ms as f64 / 1000.0));
-    body.push_str(&format!("- **Velocidade:** {:.1} tokens/s\n", record.tokens_per_second));
+    body.push_str(&format!(
+        "- **Duracao:** {:.1}s\n",
+        record.elapsed_ms as f64 / 1000.0
+    ));
+    body.push_str(&format!(
+        "- **Velocidade:** {:.1} tokens/s\n",
+        record.tokens_per_second
+    ));
     body.push_str(&format!(
         "- **Quem pode receber esta mensagem:** {}\n",
         record
@@ -125,7 +135,10 @@ pub fn write_turn(run: &RunPaths, record: &TurnRecord) -> Result<String, String>
             "{}. **{}**{} — `{}` — {:.1}s — [{}]({})\n",
             record.step,
             record.role.label(),
-            record.network.map(|n| format!(" ({})", n.label())).unwrap_or_default(),
+            record
+                .network
+                .map(|n| format!(" ({})", n.label()))
+                .unwrap_or_default(),
             record.model,
             record.elapsed_ms as f64 / 1000.0,
             filename,
@@ -235,8 +248,14 @@ pub fn list_runs() -> Vec<RunSummary> {
                 index: dir.join("campanha.md").to_string_lossy().to_string(),
                 dir: caminho,
                 turns,
-                objetivo: resultado.as_ref().map(|r| r.objetivo.clone()).unwrap_or_default(),
-                redes: resultado.as_ref().map(|r| r.redes.clone()).unwrap_or_default(),
+                objetivo: resultado
+                    .as_ref()
+                    .map(|r| r.objetivo.clone())
+                    .unwrap_or_default(),
+                redes: resultado
+                    .as_ref()
+                    .map(|r| r.redes.clone())
+                    .unwrap_or_default(),
                 pecas: resultado.as_ref().map(|r| r.pecas.len()).unwrap_or(0),
                 publicadas: resultado
                     .as_ref()

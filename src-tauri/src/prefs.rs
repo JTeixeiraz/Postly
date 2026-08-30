@@ -98,7 +98,9 @@ impl Prefs {
             return None;
         }
         let tag = self.modelos.get(cargo)?;
-        crate::ollama::catalog::CATALOG.iter().find(|m| m.tag == *tag)
+        crate::ollama::catalog::CATALOG
+            .iter()
+            .find(|m| m.tag == *tag)
     }
 }
 

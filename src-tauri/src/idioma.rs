@@ -27,5 +27,9 @@ pub fn em_ingles() -> bool {
 /// ponto da chamada e o que impede uma delas de envelhecer sozinha, que e o
 /// destino de todo arquivo de traducao separado.
 pub fn msg(pt: &str, en: &str) -> String {
-    if em_ingles() { en.to_string() } else { pt.to_string() }
+    if em_ingles() {
+        en.to_string()
+    } else {
+        pt.to_string()
+    }
 }

@@ -106,9 +106,13 @@ fn extensao_valida(nome: &str) -> Option<&'static str> {
 /// modelo local aguenta, e o custo aparece so na hora do turno.
 const MAX_BYTES: usize = 6 * 1024 * 1024;
 
-pub fn salvar(nome: &str, base64_dados: &str, tipo: TipoReferencia, nota: &str) -> Result<Referencia, String> {
-    let ext = extensao_valida(nome)
-        .ok_or("Formato nao aceito. Use PNG, JPG ou WEBP.")?;
+pub fn salvar(
+    nome: &str,
+    base64_dados: &str,
+    tipo: TipoReferencia,
+    nota: &str,
+) -> Result<Referencia, String> {
+    let ext = extensao_valida(nome).ok_or("Formato nao aceito. Use PNG, JPG ou WEBP.")?;
 
     // O navegador manda `data:image/png;base64,AAAA...`; so a cauda interessa.
     let cru = base64_dados
@@ -174,15 +178,18 @@ pub fn bloco_descritivo(refs: &[Referencia]) -> String {
     if refs.is_empty() {
         return String::new();
     }
-    let (proprias, marcas): (Vec<_>, Vec<_>) = refs
-        .iter()
-        .partition(|r| r.tipo == TipoReferencia::Propria);
+    let (proprias, marcas): (Vec<_>, Vec<_>) =
+        refs.iter().partition(|r| r.tipo == TipoReferencia::Propria);
 
     let mut out = Vec::new();
     if !proprias.is_empty() {
         out.push("REFERENCIAS DA PROPRIA MARCA (material que a peca pode mostrar):".to_string());
         for r in &proprias {
-            let nota = if r.nota.trim().is_empty() { "sem nota" } else { r.nota.trim() };
+            let nota = if r.nota.trim().is_empty() {
+                "sem nota"
+            } else {
+                r.nota.trim()
+            };
             out.push(format!("- {}: {}", r.nome, nota));
         }
     }
@@ -196,7 +203,11 @@ pub fn bloco_descritivo(refs: &[Referencia]) -> String {
                 .to_string(),
         );
         for r in &marcas {
-            let nota = if r.nota.trim().is_empty() { "sem nota" } else { r.nota.trim() };
+            let nota = if r.nota.trim().is_empty() {
+                "sem nota"
+            } else {
+                r.nota.trim()
+            };
             out.push(format!("- {}: {}", r.nome, nota));
         }
     }

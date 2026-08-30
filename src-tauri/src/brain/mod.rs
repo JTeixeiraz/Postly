@@ -92,7 +92,12 @@ fn now() -> i64 {
 
 impl Graph {
     pub fn new() -> Self {
-        Self { nodes: BTreeMap::new(), edges: Vec::new(), schema_version: 1, updated_at: now() }
+        Self {
+            nodes: BTreeMap::new(),
+            edges: Vec::new(),
+            schema_version: 1,
+            updated_at: now(),
+        }
     }
 
     pub fn node_count(&self) -> usize {
@@ -136,7 +141,8 @@ impl Graph {
             .iter_mut()
             .find(|e| e.from == from && e.to == to && e.edge_type == edge_type)
         {
-            let delta = (target - edge.weight).clamp(-MAX_DELTA_PER_INTERACTION, MAX_DELTA_PER_INTERACTION);
+            let delta =
+                (target - edge.weight).clamp(-MAX_DELTA_PER_INTERACTION, MAX_DELTA_PER_INTERACTION);
             edge.weight = (edge.weight + delta).clamp(WEIGHT_MIN, WEIGHT_MAX);
             edge.uses += 1;
             edge.last_used = ts;
@@ -157,7 +163,11 @@ impl Graph {
     pub fn reinforce(&mut self, from: &str, to: &str, delta: f32) {
         let bounded = delta.clamp(-MAX_DELTA_PER_INTERACTION, MAX_DELTA_PER_INTERACTION);
         let ts = now();
-        for edge in self.edges.iter_mut().filter(|e| e.from == from && e.to == to) {
+        for edge in self
+            .edges
+            .iter_mut()
+            .filter(|e| e.from == from && e.to == to)
+        {
             edge.weight = (edge.weight + bounded).clamp(WEIGHT_MIN, WEIGHT_MAX);
             edge.uses += 1;
             edge.last_used = ts;
@@ -220,7 +230,11 @@ impl Graph {
             })
             .collect();
 
-        neighbors.sort_by(|a, b| b.weight.partial_cmp(&a.weight).unwrap_or(std::cmp::Ordering::Equal));
+        neighbors.sort_by(|a, b| {
+            b.weight
+                .partial_cmp(&a.weight)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         neighbors.truncate(top_k);
 
         Some(NodeView {
@@ -233,7 +247,13 @@ impl Graph {
 
     /// Travessia em profundidade com peso efetivo = produto dos pesos do caminho.
     /// O limiar poda a expansao antes de ela explodir combinatorialmente.
-    pub fn traverse(&self, seed: &str, depth: u8, min_effective: f32, top_k: usize) -> Vec<ReachedNode> {
+    pub fn traverse(
+        &self,
+        seed: &str,
+        depth: u8,
+        min_effective: f32,
+        top_k: usize,
+    ) -> Vec<ReachedNode> {
         let mut reached: HashMap<String, ReachedNode> = HashMap::new();
         let mut frontier: Vec<(String, f32, Vec<String>)> =
             vec![(seed.to_string(), 1.0, vec![seed.to_string()])];
@@ -256,7 +276,9 @@ impl Graph {
                     if effective < min_effective {
                         continue; // a expansao morre aqui
                     }
-                    let Some(node) = self.nodes.get(other) else { continue };
+                    let Some(node) = self.nodes.get(other) else {
+                        continue;
+                    };
                     let mut new_path = path.clone();
                     new_path.push(other.clone());
 
@@ -309,7 +331,10 @@ impl Graph {
             .iter()
             .filter_map(|(id, node)| {
                 let haystack = format!("{} {} {}", id, node.node_type, node.context).to_lowercase();
-                let score = needles.iter().filter(|n| haystack.contains(n.as_str())).count() as u32;
+                let score = needles
+                    .iter()
+                    .filter(|n| haystack.contains(n.as_str()))
+                    .count() as u32;
                 if score == 0 {
                     None
                 } else {
@@ -319,7 +344,7 @@ impl Graph {
             })
             .collect();
 
-        scored.sort_by(|a, b| b.0.cmp(&a.0));
+        scored.sort_by_key(|x| std::cmp::Reverse(x.0));
 
         let mut seen = HashSet::new();
         scored
@@ -346,7 +371,10 @@ impl Graph {
         }
         let mut out = String::new();
         for view in views {
-            out.push_str(&format!("- [{}] {}: {}\n", view.node_type, view.node, view.context));
+            out.push_str(&format!(
+                "- [{}] {}: {}\n",
+                view.node_type, view.node, view.context
+            ));
             for neighbor in &view.neighbors {
                 out.push_str(&format!(
                     "    -> ({:.2}) {} {}: {}\n",
