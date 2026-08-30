@@ -3,50 +3,43 @@ import { AnimatePresence, motion } from "motion/react";
 import { useIdioma } from "../i18n";
 
 const REPO = "JTeixeiraz/Postly";
+const RELEASES = `https://github.com/${REPO}/releases/latest`;
+const SCRIPT = `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/scripts/instalar.sh | bash`;
 
 /** O nome do sistema e o comando não são texto de página: "Linux" se escreve
  *  igual nos dois idiomas, e um comando traduzido deixa de colar no
- *  terminal. Só a nota abaixo dele muda. */
+ *  terminal. Só as notas mudam. */
 type Slug = "linux" | "macos" | "windows";
 
-const SISTEMAS: { id: Slug; nome: string; comando: string }[] = [
+/** No Windows há dois caminhos, e os dois ficam à vista.
+ *
+ *  O script funciona hoje, no Git Bash. O `winget` é o que a maioria vai
+ *  querer quando o pacote sair da revisão no winget-pkgs — e deixar os dois
+ *  na tela evita ter que mexer aqui de novo no dia da aprovação. O rótulo
+ *  "em revisão" é o que impede alguém de copiar o de baixo e concluir que o
+ *  produto está quebrado. */
+const SISTEMAS: {
+  id: Slug;
+  nome: string;
+  comando: string;
+  alternativo?: string;
+}[] = [
+  { id: "linux", nome: "Linux", comando: SCRIPT },
+  { id: "macos", nome: "macOS", comando: SCRIPT },
   {
-    id: "linux",
-    nome: "Linux",
-    comando: `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/scripts/instalar.sh | bash`,
-  },
-  {
-    id: "macos",
-    nome: "macOS",
-    comando: `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/scripts/instalar.sh | bash`,
-  },
-  {
-    // O mesmo script do Linux e do macOS: ele detecta o Windows pelo `uname`
-    // do MSYS e baixa o instalador certo. O `winget install` fica de fora
-    // enquanto o pacote está em revisão — anunciar um comando que devolve
-    // "pacote não encontrado" é pior que não anunciar comando nenhum.
     id: "windows",
     nome: "Windows",
-    comando: `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/scripts/instalar.sh | bash`,
+    comando: SCRIPT,
+    alternativo: `winget install --id ${REPO.replace("/", ".")}`,
   },
 ];
 
-/** O comando de instalação, com o sistema escolhido pela pessoa.
- *
- *  Fica no alto da página e não no rodapé: quem chega já sabe o que quer, e
- *  esconder o comando atrás de um scroll inteiro é atrito sem motivo.
- *
- *  A cópia usa a API de clipboard com um caminho de reserva. Sem ele, todo
- *  visitante em contexto não seguro (um `file://`, uma prévia local) clicaria
- *  no botão e nada aconteceria, sem erro nenhum. */
 /** Os instaladores do Windows da versão mais recente.
  *
  *  Buscados na API em vez de escritos à mão: o nome do arquivo carrega a
  *  versão (`Postly_0.1.1_x64_en-US.msi`), e um link fixo apontaria para uma
  *  versão velha no dia seguinte ao próximo lançamento. Falhando a busca, os
  *  botões caem para a página de releases, que nunca some. */
-const RELEASES = `https://github.com/${REPO}/releases/latest`;
-
 function useInstaladoresWindows() {
   const [links, setLinks] = useState<{ msi?: string; exe?: string }>({});
   useEffect(() => {
@@ -67,19 +60,21 @@ function useInstaladoresWindows() {
   return links;
 }
 
-export default function Comando({ compacto = false }: { compacto?: boolean }) {
+/** Uma linha de comando com o botão de copiar.
+ *
+ *  A cópia usa a API de clipboard com um caminho de reserva. Sem ele, todo
+ *  visitante em contexto não seguro (um `file://`, uma prévia local) clicaria
+ *  no botão e nada aconteceria, sem erro nenhum. */
+function Linha({ texto, esmaecida = false }: { texto: string; esmaecida?: boolean }) {
   const { d } = useIdioma();
-  const [sistema, setSistema] = useState(SISTEMAS[0]);
   const [copiado, setCopiado] = useState(false);
-  const instaladores = useInstaladoresWindows();
 
   const copiar = async () => {
     try {
-      await navigator.clipboard.writeText(sistema.comando);
+      await navigator.clipboard.writeText(texto);
     } catch {
-      // Contexto não seguro: cai para o caminho antigo, que sempre funciona.
       const campo = document.createElement("textarea");
-      campo.value = sistema.comando;
+      campo.value = texto;
       campo.style.position = "fixed";
       campo.style.opacity = "0";
       document.body.appendChild(campo);
@@ -93,6 +88,41 @@ export default function Comando({ compacto = false }: { compacto?: boolean }) {
     setCopiado(true);
     setTimeout(() => setCopiado(false), 1800);
   };
+
+  return (
+    <div className="comando__linha" data-esmaecida={esmaecida}>
+      <code className="comando__texto mono">
+        <span className="comando__cifrao" aria-hidden>
+          $
+        </span>
+        {texto}
+      </code>
+      <button className="comando__copiar" onClick={() => void copiar()}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={copiado ? "ok" : "copiar"}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.16 }}
+          >
+            {copiado ? d.comando.copiado : d.comando.copiar}
+          </motion.span>
+        </AnimatePresence>
+      </button>
+    </div>
+  );
+}
+
+/** O comando de instalação, com o sistema escolhido pela pessoa.
+ *
+ *  Fica no alto da página e não no rodapé: quem chega já sabe o que quer, e
+ *  esconder o comando atrás de um scroll inteiro é atrito sem motivo. */
+export default function Comando({ compacto = false }: { compacto?: boolean }) {
+  const { d } = useIdioma();
+  const [sistema, setSistema] = useState(SISTEMAS[0]);
+  const instaladores = useInstaladoresWindows();
+  const janelaCheia = sistema.id === "windows" && !compacto;
 
   return (
     <div className="comando" data-compacto={compacto}>
@@ -119,50 +149,41 @@ export default function Comando({ compacto = false }: { compacto?: boolean }) {
         ))}
       </div>
 
-      <div className="comando__linha">
-        <code className="comando__texto mono">
-          <span className="comando__cifrao" aria-hidden>
-            $
-          </span>
-          {sistema.comando}
-        </code>
-        <button className="comando__copiar" onClick={() => void copiar()}>
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span
-              key={copiado ? "ok" : "copiar"}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.16 }}
-            >
-              {copiado ? d.comando.copiado : d.comando.copiar}
-            </motion.span>
-          </AnimatePresence>
-        </button>
-      </div>
-
+      <Linha texto={sistema.comando} />
       <p className="comando__nota">{d.comando.notas[sistema.id]}</p>
 
-      {/* Quem não tem o Git Bash não tem por que instalar um shell inteiro
-          para rodar um instalador. Os dois formatos aparecem porque eles
-          instalam diferente: o MSI vai para Programas e Recursos, o NSIS
-          instala para o usuário e não pede elevação. */}
-      {sistema.id === "windows" && !compacto && (
+      {janelaCheia && sistema.alternativo && (
         <motion.div
-          className="baixar"
+          className="comando__depois"
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
         >
-          <span className="baixar__rotulo">{d.comando.ouBaixe}</span>
-          <a className="baixar__op" href={instaladores.msi ?? RELEASES}>
-            <strong>.msi</strong>
-            <span>{d.comando.msi}</span>
-          </a>
-          <a className="baixar__op" href={instaladores.exe ?? RELEASES}>
-            <strong>.exe</strong>
-            <span>{d.comando.exe}</span>
-          </a>
+          {/* Esmaecido de propósito: ele ainda não funciona, e uma linha com
+              o mesmo peso da de cima convida a copiar a errada. */}
+          <Linha texto={sistema.alternativo} esmaecida />
+          <p className="comando__nota">
+            <span className="selo">{d.comando.emBreve}</span>
+            {d.comando.notaWinget}
+          </p>
+
+          {/* Quem não tem o Git Bash não tem por que instalar um shell inteiro
+              para rodar um instalador. Os dois formatos aparecem porque
+              instalam diferente, e a diferença decide qual funciona numa
+              máquina corporativa. */}
+          <div className="baixar">
+            <span className="baixar__rotulo">{d.comando.ouBaixe}</span>
+            <div className="baixar__ops">
+              <a className="baixar__op" href={instaladores.msi ?? RELEASES}>
+                <strong>.msi</strong>
+                <span>{d.comando.msi}</span>
+              </a>
+              <a className="baixar__op" href={instaladores.exe ?? RELEASES}>
+                <strong>.exe</strong>
+                <span>{d.comando.exe}</span>
+              </a>
+            </div>
+          </div>
         </motion.div>
       )}
     </div>

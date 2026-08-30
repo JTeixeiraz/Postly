@@ -189,7 +189,9 @@ export const en: Dicionario = {
 
   comando: {
     rotulo: "Operating system",
-    ouBaixe: "Or download directly:",
+    ouBaixe: "Or download the installer:",
+    emBreve: "under review",
+    notaWinget: "The package is in the winget-pkgs queue. This command starts working the moment it is approved.",
     msi: "installs for everyone, asks for admin",
     exe: "installs just for you, no admin",
     copiar: "copy",

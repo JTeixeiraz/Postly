@@ -592,36 +592,62 @@
 }
 @media (max-width: 900px) { .claude__mascote { display: none; } }
 
-/* ══ baixar direto (Windows) ═════════════════════════════════════════════ */
+/* ══ o bloco extra do Windows ════════════════════════════════════════════ */
 
-/* Os dois formatos lado a lado, com a diferença escrita: MSI e NSIS instalam
-   de formas diferentes, e quem está numa máquina corporativa precisa saber
-   qual dos dois não vai pedir administrador antes de clicar. */
-.baixar {
-  display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
-  margin-top: var(--s2);
+.comando__depois { display: grid; gap: var(--s3); margin-top: var(--s4); }
+
+/* O comando que ainda não funciona fica mais apagado que o que funciona:
+   duas linhas com o mesmo peso convidam a copiar a de baixo.
+
+   O que perde peso é o TEXTO, não o bloco. `opacity` no bloco inteiro clareia
+   o fundo do terminal contra o papel e a linha vira um retângulo cinza — deixa
+   de parecer um comando. Ao passar o mouse ela recupera o tom cheio: a pessoa
+   que foi até ali quer ler o que está escrito. */
+.comando__linha[data-esmaecida="true"] { border-style: dashed; }
+.comando__linha[data-esmaecida="true"] .comando__texto { color: var(--ink-3); }
+.comando__linha[data-esmaecida="true"] .comando__cifrao { color: var(--act-escuro); }
+.comando__linha[data-esmaecida="true"]:hover .comando__texto,
+.comando__linha[data-esmaecida="true"]:focus-within .comando__texto { color: var(--ink); }
+
+.selo {
+  display: inline-block; margin-right: 8px;
+  padding: 2px 8px; border-radius: var(--r-pill);
+  background: var(--fora-2); border: 1px solid var(--fora-linha);
+  font-size: var(--t-micro); color: var(--fora-ink-2);
+  vertical-align: 1px;
 }
+.painel .selo { background: var(--card-2); border-color: var(--line); color: var(--ink-2); }
+
+/* ══ baixar o instalador ═════════════════════════════════════════════════ */
+
+/* O rótulo vai ACIMA dos botões, não ao lado. Ao lado, a fila de três itens
+   quebra na largura errada e deixa um botão sozinho na linha de baixo,
+   desalinhado do primeiro — que é exatamente o que acontecia. */
+.baixar { display: grid; gap: var(--s2); margin-top: var(--s2); }
 .baixar__rotulo { font-size: var(--t-sm); color: var(--fora-ink-3); }
+.painel .baixar__rotulo { color: var(--ink-3); }
+
+/* Duas colunas iguais: os dois formatos têm o mesmo peso de decisão, e uma
+   grade mantém os dois cartões da mesma largura em qualquer texto. */
+.baixar__ops {
+  display: grid; gap: var(--s3);
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+}
 .baixar__op {
-  display: flex; align-items: baseline; gap: 9px;
-  padding: 10px 16px; border-radius: var(--r-md);
+  display: grid; gap: 3px;
+  padding: 13px 16px; border-radius: var(--r-md);
   background: var(--fora-2); border: 1px solid var(--fora-linha);
   color: var(--fora-ink); text-decoration: none;
-  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
 }
-.baixar__op:hover { border-color: var(--act-escuro); background: oklch(0.995 0 0); }
+.baixar__op:hover {
+  border-color: var(--act-escuro); background: oklch(0.995 0 0);
+  transform: translateY(-1px);
+}
 .baixar__op strong { font-family: var(--mono); font-size: var(--t-sm); font-weight: 600; }
-.baixar__op span { font-size: var(--t-micro); color: var(--fora-ink-3); }
+.baixar__op span { font-size: var(--t-micro); color: var(--fora-ink-3); line-height: 1.4; }
 
-/* Dentro de um painel escuro os tokens de papel não servem. */
-.painel .baixar__rotulo { color: var(--ink-3); }
-.painel .baixar__op {
-  background: var(--card-2); border-color: var(--line); color: var(--ink);
-}
+.painel .baixar__op { background: var(--card-2); border-color: var(--line); color: var(--ink); }
 .painel .baixar__op:hover { border-color: var(--act); background: var(--sunken); }
 .painel .baixar__op span { color: var(--ink-3); }
-
-@media (max-width: 560px) {
-  .baixar { flex-direction: column; align-items: stretch; }
-  .baixar__op { justify-content: center; }
-}

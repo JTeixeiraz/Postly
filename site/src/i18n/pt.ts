@@ -187,7 +187,9 @@ export const pt = {
 
   comando: {
     rotulo: "Sistema operacional",
-    ouBaixe: "Ou baixe direto:",
+    ouBaixe: "Ou baixe o instalador:",
+    emBreve: "em revisão",
+    notaWinget: "O pacote está na fila do winget-pkgs. Este comando passa a funcionar assim que ele for aprovado.",
     msi: "instala para todos, pede administrador",
     exe: "instala só para você, sem administrador",
     copiar: "copiar",
