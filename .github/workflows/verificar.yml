@@ -38,11 +38,11 @@ jobs:
       - name: Formatação
         run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
       - name: Clippy
-        run: cargo clippy --manifest-path src-tauri/Cargo.toml --lib --tests -- -D warnings
+        run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --lib --tests -- -D warnings
       - name: Testes
         # Alvos explícitos: os dois testes que falam com um Ollama vivo estão
         # num binário próprio e não rodam no runner, que não tem Ollama.
-        run: cargo test --manifest-path src-tauri/Cargo.toml --lib --test cerebro --test sistema
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml --lib --test cerebro --test sistema --test limite
 
   frontend:
     runs-on: ubuntu-latest
