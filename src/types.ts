@@ -182,14 +182,24 @@ export interface DesignSystem {
   evitar: string;
 }
 
-export type Provedor = "ollama" | "claude_code";
+export type Provedor = "ollama" | "claude_code" | "gemini_cli";
 
 export interface StatusProvedor {
+  provedor: Provedor;
+
   claude_caminho: string | null;
   credencial_ignorada: string | null;
-  provedor: Provedor;
   claude_disponivel: boolean;
   claude_versao: string | null;
+
+  gemini_caminho: string | null;
+  gemini_disponivel: boolean;
+  gemini_versao: string | null;
+  /** Variável do Google no ambiente. Ao contrário da do Claude Code, esta NÃO
+   *  é removida do processo filho — o método escolhido em `~/.gemini/settings.json`
+   *  vence a variável, e sem método escolhido ela é a única autenticação que
+   *  a pessoa tem. */
+  gemini_credencial_no_ambiente: string | null;
 }
 
 export interface Skill {
@@ -441,7 +451,7 @@ export interface CartaoImagem {
   ativo: boolean;
 }
 
-/** Um cargo e o modelo Claude que o assume. */
+/** Um cargo e o modelo de um provedor externo que o assume. */
 export interface VagaClaude {
   cargo: string;
   nivel: Nivel;

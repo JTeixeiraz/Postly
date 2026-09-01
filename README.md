@@ -224,19 +224,35 @@ Nunca há dois modelos residentes.
 O nível do modelo é proporcional ao que o cargo entrega. Quem decide precisa
 raciocinar; quem cumpre um briefing pronto, não.
 
-### Quem executa: Ollama ou o seu Claude Code
+### Quem executa: Ollama, Claude Code ou Gemini CLI
 
 Por padrão os turnos rodam em modelos locais do Ollama. Se você já tem o
-**Claude Code** instalado, pode trocar o executor na aba Modelos e ganhar
-velocidade: o mesmo princípio vale, só que o eixo muda — decisão vai para Opus,
-auditoria para Sonnet, execução para Haiku.
+**Claude Code** ou o **Gemini CLI** instalado, pode trocar o executor na aba
+Modelos e ganhar velocidade. O mesmo princípio vale nos três — o nível do cargo
+é proporcional ao que ele entrega — só que o eixo muda:
 
-Isso executa o binário `claude` da sua máquina, com a sessão que você já logou.
-**Não existe campo de chave de API em lugar nenhum do Postly.** O CLI prefere
-`ANTHROPIC_API_KEY` quando ela está no ambiente, e um processo filho herda o
-ambiente do pai — então o Postly remove essa variável (e as de Bedrock e Vertex)
-do processo do Claude Code. O turno roda pela sua assinatura, ou não roda. O
-custo de cada turno aparece na trilha.
+| Nível | Ollama | Claude Code | Gemini CLI |
+|---|---|---|---|
+| Alto (decide, julga) | o mais forte que couber na memória | Opus 5 | Gemini 2.5 Pro |
+| Médio (audita) | intermediário | Sonnet 5 | Gemini 2.5 Flash |
+| Baixo (executa briefing) | modelo pequeno | Haiku 4.5 | Gemini 2.5 Flash-Lite |
+
+Nos dois casos isso executa o binário da sua máquina (`claude` ou `gemini`), com
+a sessão que você já logou. **Não existe campo de chave de API em lugar nenhum
+do Postly.**
+
+**Claude Code:** o CLI prefere `ANTHROPIC_API_KEY` quando ela está no ambiente,
+e um processo filho herda o ambiente do pai — então o Postly remove essa
+variável (e as de Bedrock e Vertex) do processo do Claude Code. O turno roda
+pela sua assinatura, ou não roda. O custo de cada turno aparece na trilha.
+
+**Gemini CLI:** aqui a regra é outra, e a diferença foi medida. O Gemini escolhe
+o método de autenticação em `~/.gemini/settings.json`, e o método escolhido
+**vence** a variável de ambiente; quando não há método escolhido, a variável é a
+sua única autenticação. Remover seria quebrar quem funciona hoje, então o Postly
+**avisa e não mexe**. O CLI também não reporta o custo por turno, então a trilha
+mostra o tempo em vez do preço — dizer `USD 0,000` seria afirmar que o turno saiu
+de graça, e ele gastou cota da sua conta.
 
 ### Quem desenha a arte: você escolhe
 
@@ -427,6 +443,8 @@ src-tauri/src/            backend em Rust
 ├── browser/              ponte com o sidecar do Playwright
 ├── imagem/               os cinco geradores de arte, um adaptador cada
 ├── gemini/               cliente da API de imagem e texto
+├── gemini_cli/           o Gemini CLI local como provedor de turno
+├── claude/               o Claude Code local como provedor de turno
 ├── metricas.rs           desempenho publicado e a regra de divergir
 └── vault.rs              cofre cifrado
 

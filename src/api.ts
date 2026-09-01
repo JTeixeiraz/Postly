@@ -156,6 +156,8 @@ export const api = {
   testarProvedorImagem: (slug: string) => invoke<string>("testar_provedor_imagem", { slug }),
 
   elencoClaude: () => invoke<VagaClaude[]>("elenco_claude"),
+
+  elencoGemini: () => invoke<VagaClaude[]>("elenco_gemini"),
   responderMotion: (aceitar: boolean) => invoke<void>("responder_motion", { aceitar }),
   responderLimite: (esperar: boolean) => invoke<void>("responder_limite", { esperar }),
 };

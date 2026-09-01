@@ -299,6 +299,11 @@ export const pt = {
     claudeFound: "Encontrado nesta máquina, versão {v}",
     tiers: "O nível do cargo continua valendo: decisão vai para Opus, auditoria para Sonnet, execução para Haiku.",
     cost: "Cada turno aparece com o custo em dólar na trilha.",
+    gemini: "Gemini CLI",
+    geminiWhy: "Mesma troca do Claude Code: muito mais rápido, o prompt sai da sua máquina e cada turno gasta a cota da sua conta Google.",
+    geminiMissing: "Não encontrei o Gemini CLI nesta máquina.",
+    geminiProcurar: "Clique para procurar de novo — ou instale com npm i -g @google/gemini-cli.",
+    geminiFound: "Encontrado nesta máquina, versão {v}",
   },
   skills: {
     open: "Skills",
@@ -533,6 +538,16 @@ export const pt = {
     howTitle: "Como o turno é executado",
   },
 
+  geminiElenco: {
+    // O Gemini CLI não reporta o custo do turno como o Claude Code reporta.
+    // Prometer um valor na trilha que não vai aparecer seria pior que não
+    // prometer nada.
+    cost: "Cada turno gasta a cota da sua conta Google. O Gemini CLI não informa o valor por turno, então a trilha mostra o tempo e não o preço.",
+    // O aviso é diferente do Claude Code de propósito, e a diferença foi
+    // medida: lá a variável é removida do processo filho, aqui não.
+    envWarn: "{v} está no ambiente deste terminal. O Postly não remove essa variável: no Gemini CLI o método escolhido em ~/.gemini/settings.json vence a variável, e quando não há método escolhido ela é a sua única autenticação. Confira por qual conta o turno vai ser cobrado.",
+  },
+
   imgProvider: {
     title: "Quem gera a arte",
     lead: "Clique no serviço que vai desenhar as peças.",
@@ -549,5 +564,7 @@ export const pt = {
     testing: "Testando…",
     testOk: "Chave aceita: {r}",
   },
+
+
 };
 

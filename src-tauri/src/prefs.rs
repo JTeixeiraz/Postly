@@ -43,6 +43,22 @@ pub enum Provedor {
     /// O Claude Code que a pessoa ja tem instalado. Muito mais rapido, custa
     /// dinheiro por turno e manda o prompt para fora.
     ClaudeCode,
+    /// O Gemini CLI que a pessoa ja tem instalado, na sessao que ela ja logou.
+    /// Mesma troca do Claude Code: velocidade e qualidade em cima, o prompt
+    /// saindo da maquina e a cota da assinatura dela embaixo.
+    GeminiCli,
+}
+
+impl Provedor {
+    /// Este provedor executa o turno fora desta maquina?
+    ///
+    /// A pergunta importa no `agent.rs`: quando a inferencia acontece fora, o
+    /// caminho e muito mais curto — nao ha memoria para medir, modelo para
+    /// baixar nem nada para descarregar. Um `match` espalhado por varios
+    /// arquivos esqueceria um provedor no dia em que entrasse o terceiro.
+    pub fn externo(&self) -> bool {
+        !matches!(self, Provedor::Ollama)
+    }
 }
 
 /// Quanto da maquina a campanha pode usar.

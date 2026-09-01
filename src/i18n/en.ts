@@ -295,6 +295,11 @@ export const en: typeof pt = {
     claudeFound: "Found on this machine, version {v}",
     tiers: "Role tiers still apply: decision goes to Opus, audit to Sonnet, execution to Haiku.",
     cost: "Each turn shows its dollar cost on the relay.",
+    gemini: "Gemini CLI",
+    geminiWhy: "Same trade as Claude Code: far faster, the prompt leaves your machine, and each turn spends your Google account quota.",
+    geminiMissing: "Gemini CLI was not found on this machine.",
+    geminiProcurar: "Click to look again — or install it with npm i -g @google/gemini-cli.",
+    geminiFound: "Found on this machine, version {v}",
   },
   skills: {
     open: "Skills",
@@ -529,6 +534,17 @@ export const en: typeof pt = {
     howTitle: "How the turn is executed",
   },
 
+  geminiElenco: {
+    // Gemini CLI does not report per-turn cost the way Claude Code does.
+    // Promising a figure on the trail that will never show up would be worse
+    // than promising nothing.
+    cost: "Each turn spends your Google account quota. Gemini CLI does not report a per-turn amount, so the trail shows the time rather than the price.",
+    // The wording differs from Claude Code on purpose, and the difference was
+    // measured: there the variable is stripped from the child process, here it
+    // is not.
+    envWarn: "{v} is set in this terminal. Postly does not strip it: in Gemini CLI the method chosen in ~/.gemini/settings.json wins over the variable, and with no method chosen it is your only authentication. Check which account the turn will be billed to.",
+  },
+
   imgProvider: {
     title: "Who draws the art",
     lead: "Click the service that will render the pieces.",
@@ -545,4 +561,6 @@ export const en: typeof pt = {
     testing: "Testing…",
     testOk: "Key accepted: {r}",
   },
+
+
 };

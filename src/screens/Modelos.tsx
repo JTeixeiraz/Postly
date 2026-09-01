@@ -13,7 +13,7 @@ import LinhaModelo from "../components/LinhaModelo";
 import CargosAvancado from "../components/CargosAvancado";
 import Porque from "../components/Porque";
 import Provedor from "../components/Provedor";
-import ElencoClaude from "../components/ElencoClaude";
+import ElencoExterno from "../components/ElencoExterno";
 import EscolhaImagem from "../components/EscolhaImagem";
 import Galeria from "../components/Galeria";
 import ModoDesempenho from "../components/ModoDesempenho";
@@ -158,11 +158,11 @@ export default function Modelos({
             so como um seletor. */}
         <Galeria />
 
-      {/* Com o Claude Code no comando, o catalogo do Ollama deixa de valer para
-          a proxima campanha. Manter as duas listas na tela sugeriria que da
-          para escolher entre as familias, e nao da: o provedor e um so. */}
-      {provedor?.provedor === "claude_code" ? (
-        <ElencoClaude status={provedor} />
+      {/* Com um CLI de fora no comando, o catalogo do Ollama deixa de valer
+          para a proxima campanha. Manter as duas listas na tela sugeriria que
+          da para escolher entre as familias, e nao da: o provedor e um so. */}
+      {provedor && provedor.provedor !== "ollama" ? (
+        <ElencoExterno status={provedor} provedor={provedor.provedor} />
       ) : (
       <>
 

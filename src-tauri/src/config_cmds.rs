@@ -117,9 +117,22 @@ pub struct StatusProvedor {
     /// Ela e removida do processo filho; o aviso existe para a pessoa saber
     /// que o turno NAO vai usar a chave que ela talvez esperasse usar.
     pub credencial_ignorada: Option<String>,
+
+    /// O Gemini CLI esta instalado nesta maquina?
+    pub gemini_disponivel: bool,
+    pub gemini_versao: Option<String>,
+    pub gemini_caminho: Option<String>,
+    /// Variavel de credencial do Google encontrada no ambiente.
+    ///
+    /// Ao contrario da do Claude Code, esta NAO e removida do processo filho —
+    /// medido, o metodo escolhido em `~/.gemini/settings.json` vence a
+    /// variavel, e quando nao ha metodo escolhido ela e a unica autenticacao
+    /// que a pessoa tem. O aviso serve para ela saber por qual conta o turno
+    /// pode estar sendo cobrado.
+    pub gemini_credencial_no_ambiente: Option<String>,
 }
 
-/// Um cargo e o modelo Claude que o assume.
+/// Um cargo e o modelo de um provedor externo que o assume.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct VagaClaude {
     pub cargo: String,
@@ -160,21 +173,63 @@ pub fn elenco_claude() -> Vec<VagaClaude> {
     .collect()
 }
 
+/// O elenco quando quem executa e o Gemini CLI.
+///
+/// Comando proprio, e nao um parametro no `elenco_claude`: os dois provedores
+/// vivem em modulos separados e nada garante que o organograma deles siga
+/// igual para sempre. Um comando por provedor deixa a divergencia possivel sem
+/// obrigar a inventar um enum de despacho hoje.
+#[tauri::command]
+pub fn elenco_gemini() -> Vec<VagaClaude> {
+    use crate::orchestrator::roles::Role;
+    [
+        Role::DiretorGeral,
+        Role::GerenteSetor,
+        Role::MotionDesigner,
+        Role::Criador,
+        Role::Auditor,
+    ]
+    .iter()
+    .map(|r| {
+        let nivel = r.tier();
+        let modelo = crate::gemini_cli::modelo_do_nivel(nivel).to_string();
+        VagaClaude {
+            cargo: r.slug().to_string(),
+            nivel,
+            rotulo: crate::gemini_cli::rotulo_do_modelo(&modelo).to_string(),
+            modelo,
+            porque: crate::idioma::msg(r.porque_este_nivel().0, r.porque_este_nivel().1),
+        }
+    })
+    .collect()
+}
+
 #[tauri::command]
 pub async fn status_provedor() -> StatusProvedor {
-    let disponivel = crate::claude::disponivel();
+    let claude = crate::claude::disponivel();
+    let gemini = crate::gemini_cli::disponivel();
     StatusProvedor {
         provedor: crate::prefs::load().provedor,
-        claude_disponivel: disponivel,
-        claude_versao: if disponivel {
+        claude_disponivel: claude,
+        claude_versao: if claude {
             crate::claude::versao().await
         } else {
             None
         },
-        claude_caminho: crate::platform::current()
-            .which("claude")
-            .map(|p| p.display().to_string()),
+        // A busca completa, e nao so o PATH: um app aberto pelo icone do menu
+        // nao tem `~/.local/bin` no PATH, e a tela diria "nao encontrado" ao
+        // lado de um provedor que acabou de rodar um turno.
+        claude_caminho: crate::claude::localizar().map(|p| p.display().to_string()),
         credencial_ignorada: crate::claude::credencial_externa_no_ambiente(),
+
+        gemini_disponivel: gemini,
+        gemini_versao: if gemini {
+            crate::gemini_cli::versao().await
+        } else {
+            None
+        },
+        gemini_caminho: crate::gemini_cli::localizar().map(|p| p.display().to_string()),
+        gemini_credencial_no_ambiente: crate::gemini_cli::credencial_externa_no_ambiente(),
     }
 }
 
@@ -202,16 +257,27 @@ pub async fn modos_de_desempenho() -> Vec<CartaoModo> {
     let perfil = crate::hardware::compute_profile();
     let instalados = crate::ollama::client::installed_models().await;
     let prefs = crate::prefs::load();
-    let claude = prefs.provedor == crate::prefs::Provedor::ClaudeCode;
+    let externo = prefs.provedor.externo();
 
     [M::Economico, M::Normal, M::Maximo]
         .into_iter()
         .map(|m| {
             let teto = crate::hardware::snapshot_com(m).live_budget_bytes;
             let nome = |tier| -> (String, f32) {
-                if claude {
-                    let id = crate::claude::modelo_do_nivel_com(tier, m);
-                    return (crate::claude::rotulo_do_modelo(id).to_string(), 0.0);
+                // Nos provedores de fora a velocidade nao e medida em tokens
+                // por segundo desta maquina: a inferencia acontece longe dela.
+                // O zero e o que faz a tela mostrar so o modelo, sem inventar
+                // uma vazao que nao mediu.
+                if externo {
+                    let id = match prefs.provedor {
+                        crate::prefs::Provedor::GeminiCli => crate::gemini_cli::rotulo_do_modelo(
+                            crate::gemini_cli::modelo_do_nivel_com(tier, m),
+                        ),
+                        _ => crate::claude::rotulo_do_modelo(crate::claude::modelo_do_nivel_com(
+                            tier, m,
+                        )),
+                    };
+                    return (id.to_string(), 0.0);
                 }
                 crate::ollama::catalog::pick(tier, teto, perfil.mode, m, false, &instalados)
                     .map(|(s, _)| {
@@ -383,6 +449,12 @@ pub fn definir_provedor(provedor: crate::prefs::Provedor) -> Result<crate::prefs
         return Err(crate::idioma::msg(
             "Claude Code nao encontrado nesta maquina. Instale em claude.com/code.",
             "Claude Code was not found on this machine. Install it from claude.com/code.",
+        ));
+    }
+    if provedor == crate::prefs::Provedor::GeminiCli && !crate::gemini_cli::disponivel() {
+        return Err(crate::idioma::msg(
+            "Gemini CLI nao encontrado nesta maquina. Instale com `npm i -g @google/gemini-cli`.",
+            "Gemini CLI was not found on this machine. Install it with `npm i -g @google/gemini-cli`.",
         ));
     }
     let mut p = crate::prefs::load();

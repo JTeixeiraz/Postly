@@ -54,24 +54,35 @@ export default function Provedor({
     }
   };
 
+  // De propósito SEM `disabled` nos dois provedores de fora. Um botão
+  // desabilitado não responde ao clique, e quem acabou de instalar o CLI
+  // ficaria batendo nele sem entender. Clicável, ele reconsulta — e a busca
+  // não memoriza a falha justamente para esse caso.
   const opcoes: {
     id: TipoProvedor;
     titulo: string;
     porque: string;
     nota?: string;
+    ausente?: boolean;
   }[] = [
     { id: "ollama", titulo: d.provider.ollama, porque: d.provider.ollamaWhy },
     {
       id: "claude_code",
       titulo: d.provider.claude,
       porque: d.provider.claudeWhy,
+      ausente: !status.claude_disponivel,
       nota: status.claude_disponivel
         ? f(d.provider.claudeFound, { v: status.claude_versao ?? "?" })
         : `${d.provider.claudeMissing} ${d.provider.claudeProcurar}`,
-      // De propósito SEM `disabled`. Um botão desabilitado não responde ao
-      // clique, e a pessoa que acabou de instalar o Claude Code ficaria
-      // batendo nele sem entender. Clicável, ele reconsulta — e a busca não
-      // memoriza a falha justamente para esse caso.
+    },
+    {
+      id: "gemini_cli",
+      titulo: d.provider.gemini,
+      porque: d.provider.geminiWhy,
+      ausente: !status.gemini_disponivel,
+      nota: status.gemini_disponivel
+        ? f(d.provider.geminiFound, { v: status.gemini_versao ?? "?" })
+        : `${d.provider.geminiMissing} ${d.provider.geminiProcurar}`,
     },
   ];
 
@@ -95,10 +106,7 @@ export default function Provedor({
               <span className="choice__title">{o.titulo}</span>
               <div className="hint">{o.porque}</div>
               {o.nota && (
-                <div
-                  className="hint"
-                  data-alerta={o.id === "claude_code" && !status.claude_disponivel}
-                >
+                <div className="hint" data-alerta={o.ausente}>
                   {o.nota}
                 </div>
               )}

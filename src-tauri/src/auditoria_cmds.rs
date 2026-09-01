@@ -216,6 +216,15 @@ pub async fn analisar_desempenho() -> Result<String, String> {
         .await
         .map(|t| t.texto)
         .map_err(String::from),
+        crate::prefs::Provedor::GeminiCli => crate::gemini_cli::turno(
+            crate::orchestrator::roles::Tier::Alto,
+            &system,
+            &prompt,
+            600,
+        )
+        .await
+        .map(|t| t.texto)
+        .map_err(String::from),
         crate::prefs::Provedor::Ollama => {
             let perfil = crate::hardware::compute_profile();
             let modo = crate::prefs::load().modo;

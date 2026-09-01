@@ -71,6 +71,56 @@ pub struct AgentTurn<'a> {
     pub images: Vec<String>,
 }
 
+/// A falha de um turno rodado por um CLI de fora.
+///
+/// Existe para o `executar_fora` nao precisar de um `match` por provedor em
+/// cada ponto onde trata erro. A distincao que interessa e uma so, e e a mesma
+/// nos dois: acabou a cota (que pode virar espera) ou foi outra coisa (que
+/// encerra). Reconhecer isso pelo texto da mensagem quebraria na primeira
+/// traducao — por isso enum, e nao `String`.
+enum FalhaExterna {
+    Limite(crate::claude::limite::Limite),
+    Outro(String),
+}
+
+impl From<crate::claude::ErroTurno> for FalhaExterna {
+    fn from(e: crate::claude::ErroTurno) -> Self {
+        match e {
+            crate::claude::ErroTurno::Limite(l) => FalhaExterna::Limite(l),
+            crate::claude::ErroTurno::Outro(m) => FalhaExterna::Outro(m),
+        }
+    }
+}
+
+impl From<crate::gemini_cli::ErroTurno> for FalhaExterna {
+    fn from(e: crate::gemini_cli::ErroTurno) -> Self {
+        match e {
+            crate::gemini_cli::ErroTurno::Limite(l) => FalhaExterna::Limite(l),
+            crate::gemini_cli::ErroTurno::Outro(m) => FalhaExterna::Outro(m),
+        }
+    }
+}
+
+impl FalhaExterna {
+    /// A mensagem que vai para a trilha, com o nome de quem falhou.
+    ///
+    /// O nome do provedor entra aqui e nao no tipo porque a mesma falha pode
+    /// vir de qualquer um dos dois, e quem le a tela precisa saber qual foi.
+    fn explicar(self, provedor: &str) -> String {
+        match self {
+            FalhaExterna::Limite(l) => format!(
+                "{} {}",
+                crate::idioma::msg(
+                    &format!("A cota do {provedor} acabou."),
+                    &format!("The {provedor} quota ran out."),
+                ),
+                l.evidencia.lines().next().unwrap_or("")
+            ),
+            FalhaExterna::Outro(m) => m,
+        }
+    }
+}
+
 pub struct AgentResult {
     pub model: String,
     pub raw: String,
@@ -110,8 +160,9 @@ impl<'a> AgentTurn<'a> {
         // Provedor externo: o caminho e outro e muito mais curto. Nao ha
         // memoria para medir, modelo para baixar nem nada para descarregar,
         // porque a inferencia acontece fora desta maquina.
-        if crate::prefs::load().provedor == crate::prefs::Provedor::ClaudeCode {
-            return self.executar_com_claude(started, warnings).await;
+        let provedor = crate::prefs::load().provedor;
+        if provedor.externo() {
+            return self.executar_fora(provedor, started, warnings).await;
         }
 
         // 1. Quanta memoria temos AGORA. Esta medicao acontece antes de todo
@@ -386,18 +437,34 @@ impl<'a> AgentTurn<'a> {
         })
     }
 
-    /// O mesmo turno, executado pelo Claude Code em vez do Ollama.
+    /// O mesmo turno, executado por um CLI de fora em vez do Ollama.
     ///
     /// A saida precisa ser identica em forma: mesma mensagem que atravessa,
     /// mesmo JSON quando o cargo devolve estrutura, mesma transcricao em disco.
     /// O orquestrador nao sabe nem precisa saber quem executou.
-    async fn executar_com_claude(
+    ///
+    /// Claude Code e Gemini CLI dividem este caminho porque o que muda entre
+    /// eles cabe em tres pontos — o nome do modelo, a chamada do turno e o que
+    /// a trilha mostra no fim. Duplicar o metodo por provedor faria toda
+    /// correcao daqui precisar ser feita duas vezes, e a segunda seria
+    /// esquecida.
+    async fn executar_fora(
         self,
+        provedor: crate::prefs::Provedor,
         started: Instant,
         mut warnings: Vec<String>,
     ) -> Result<AgentResult, String> {
+        use crate::prefs::Provedor as P;
+
         let tier = self.role.tier();
-        let modelo = crate::claude::modelo_do_nivel(tier);
+        let modelo = match provedor {
+            P::GeminiCli => crate::gemini_cli::modelo_do_nivel(tier),
+            _ => crate::claude::modelo_do_nivel(tier),
+        };
+        let nome_do_provedor = match provedor {
+            P::GeminiCli => "Gemini CLI",
+            _ => "Claude Code",
+        };
         let role_label = self.role.label();
         let net_slug = self.network.map(|n| n.slug());
         let step = self.step;
@@ -422,7 +489,7 @@ impl<'a> AgentTurn<'a> {
                 model: Some(modelo.to_string()),
                 ..base(
                     Stage::Pensando,
-                    format!("{role_label} trabalhando no Claude Code"),
+                    format!("{role_label} trabalhando no {nome_do_provedor}"),
                     0,
                 )
             },
@@ -436,38 +503,63 @@ impl<'a> AgentTurn<'a> {
         // Uma vez so — se o limite reaparecer logo depois de voltar, insistir
         // viraria laco, e a campanha deve parar com o motivo na tela.
         let mut tentativa = 0;
-        let turno = loop {
-            match crate::claude::turno(tier, &self.system, &self.prompt, 900).await {
+        let (raw, custo_usd) = loop {
+            // O unico ponto em que os dois provedores divergem de verdade: a
+            // chamada e o custo. Tudo o que vem depois — o limite, a espera, a
+            // transcricao, o despacho — e identico, e por isso vive fora do
+            // `match`.
+            //
+            // O custo e `Option` porque o Gemini CLI nao reporta o valor do
+            // turno como o Claude Code reporta. Mostrar `USD 0,000` ali seria
+            // afirmar que o turno saiu de graca, e ele nao saiu: gastou cota da
+            // assinatura de quem usa. A trilha omite o campo em vez de mentir.
+            let saida: Result<(String, Option<f64>), FalhaExterna> = match provedor {
+                P::GeminiCli => crate::gemini_cli::turno(tier, &self.system, &self.prompt, 900)
+                    .await
+                    .map(|t| (t.texto, None))
+                    .map_err(FalhaExterna::from),
+                _ => crate::claude::turno(tier, &self.system, &self.prompt, 900)
+                    .await
+                    .map(|t| (t.texto, Some(t.custo_usd)))
+                    .map_err(FalhaExterna::from),
+            };
+
+            match saida {
                 Ok(t) => break t,
-                Err(crate::claude::ErroTurno::Limite(l)) if tentativa == 0 => {
+                Err(FalhaExterna::Limite(l)) if tentativa == 0 => {
                     tentativa += 1;
                     emit(
                         self.app,
                         base(
                             Stage::Falhou,
                             crate::idioma::msg(
-                                "A cota do Claude Code acabou. Esperando a sua decisao.",
-                                "The Claude Code quota ran out. Waiting for your decision.",
+                                &format!(
+                                    "A cota do {nome_do_provedor} acabou. Esperando a sua decisao."
+                                ),
+                                &format!(
+                                    "The {nome_do_provedor} quota ran out. Waiting for your decision."
+                                ),
                             ),
                             0,
                         ),
                     );
                     let estado = self.app.state::<crate::state::AppState>();
                     if !crate::claude::limite::pausar_e_esperar(self.app, &estado, &l).await {
-                        let msg = String::from(crate::claude::ErroTurno::Limite(l));
+                        let msg = FalhaExterna::Limite(l).explicar(nome_do_provedor);
                         emit(self.app, base(Stage::Falhou, msg.clone(), 0));
                         return Err(msg);
                     }
                 }
+                // Todo o resto encerra, inclusive o limite que reaparece na
+                // segunda tentativa: insistir ali viraria laco, e a campanha
+                // deve parar com o motivo na tela.
                 Err(e) => {
-                    let msg = String::from(e);
+                    let msg = e.explicar(nome_do_provedor);
                     emit(self.app, base(Stage::Falhou, msg.clone(), 0));
                     return Err(msg);
                 }
             }
         };
-
-        let raw = turno.texto;
         let (handoff, handoff_warning) = if self.json_mode {
             (raw.trim().to_string(), None)
         } else {
@@ -489,10 +581,14 @@ impl<'a> AgentTurn<'a> {
         }
         if !self.images.is_empty() {
             warnings.push(crate::idioma::msg(
-                "As referencias em imagem nao vao para o Claude Code nesta versao; \
-                 elas entraram apenas como descricao no prompt.",
-                "Image references are not sent to Claude Code in this version; they \
-                 went in as text description only.",
+                &format!(
+                    "As referencias em imagem nao vao para o {nome_do_provedor} nesta \
+                     versao; elas entraram apenas como descricao no prompt."
+                ),
+                &format!(
+                    "Image references are not sent to {nome_do_provedor} in this version; \
+                     they went in as text description only."
+                ),
             ));
         }
 
@@ -522,11 +618,16 @@ impl<'a> AgentTurn<'a> {
                 handoff: Some(resumo(&handoff)),
                 ..base(
                     Stage::Concluido,
-                    format!(
-                        "{role_label} concluiu em {:.0}s · USD {:.3}",
-                        started.elapsed().as_secs_f32(),
-                        turno.custo_usd
-                    ),
+                    match custo_usd {
+                        Some(c) => format!(
+                            "{role_label} concluiu em {:.0}s · USD {c:.3}",
+                            started.elapsed().as_secs_f32()
+                        ),
+                        None => format!(
+                            "{role_label} concluiu em {:.0}s no {nome_do_provedor}",
+                            started.elapsed().as_secs_f32()
+                        ),
+                    },
                     0,
                 )
             },
