@@ -13,7 +13,10 @@ pub mod agent;
 pub mod movimento;
 pub mod prompts;
 pub mod roles;
-mod support;
+// `pub(crate)` e nao privado: o fluxo de video (`crate::video`) reusa o
+// `com_idioma` daqui. Duplicar a clausula de idioma la deixaria duas versoes
+// da mesma regra, e a segunda envelheceria sozinha.
+pub(crate) mod support;
 mod tipos;
 pub mod transcript;
 

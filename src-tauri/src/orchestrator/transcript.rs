@@ -30,19 +30,40 @@ pub fn start_run(objetivo: &str, redes: &[Network]) -> Result<RunPaths, String> 
     let media = dir.join("midia");
     std::fs::create_dir_all(&media).map_err(|e| format!("falha ao criar {dir:?}: {e}"))?;
 
+    // Um video avulso nao tem rede. Sem esta distincao o cabecalho diria
+    // "Redes:" seguido de nada, e quem abrisse a pasta meses depois nao saberia
+    // se foi uma campanha que falhou antes de escolher rede ou outra coisa.
+    let (titulo, linha_redes) = if redes.is_empty() {
+        (
+            "Video",
+            String::from(
+                "- **Tipo:** video avulso, sem publicacao
+",
+            ),
+        )
+    } else {
+        (
+            "Campanha",
+            format!(
+                "- **Redes:** {}
+",
+                redes
+                    .iter()
+                    .map(|r| r.label())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        )
+    };
+
     let index = dir.join("campanha.md");
     let header = format!(
-        "# Campanha {id}\n\n\
+        "# {titulo} {id}\n\n\
          - **Iniciada em:** {}\n\
-         - **Redes:** {}\n\n\
+         {linha_redes}\n\
          ## Objetivo do usuario\n\n{}\n\n\
          ---\n\n## Linha do tempo\n\n",
         chrono::Local::now().format("%d/%m/%Y %H:%M:%S"),
-        redes
-            .iter()
-            .map(|r| r.label())
-            .collect::<Vec<_>>()
-            .join(", "),
         objetivo.trim()
     );
     std::fs::write(&index, header).map_err(|e| e.to_string())?;

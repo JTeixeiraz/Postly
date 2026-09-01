@@ -12,6 +12,7 @@
 //! - `gemini_cli`   o Gemini CLI local como provedor de turno.
 //! - `browser`      ponte com o sidecar do Playwright.
 //! - `vault`        cofre cifrado de chave e credenciais.
+//! - `video`        o video avulso: assets, roteiro de cenas e render.
 
 pub mod atualizacao;
 pub mod auditoria_cmds;
@@ -36,6 +37,8 @@ pub mod prefs;
 pub mod referencias;
 pub mod state;
 pub mod vault;
+pub mod video;
+pub mod video_cmds;
 
 use state::AppState;
 
@@ -140,6 +143,13 @@ pub fn run() {
             config_cmds::baixar_modelo_local,
             config_cmds::remover_modelo_local,
             config_cmds::salvar_design_system,
+            video_cmds::video_listar,
+            video_cmds::video_criar,
+            video_cmds::video_adicionar,
+            video_cmds::video_remover_item,
+            video_cmds::video_remover_projeto,
+            video_cmds::video_gerar,
+            video_cmds::responder_narracao,
         ])
         .run(tauri::generate_context!())
         .expect("falha ao iniciar a janela da Postly");

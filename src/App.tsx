@@ -14,6 +14,7 @@ import ModalAtualizacao from "./components/ModalAtualizacao";
 import ModalFalha from "./components/ModalFalha";
 import ModalLimite from "./components/ModalLimite";
 import ModalMotion from "./components/ModalMotion";
+import ModalNarracao from "./components/ModalNarracao";
 import Auditoria from "./screens/Auditoria";
 import Meter from "./components/Meter";
 import {
@@ -23,19 +24,25 @@ import {
   IconGraph,
   IconLayers,
   IconRelay,
+  IconFilm,
 } from "./components/Icons";
 import Preparo from "./screens/Preparo";
 import Modelos from "./screens/Modelos";
 import Campanha from "./screens/Campanha";
+import Video from "./screens/Video";
 import Cerebro from "./screens/Cerebro";
 import Historico from "./screens/Historico";
 
-type Tela = "preparo" | "modelos" | "campanha" | "cerebro" | "auditoria" | "historico";
+type Tela = "preparo" | "modelos" | "campanha" | "video" | "cerebro" | "auditoria" | "historico";
 
 const TELAS: { id: Tela; icone: typeof IconChip }[] = [
   { id: "preparo", icone: IconChip },
   { id: "modelos", icone: IconLayers },
   { id: "campanha", icone: IconRelay },
+  // O video fica depois da campanha e antes do cerebro: e a outra coisa que a
+  // pessoa PEDE ao sistema, e as duas telas seguintes sao ferramentas de ler o
+  // que ja aconteceu, nao de pedir coisa nova.
+  { id: "video", icone: IconFilm },
   { id: "cerebro", icone: IconGraph },
   // A auditoria fica depois do cerebro e antes do historico: ela le o que ja
   // foi publicado, entao so faz sentido quando ha campanha atras.
@@ -117,6 +124,7 @@ export default function App() {
     preparo: d.nav.prep,
     modelos: d.nav.models,
     campanha: d.nav.campaign,
+    video: d.nav.video,
     cerebro: d.nav.brain,
     auditoria: d.motion.nav,
     historico: d.nav.history,
@@ -153,6 +161,7 @@ export default function App() {
       {/* Fora do fluxo das telas: a pergunta chega no meio de qualquer uma
           delas, e a campanha fica parada ate a resposta. */}
       <ModalMotion />
+      <ModalNarracao />
       <ModalLimite />
       <ModalFalha />
       <ModalAtualizacao />
@@ -229,6 +238,7 @@ export default function App() {
               <Modelos diag={diag} avancar={() => avancar("campanha")} />
             )}
             {tela === "campanha" && <Campanha diag={diag} />}
+            {tela === "video" && <Video />}
             {tela === "cerebro" && <Cerebro />}
             {tela === "auditoria" && <Auditoria />}
             {tela === "historico" && <Historico />}

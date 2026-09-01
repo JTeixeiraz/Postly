@@ -359,6 +359,65 @@ Se você aceitar, o Motion Designer devolve um roteiro de animação — cenas c
 tempo, o que se move e como, o último quadro do laço. Ele não gera o vídeo: a
 entrega é o roteiro, e ele não toca na peça, que já foi aprovada.
 
+### Vídeo: um editor em que você não edita
+
+A aba **Vídeos** é a outra coisa que você pede ao sistema, e ela não é campanha:
+nenhuma rede social entra no caminho e nada é publicado. Você sobe o material,
+descreve o que quer, e no fim baixa um `.mp4` para usar como quiser.
+
+Quem monta é o **Motion Designer**, em [Remotion](https://remotion.dev). Não há
+linha do tempo para arrastar — arrastar clipe é justamente o trabalho que este
+programa existe para não pedir.
+
+Os assets ficam em três pastas, e a terceira decide o fluxo:
+
+```
+imagens/     entram na tela do vídeo
+audio/       trilha e efeitos
+narracao/    a voz — é esta pasta que responde se o vídeo tem narração
+```
+
+**A pasta responde, o modelo não adivinha.** Um arquivo chamado
+`narracao-final.mp3` largado em `audio/` continua sendo trilha: adivinhar pelo
+nome seria adivinhação com cara de detecção.
+
+Se a pasta de narração estiver vazia, o vídeo **para no meio e pergunta** se
+você quer voz — depois de o gerente decidir a linha (antes seria sem contexto) e
+antes de a primeira cena ser montada (depois seria tarde, porque as cenas já
+teriam sido medidas para texto na tela). Se você quiser, o Motion Designer
+escreve o roteiro de locução, te entrega com o link do **ElevenLabs** e o caminho
+exato da pasta. Você grava, larga o arquivo lá e roda de novo — da segunda vez
+ninguém pergunta nada.
+
+> O cargo devolve um **JSON de cenas**, não código. O provedor padrão é um modelo
+> local pequeno, e ele não escreveria TSX que compila; além disso, JSON inválido
+> é um erro que a tela mostra, enquanto código que compila e anima errado é um
+> vídeo estranho que ninguém sabe explicar.
+
+**Não é um template.** O modelo decide quantas cenas, quais, em que ordem e com
+que duração — e também **como cada uma se parece**: de onde a câmera parte, para
+onde ela anda, onde o texto pousa, como a cena entra, e a energia do vídeo
+inteiro. Duas cenas do mesmo tipo não saem iguais, e dois vídeos com os mesmos
+assets não se parecem.
+
+Quando o modelo não escreve o bloco de direção — coisa que um modelo pequeno faz
+com frequência —, o padrão **alterna por cena** em vez de repetir, com ciclos de
+comprimentos diferentes para a combinação não fechar dentro do teto de cenas.
+
+### A bancada de montagem
+
+Monitor em cima, inspetor na lateral, régua e trilhas embaixo. Não há alça para
+arrastar, corte nem keyframe — a forma de editor existe para você **ler o ritmo**
+(blocos proporcionais à duração mostram num relance que a cena 3 tem o dobro da
+2) e para **apontar**.
+
+A única ação é a nota: seleciona a cena, para o vídeo no instante, escreve o que
+está errado. **"Refazer" corrige o roteiro que existe** — mantém o que você não
+apontou e manda só o resto de volta para o Motion Designer.
+
+O render roda no sidecar Node e **reusa o Chromium que o Playwright já baixou** —
+nenhum download novo.
+
 ### A doutrina de marketing
 
 Os quatro cargos não improvisam. Cada um recebe frameworks nomeados por canal
@@ -419,8 +478,20 @@ markup toda semana e resistem ativamente a automação. Os adaptadores tentam
 vários seletores em ordem e tiram captura de tela quando falham, mas conte com
 manutenção. **Use o modo Simular primeiro.**
 
-**O TikTok espera vídeo.** O sistema gera imagem. Para o TikTok funcionar de
-verdade seria preciso geração de vídeo, que ainda não existe aqui.
+**O TikTok espera vídeo, e a campanha ainda manda imagem.** A aba Vídeos já
+produz `.mp4`, mas os dois caminhos não estão ligados: a publicação de campanha
+continua enviando a arte gerada. Ligar um no outro é trabalho que falta.
+
+**O catálogo de cenas do vídeo é fechado.** Seis tipos, e o Motion Designer
+escolhe entre eles e dirige cada um (câmera, foco, pouso do texto, entrada,
+energia). Ele não inventa uma cena que não existe — é o preço de o recurso
+funcionar num modelo local pequeno.
+
+**A prévia do vídeo pode não tocar no Linux.** A WebView (WebKitGTK) decodifica
+vídeo pelo GStreamer, e o H.264 vem do pacote `gst-libav`, que nem toda
+distribuição instala. Sem ele o monitor não toca — mas o **arquivo renderizado
+está correto** e abre em qualquer player. A tela diz isso e oferece o botão para
+abrir fora. Medido nesta máquina: `avdec_h264` ausente.
 
 **Cada rodada de auditoria custa uma imagem.** O auditor julga a peça real, não
 a promessa dela, então reprovar significa gerar de novo pelo Gemini.
@@ -445,11 +516,15 @@ src-tauri/src/            backend em Rust
 ├── gemini/               cliente da API de imagem e texto
 ├── gemini_cli/           o Gemini CLI local como provedor de turno
 ├── claude/               o Claude Code local como provedor de turno
+├── video/                o vídeo avulso: assets, direção, roteiro e render
 ├── metricas.rs           desempenho publicado e a regra de divergir
 └── vault.rs              cofre cifrado
 
-sidecar/                  Node + Playwright, um processo por demanda
-└── networks.mjs          um adaptador por rede social
+sidecar/                  Node, um processo por demanda
+├── networks.mjs          um adaptador por rede social
+└── remotion-agent.mjs    o render do vídeo, um processo por render
+
+motion/                   a biblioteca de cenas, dirigida pelo roteiro em JSON
 ```
 
 ### O site e o vídeo

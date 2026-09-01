@@ -41,6 +41,18 @@ export const IconRelay = ({ size = 18, className }: Props) => (
   </svg>
 );
 
+/** Uma claquete: dois retângulos e a barra diagonal.
+ *
+ *  Filme, e não uma seta de "play". O play significaria "assistir", e esta aba
+ *  é onde o vídeo é FEITO — a distinção importa numa barra onde as outras cinco
+ *  abas também são lugares de trabalho. */
+export const IconFilm = ({ size = 18, className }: Props) => (
+  <svg {...base(size, className)}>
+    <rect x="3" y="8" width="18" height="12" rx="2" />
+    <path d="M3.6 8 6.8 4h3.4L7 8m4.2 0L14.4 4h3.4L14.6 8" />
+  </svg>
+);
+
 export const IconGraph = ({ size = 18, className }: Props) => (
   <svg {...base(size, className)}>
     <circle cx="6" cy="7" r="2.2" />

@@ -1,0 +1,15 @@
+{
+  "name": "postly-motion",
+  "private": true,
+  "version": "0.1.2",
+  "type": "module",
+  "description": "A biblioteca de cenas que o Motion Designer monta. O cargo devolve JSON; isto renderiza.",
+  "dependencies": {
+    "@remotion/fonts": "4.0.518",
+    "@types/react": "^19.2.7",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.518",
+    "typescript": "^5.9.3"
+  }
+}

@@ -27,6 +27,13 @@ pub struct AppState {
     /// e a resposta chega por um comando, que sao dois mundos que so se falam
     /// pelo estado compartilhado.
     pub resposta_limite: Mutex<Option<tokio::sync::oneshot::Sender<bool>>>,
+    /// A vaga da resposta sobre narracao, no fluxo de video.
+    ///
+    /// Vive aqui pelo mesmo motivo das outras duas: quem pergunta e o pipeline
+    /// rodando numa tarefa, quem responde e um clique na janela, e os dois so
+    /// se falam pelo estado compartilhado.
+    pub resposta_narracao:
+        Mutex<Option<tokio::sync::oneshot::Sender<crate::video::narracao::RespostaNarracao>>>,
 }
 
 impl AppState {
@@ -37,6 +44,7 @@ impl AppState {
             app_root,
             resposta_motion: Mutex::new(None),
             resposta_limite: Mutex::new(None),
+            resposta_narracao: Mutex::new(None),
         }
     }
 }

@@ -40,6 +40,13 @@ import type {
   Falha,
   ProgressoBaixa,
   PedidoMotion,
+  PedidoNarracao,
+  PedidoVideo,
+  ProgressoRender,
+  ProjetoVideo,
+  RelatorioVideo,
+  RespostaNarracao,
+  PastaAsset,
   RelatorioNavegador,
   StatusNavegador,
   ResultadoCampanha,
@@ -158,6 +165,19 @@ export const api = {
   elencoClaude: () => invoke<VagaClaude[]>("elenco_claude"),
 
   elencoGemini: () => invoke<VagaClaude[]>("elenco_gemini"),
+
+  // ------------------------------------------------------------------ vídeo
+  videoListar: () => invoke<ProjetoVideo[]>("video_listar"),
+  videoCriar: (nome: string) => invoke<ProjetoVideo>("video_criar", { nome }),
+  videoAdicionar: (slug: string, pasta: PastaAsset, nome: string, dados: string) =>
+    invoke<ProjetoVideo>("video_adicionar", { slug, pasta, nome, dados }),
+  videoRemoverItem: (slug: string, caminho: string) =>
+    invoke<ProjetoVideo>("video_remover_item", { slug, caminho }),
+  videoRemoverProjeto: (slug: string) =>
+    invoke<ProjetoVideo[]>("video_remover_projeto", { slug }),
+  videoGerar: (req: PedidoVideo) => invoke<RelatorioVideo>("video_gerar", { req }),
+  responderNarracao: (resposta: RespostaNarracao) =>
+    invoke<void>("responder_narracao", { resposta }),
   responderMotion: (aceitar: boolean) => invoke<void>("responder_motion", { aceitar }),
   responderLimite: (esperar: boolean) => invoke<void>("responder_limite", { esperar }),
 };
@@ -176,6 +196,14 @@ export function ouvirFalha(cb: (e: Falha) => void): Promise<UnlistenFn> {
 
 export function ouvirMotion(cb: (e: PedidoMotion) => void): Promise<UnlistenFn> {
   return listen<PedidoMotion>("postly://motion", (evento) => cb(evento.payload));
+}
+
+export function ouvirNarracao(cb: (e: PedidoNarracao) => void): Promise<UnlistenFn> {
+  return listen<PedidoNarracao>("postly://narracao", (evento) => cb(evento.payload));
+}
+
+export function ouvirRender(cb: (e: ProgressoRender) => void): Promise<UnlistenFn> {
+  return listen<ProgressoRender>("postly://render", (evento) => cb(evento.payload));
 }
 
 /** O aviso de cota esgotada, e os dois eventos da espera.

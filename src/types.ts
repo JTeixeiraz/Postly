@@ -594,3 +594,177 @@ export interface ProgressoBaixa {
   total: number;
   percent: number;
 }
+
+// ----------------------------------------------------------------- video
+
+export interface ItemVideo {
+  nome: string;
+  caminho: string;
+  bytes: number;
+}
+
+/** Um projeto de vídeo, com tudo que ele tem em disco.
+ *
+ *  `narracao` é a lista que responde à pergunta central do fluxo: se ela está
+ *  vazia, o vídeo vai parar e perguntar se a pessoa quer voz. O nome do arquivo
+ *  não decide nada — só a pasta. */
+export interface ProjetoVideo {
+  slug: string;
+  nome: string;
+  caminho: string;
+  imagens: ItemVideo[];
+  audio: ItemVideo[];
+  narracao: ItemVideo[];
+  /** Os .mp4 já renderizados, do mais novo para o mais velho. */
+  saidas: ItemVideo[];
+  bytes: number;
+}
+
+export type PastaAsset = "imagens" | "audio" | "narracao";
+
+export type TipoCena =
+  | "titulo"
+  | "ken_burns"
+  | "placa"
+  | "comparacao"
+  | "declaracao"
+  | "fecho";
+
+export type Movimento =
+  | "aproximar"
+  | "afastar"
+  | "varrer_esquerda"
+  | "varrer_direita"
+  | "subir"
+  | "descer"
+  | "nenhum";
+
+export type Foco = "centro" | "topo" | "base" | "esquerda" | "direita";
+
+export type Pouso =
+  | "inferior_esquerda"
+  | "inferior_direita"
+  | "superior_esquerda"
+  | "centro"
+  | "coluna_esquerda";
+
+export type Entrada = "fade" | "subir" | "escala" | "cortina" | "corte";
+
+/** COMO a cena se parece. É o que separa este sistema de um template: sem ela,
+ *  duas cenas do mesmo tipo sairiam idênticas no olhar por mais que a montagem
+ *  mudasse. Só leitura na tela — quem dirige é o cargo. */
+export interface DirecaoCena {
+  movimento: Movimento;
+  foco: Foco;
+  pouso: Pouso;
+  entrada: Entrada;
+  escala_texto: number;
+}
+
+export interface LookVideo {
+  /** 0 = quase parado, 1 = agressivo. */
+  energia: number;
+  vinheta: boolean;
+  filete: boolean;
+}
+
+export interface CenaVideo {
+  tipo: TipoCena;
+  /** Segundos, nunca quadros. */
+  dur_s: number;
+  titulo: string;
+  subtitulo: string;
+  /** Nomes de arquivo da pasta `imagens/`, não caminhos. */
+  imagens: string[];
+  narracao: string;
+  direcao: DirecaoCena;
+}
+
+export interface RoteiroVideo {
+  cenas: CenaVideo[];
+  trilha: string;
+  proporcao: string;
+  /** Por que o vídeo é assim. Um roteiro sem justificativa não dá para criticar. */
+  racional: string;
+  look: LookVideo;
+}
+
+/** O que a pessoa apontou numa cena.
+ *
+ *  É toda a interação de edição que a tela oferece: ela seleciona, para o vídeo
+ *  num instante e escreve o que está errado. O `segundo` viaja junto porque
+ *  "aos 4,2s o texto cobre o rosto" é uma instrução que o cargo consegue
+ *  seguir, e "está errado" não é. */
+export interface NotaDeCena {
+  /** Base 1, como a linha do tempo numera. */
+  cena: number;
+  segundo: number | null;
+  texto: string;
+}
+
+export interface VideoPronto {
+  arquivo: string;
+  bytes: number;
+  /** Medida no arquivo, não somada do roteiro. */
+  duracao_s: number;
+}
+
+/** O roteiro de locução, quando a pessoa pede narração e ainda vai gravar.
+ *
+ *  Os três primeiros campos andam juntos porque ela precisa dos três na mesma
+ *  tela: o texto para copiar, o site para colar, e a pasta para largar o
+ *  arquivo que voltar. */
+export interface RoteiroDeLocucao {
+  texto: string;
+  elevenlabs: string;
+  pasta: string;
+  /** Contado pelo Postly, não pelo modelo — ele erra e o número é barato de medir. */
+  palavras: number;
+  segundos_estimados: number;
+}
+
+export interface PedidoVideo {
+  projeto: string;
+  objetivo: string;
+  proporcao: string;
+  idioma: string;
+  pensamento_estendido: boolean;
+  /** Quando vem preenchido, o vídeo não recomeça: o gerente é pulado e o
+   *  Motion Designer corrige o roteiro anterior. */
+  notas: NotaDeCena[];
+  roteiro_anterior: RoteiroVideo | null;
+  linha_anterior: string;
+}
+
+export interface RelatorioVideo {
+  run_id: string;
+  run_dir: string;
+  linha: string;
+  roteiro: RoteiroVideo | null;
+  parecer: string;
+  aprovado: boolean;
+  rodadas: number;
+  video: VideoPronto | null;
+  /** Preenchido quando o vídeo parou para a voz ser gravada. Aí `video` vem
+   *  nulo de propósito: não há o que renderizar até o áudio existir. */
+  locucao: RoteiroDeLocucao | null;
+  avisos: string[];
+}
+
+/** O que a tela recebe quando o vídeo para para perguntar sobre narração. */
+export interface PedidoNarracao {
+  linha: string;
+  /** Caminho absoluto: a pessoa vai sair do app, gerar o áudio noutro site e
+   *  voltar com um arquivo na mão. "Pasta de narração" não diz onde ela fica. */
+  pasta: string;
+  elevenlabs: string;
+}
+
+export type RespostaNarracao = "sem_voz" | "quero_roteiro";
+
+export interface ProgressoRender {
+  /** `empacotando` enquanto o bundler roda, `renderizando` depois. */
+  fase: string;
+  percent: number;
+  detalhe: string;
+}

@@ -452,3 +452,194 @@
   font-size: var(--t-micro);
   line-height: 1.55;
 }
+
+/* ══ a bancada de edição ══════════════════════════════════════════════════
+
+   Forma de editor, função de leitura. Monitor e inspetor lado a lado, régua e
+   trilhas embaixo — porque é assim que se lê ritmo, e ritmo é o que a pessoa
+   julga melhor que o modelo. Nada aqui arrasta: quem monta é o Motion Designer.
+
+   Os tokens são os mesmos do resto do app, de propósito. Um editor com paleta
+   própria leria como outro programa dentro do programa. */
+
+/* A largura do rótulo das trilhas vive aqui porque DOIS lugares dependem dela:
+   a coluna da trilha e o recuo do cabeçote. Como número solto nos dois, o
+   primeiro ajuste de layout deslocaria o cabeçote em relação às pistas e o
+   traço passaria a apontar para o tempo errado. */
+.linha { --rot: 62px; }
+
+.bancada {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--s4);
+  align-items: start;
+}
+
+/* Abaixo de 1100px o inspetor não cabe ao lado sem espremer o monitor a um
+   selo. Empilhar mantém os dois legíveis; espremer não manteria nenhum. */
+@media (max-width: 1100px) {
+  .bancada { grid-template-columns: minmax(0, 1fr); }
+}
+
+.monitor {
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+/* Teto de altura: sem ele, um vídeo vertical (9:16) empurraria a linha do tempo
+   inteira para fora da janela — e a linha é a única coisa que esta tela existe
+   para mostrar. O monitor cede espaço primeiro. */
+.monitor video {
+  display: block; width: 100%; max-height: 52vh;
+  object-fit: contain; background: #000;
+}
+
+.monitor--vazio {
+  display: grid;
+  place-items: center;
+  gap: var(--s3);
+  /* 16/9 para o vazio ter o mesmo tamanho que o vídeo vai ter: sem isso a
+     página salta de altura no instante em que o render termina. */
+  aspect-ratio: 16 / 9;
+  max-height: 52vh;
+  padding: var(--s4);
+  text-align: center;
+}
+.monitor--vazio .provisao__barra { width: min(340px, 70%); }
+
+.monitor__pe {
+  display: flex; justify-content: flex-end;
+  padding: var(--s2) var(--s3);
+  border-top: 1px solid var(--line);
+  color: var(--ink-3); font-size: var(--t-sm);
+}
+
+/* ── inspetor ─────────────────────────────────────────────────────────── */
+
+.inspetor {
+  display: grid; gap: var(--s3);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s4);
+}
+.inspetor__topo { display: flex; align-items: center; justify-content: space-between; }
+.inspetor__titulo { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+
+/* Chave e valor em duas colunas: a leitura é de varredura vertical pelas
+   chaves, e uma lista de "Movimento: aproximar" em linha corrida obriga a ler
+   tudo para achar um campo. */
+.inspetor__campos {
+  display: grid; grid-template-columns: auto 1fr;
+  gap: var(--s1) var(--s3);
+  margin: 0; font-size: var(--t-sm);
+}
+.inspetor__campos dt { color: var(--ink-3); }
+.inspetor__campos dd { margin: 0; color: var(--ink-2); }
+
+.inspetor__look {
+  display: grid; gap: var(--s1);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--line);
+}
+
+/* ── linha do tempo ───────────────────────────────────────────────────── */
+
+.linha { display: grid; gap: var(--s2); }
+
+/* A régua começa onde as pistas começam, pelo mesmo motivo do cabeçote: uma
+   marca de "2s" alinhada com o rótulo em vez de com a trilha faria a pessoa ler
+   o ritmo errado — e ritmo é a única coisa que esta tela existe para mostrar. */
+.linha__regua {
+  position: relative; height: 22px;
+  margin-left: calc(var(--rot) + var(--s2));
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.linha__marca { position: absolute; top: 0; transform: translateX(-50%); }
+.linha__marca i {
+  display: block; width: 1px; height: 6px;
+  margin: 0 auto; background: var(--line-strong);
+}
+.linha__marca em {
+  display: block; font-style: normal;
+  font-size: var(--t-micro); color: var(--ink-3);
+}
+
+.linha__trilhas { position: relative; display: grid; gap: var(--s1); }
+
+.linha__trilha { display: grid; grid-template-columns: var(--rot) 1fr; align-items: center; gap: var(--s2); }
+.linha__rot { font-size: var(--t-micro); color: var(--ink-3); text-transform: lowercase; }
+.linha__pista { position: relative; height: 42px; background: var(--sunken); border-radius: var(--r-sm); }
+
+.linha__bloco {
+  position: absolute; top: 3px; bottom: 3px;
+  display: grid; align-content: center; gap: 1px;
+  padding: 0 var(--s2);
+  background: var(--card-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  text-align: left; overflow: hidden;
+  cursor: pointer;
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+.linha__bloco:hover { border-color: var(--act-txt); }
+
+/* Duas marcas diferentes de propósito, porque são dois estados diferentes:
+   `tocando` é onde o cabeçote está agora, `ativa` é o que a pessoa escolheu
+   para inspecionar. Uma marca só faria a seleção sumir toda vez que o vídeo
+   andasse para a cena seguinte. */
+.linha__bloco[data-tocando="true"] { background: var(--act-wash); }
+.linha__bloco[data-ativa="true"] {
+  border-color: var(--act-txt);
+  box-shadow: inset 0 0 0 1px var(--act-txt);
+  color: var(--ink);
+}
+
+.linha__bloco-n { font-size: var(--t-micro); color: var(--ink-3); }
+.linha__bloco-t {
+  font-size: var(--t-sm); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.linha__onda {
+  position: absolute; inset: 3px;
+  display: flex; align-items: center;
+  padding: 0 var(--s2);
+  border-radius: var(--r-sm);
+  font-size: var(--t-micro); color: var(--ink-3);
+  background: repeating-linear-gradient(
+    90deg, var(--line) 0 2px, transparent 2px 6px
+  );
+}
+.linha__onda[data-tipo="voz"] { box-shadow: inset 0 0 0 1px var(--line-strong); }
+
+/* O cabeçote atravessa TODAS as trilhas, e é por isso que ele vive no
+   contêiner e não dentro de uma pista: um instante do vídeo é o mesmo instante
+   na voz e na trilha, e um traço por pista sugeriria que não. */
+.linha__cabecote {
+  position: absolute; top: 0; bottom: 0;
+  /* O rótulo mais o gap: o traço tem que começar onde as pistas começam,
+     senão ele aponta para o rótulo em vez de para o tempo. */
+  margin-left: calc(var(--rot) + var(--s2));
+  width: 2px; background: var(--act-txt);
+  pointer-events: none;
+  transition: left var(--fast) linear;
+}
+
+/* O monitor que não consegue tocar. Não é um erro do Postly: a WebView do Linux
+   decodifica vídeo pelo GStreamer, e o H.264 depende de um pacote que nem toda
+   distribuição traz. O arquivo está certo — o que falta é o codec da janela. */
+.monitor__semcodec {
+  /* `align-content: center` e não `place-items`: com três linhas numa caixa
+     16/9 alta, o `place-items` estica as linhas e o texto fica boiando longe do
+     botão. Aqui o bloco inteiro é que se centra. */
+  display: grid; align-content: center; justify-items: center; gap: var(--s3);
+  aspect-ratio: 16 / 9;
+  max-height: 52vh;
+  padding: var(--s4);
+  text-align: center;
+}
+.monitor__semcodec p { margin: 0; max-width: 46ch; }

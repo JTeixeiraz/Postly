@@ -3,11 +3,17 @@
   "private": true,
   "version": "0.1.2",
   "type": "module",
-  "description": "Sidecar Playwright: o unico processo do sistema que abre navegador",
+  "description": "Sidecar Node: o Playwright que publica e o Remotion que renderiza",
   "scripts": {
     "postinstall": "playwright install chromium"
   },
   "dependencies": {
-    "playwright": "^1.49.0"
+    "@remotion/bundler": "4.0.518",
+    "@remotion/fonts": "^4.0.518",
+    "@remotion/renderer": "4.0.518",
+    "playwright": "^1.49.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.518"
   }
 }
