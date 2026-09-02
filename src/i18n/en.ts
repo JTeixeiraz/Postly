@@ -273,7 +273,8 @@ export const en: typeof pt = {
     notePlaceholder: "e.g. the light and the framing, not the product",
     empty: "No images yet.",
     exampleTitle: "Example",
-    exampleBody: "A coffee brand uploaded three photos of its own beans (own material) and two posts from a Scandinavian roastery (style), with the note \"I want that visual silence, plain background, one thing in focus\". The creator kept their product and adopted the reference's framing.",
+    exampleBody:
+      'A coffee brand uploaded three photos of its own beans (own material) and two posts from a Scandinavian roastery (style), with the note "I want that visual silence, plain background, one thing in focus". The creator kept their product and adopted the reference\'s framing.',
     ds: "Visual identity",
     dsWhy: "Constraints the creator must respect in every piece.",
     colors: "Colors",
@@ -298,11 +299,11 @@ export const en: typeof pt = {
     claudeFound: "Found on this machine, version {v}",
     tiers: "Role tiers still apply: decision goes to Opus, audit to Sonnet, execution to Haiku.",
     cost: "Each turn shows its dollar cost on the relay.",
-    gemini: "Gemini CLI",
-    geminiWhy: "Same trade as Claude Code: far faster, the prompt leaves your machine, and each turn spends your Google account quota.",
-    geminiMissing: "Gemini CLI was not found on this machine.",
-    geminiProcurar: "Click to look again — or install it with npm i -g @google/gemini-cli.",
-    geminiFound: "Found on this machine, version {v}",
+    agy: "Antigravity CLI",
+    agyWhy: "Same trade as Claude Code: far faster, the prompt leaves your machine, and each turn spends your Google account quota. It is the successor to Gemini CLI.",
+    agyMissing: "Antigravity CLI was not found on this machine.",
+    agyProcurar: "Click to look again — or install it from antigravity.google.",
+    agyFound: "Found on this machine, version {v}",
   },
   skills: {
     open: "Skills",
@@ -406,7 +407,8 @@ export const en: typeof pt = {
     verdictDiverge: "Beat it and diverge",
     verdictDivergeWhy: "The next piece has to beat {n} and cannot repeat the concept that performed best.",
     verdictFollow: "Stay on this line",
-    verdictFollowWhy: "\"{c}\" returned {x}× the median. That is a vein, not luck: worth continuing while it pays.",
+    verdictFollowWhy:
+      '"{c}" returned {x}× the median. That is a vein, not luck: worth continuing while it pays.',
     fromScrape: "scraped",
     fromManual: "typed",
     collectedAt: "Collected",
@@ -420,11 +422,9 @@ export const en: typeof pt = {
     nenhuma: "No folders yet. Create one per product and the material is ready for the next campaign.",
     resumo: "{n} assets · {r} references · {b}",
     doProduto: "Brand material",
-    doProdutoPorque:
-      "Photos of the product, the shop, the team. Goes in as an image for models that can see, and may appear in the piece.",
+    doProdutoPorque: "Photos of the product, the shop, the team. Goes in as an image for models that can see, and may appear in the piece.",
     deTerceiros: "Style references",
-    deTerceirosPorque:
-      "Other brands' work, for direction. Goes in as text only — handing another brand's art to the model to copy is the shortest path to someone else's logo showing up in your piece.",
+    deTerceirosPorque: "Other brands' work, for direction. Goes in as text only — handing another brand's art to the model to copy is the shortest path to someone else's logo showing up in your piece.",
     adicionar: "Add",
     apagar: "Delete",
     apagarPasta: "Delete the whole folder",
@@ -434,13 +434,11 @@ export const en: typeof pt = {
     erroLeitura: "Could not read the chosen files.",
     naCampanha: "Asset folder",
     naCampanhaNenhuma: "None — only the loose references",
-    naCampanhaPorque:
-      "The folder's contents add to what you upload below; they do not replace it.",
+    naCampanhaPorque: "The folder's contents add to what you upload below; they do not replace it.",
   },
   local: {
     motor: "Diffusion engine",
-    motorPorque:
-      "The stable-diffusion.cpp executable, about 30 MB. Runs on the CPU, with no Python and nothing to compile.",
+    motorPorque: "The stable-diffusion.cpp executable, about 30 MB. Runs on the CPU, with no Python and nothing to compile.",
     instalado: "installed",
     baixarMotor: "Download the engine",
     baixar: "Download",
@@ -464,16 +462,13 @@ export const en: typeof pt = {
     },
     tps: "≈ {n} tok/s",
     teto: "up to {n} per model",
-    avisoMaximo:
-      "On maximum, a turn can take tens of minutes on a machine without a GPU, and the rest of the computer slows down while it runs. The campaign is the same — each role just takes longer to answer.",
+    avisoMaximo: "On maximum, a turn can take tens of minutes on a machine without a GPU, and the rest of the computer slows down while it runs. The campaign is the same — each role just takes longer to answer.",
   },
   limite: {
     pilula: "quota exhausted",
     titulo: "Claude Code hit its limit",
-    textoCom:
-      "The quota comes back at {hora}, in {falta}. You can stop now and pick it up whenever you want, or let Postly wait and carry on by itself.",
-    textoSem:
-      "Claude Code did not say when the quota comes back. The campaign stops here, and the turns that already ran stay saved.",
+    textoCom: "The quota comes back at {hora}, in {falta}. You can stop now and pick it up whenever you want, or let Postly wait and carry on by itself.",
+    textoSem: "Claude Code did not say when the quota comes back. The campaign stops here, and the turns that already ran stay saved.",
     oQueOClaudeDisse: "What Claude Code replied",
     encerrar: "Stop now",
     esperar: "Wait {falta} and continue",
@@ -481,8 +476,7 @@ export const en: typeof pt = {
     notaSem: "The turns that already ran stay saved in the run folder.",
     esperando: "waiting for the quota",
     voltaAs: "The campaign resumes at {hora}",
-    textoEsperando:
-      "{falta} to go. Keep Postly open — the wait lives in this window, and closing the app ends the campaign. Your computer will tell you when it is back.",
+    textoEsperando: "{falta} to go. Keep Postly open — the wait lives in this window, and closing the app ends the campaign. Your computer will tell you when it is back.",
     encerrarAgora: "Do not wait, stop",
   },
   falha: {
@@ -537,15 +531,15 @@ export const en: typeof pt = {
     howTitle: "How the turn is executed",
   },
 
-  geminiElenco: {
+  agyElenco: {
     // Gemini CLI does not report per-turn cost the way Claude Code does.
     // Promising a figure on the trail that will never show up would be worse
     // than promising nothing.
-    cost: "Each turn spends your Google account quota. Gemini CLI does not report a per-turn amount, so the trail shows the time rather than the price.",
+    cost: "Each turn spends your Google account quota. Antigravity reports tokens, not price — the trail shows time, because turning tokens into money would need a table that changes without notice.",
     // The wording differs from Claude Code on purpose, and the difference was
     // measured: there the variable is stripped from the child process, here it
     // is not.
-    envWarn: "{v} is set in this terminal. Postly does not strip it: in Gemini CLI the method chosen in ~/.gemini/settings.json wins over the variable, and with no method chosen it is your only authentication. Check which account the turn will be billed to.",
+    envWarn: "{v} is set in this terminal. Postly does not strip it — when it is set, it is your authentication and not a detour. Check which account the turn will be billed to.",
   },
 
   imgProvider: {
@@ -584,7 +578,7 @@ export const en: typeof pt = {
     think: "Extended reasoning for whoever sets the line",
     generate: "Generate video",
     running: "Working",
-    needImages: "Add at least one image on the assets tab.",
+    needImages: "Add at least one video or image on the assets tab.",
     willUseVoice: "There is narration in the folder. The script will be timed to the spoken lines.",
     willAsk: "There is no narration in the folder. Partway through, the video will stop and ask whether you want it.",
     bundling: "Bundling the scene library",
@@ -596,7 +590,10 @@ export const en: typeof pt = {
     notApproved: "not approved",
     review: "Auditor's review",
     previous: "Rendered earlier",
-    nothingYet: "Nothing has run yet. Fill in the brief and generate.",
+    nextStep: "What comes next",
+    stepAssets: "This video has no material yet. Drag your videos in or add images on the Assets tab — that is what the Motion Designer builds the scenes from.",
+    stepBrief: "The material is here. Now say, on the Brief tab, what this video needs to be.",
+    stepGenerate: "Everything is ready. Go back to the Brief and generate — the bench fills up once the video is done.",
     redo: "Redo with my {n} notes",
     redoHow: "Pick a scene on the timeline and write what is wrong. The Motion Designer works from there.",
     redoWhat: "It fixes the script that already exists — keeps whatever you did not flag and only touches the rest.",
@@ -608,7 +605,8 @@ export const en: typeof pt = {
     audio: "Audio",
     audioNote: "Track and effects. MP3, WAV, M4A or OGG.",
     voice: "Narration",
-    voiceNote: "The video's voice. This folder — and only this folder — answers whether the video has narration: a file called \"narration\" in the audio folder is still a track.",
+    voiceNote:
+      'The video\'s voice. This folder — and only this folder — answers whether the video has narration: a file called "narration" in the audio folder is still a track.',
     add: "Add files",
     empty: "Empty.",
     hasVoice: "There is narration. The Motion Designer will time each scene to the spoken line, and on-screen text will not repeat what the voice says.",
@@ -635,7 +633,6 @@ export const en: typeof pt = {
     thenWhat: "Once the file is in that folder, go back to the brief and generate again. This time the video will not ask — the folder already answers.",
   },
 
-
   linha: {
     scenes: "Scenes",
     voice: "Voice",
@@ -646,6 +643,7 @@ export const en: typeof pt = {
 
   monitor: {
     empty: "The video shows up here once the Motion Designer has assembled and rendered it. Fill in the brief and generate.",
+    semVideo: "The run finished without a video file. The reason is in the notices below — the script is still here for you to point at what to fix.",
     noCodec: "This window cannot play the video, but the file itself is finished and correct.",
     noCodecFix: "The Linux WebView decodes video through GStreamer, and H.264 comes from the gst-libav package, which is not installed here. Installing it fixes the preview; the rendered file plays in any player.",
     openOutside: "Open in the system player",
@@ -678,6 +676,7 @@ export const en: typeof pt = {
     comparacao: "comparison",
     declaracao: "statement",
     fecho: "closing",
+    clipe: "clip from your video",
   },
 
   direcao: {
@@ -703,4 +702,36 @@ export const en: typeof pt = {
     corte: "hard cut",
   },
 
+  escolhaModelo: {
+    titulo: "Who will think this video through",
+    ollama: "On your machine",
+    ollamaNota: "Free, and nothing leaves the computer. Slow without a GPU.",
+    claude: "Claude Code",
+    claudeNota: "Fast. Billed to your Anthropic subscription.",
+    claudeAusente: "not installed",
+    agy: "Antigravity",
+    agyNota: "Fast. Spends your Google account quota.",
+    agyAusente: "not installed",
+    herdado: "Using what the Models tab has selected: {p}.",
+    soEsteVideo: "Applies to this video only — campaigns keep using the Models tab setting.",
+    claude_code: "Claude Code",
+    antigravity: "Antigravity",
+  },
+
+  clipes: {
+    titulo: "Your videos",
+    nota: "The model cuts the dead air, picks the takes and assembles.",
+    arraste: "Drag your videos here",
+    solte: "Drop the videos here",
+    analisando: "Measuring the audio",
+    medir: "Measure the pauses",
+    remedir: "Measure again",
+    bruto: "raw footage",
+    falado: "with sound",
+    ganho: "{n}s of dead air to cut",
+    semSom: "no audio",
+    pausas: "{n} pauses",
+    porQue: "Pauses are measured in the real audio, not estimated — the model gets the exact ranges and builds from them.",
+    erroClipe: "could not be read",
+  },
 };

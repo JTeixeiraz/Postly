@@ -9,12 +9,13 @@
 //! - `brain`        grafo de contexto ponderado, serializado e compactado.
 //! - `orchestrator` os cargos, os prompts e o pipeline da campanha.
 //! - `gemini`       geracao de imagem e legenda.
-//! - `gemini_cli`   o Gemini CLI local como provedor de turno.
+//! - `antigravity`  o Antigravity CLI local (`agy`) como provedor de turno.
 //! - `browser`      ponte com o sidecar do Playwright.
 //! - `vault`        cofre cifrado de chave e credenciais.
 //! - `video`        o video avulso: assets, roteiro de cenas e render.
 
 pub mod atualizacao;
+pub mod antigravity;
 pub mod auditoria_cmds;
 pub mod brain;
 pub mod browser;
@@ -24,7 +25,6 @@ pub mod config_cmds;
 pub mod falha;
 pub mod galeria;
 pub mod gemini;
-pub mod gemini_cli;
 pub mod hardware;
 pub mod idioma;
 pub mod imagem;
@@ -75,7 +75,7 @@ pub fn run() {
             auditoria_cmds::responder_motion,
             auditoria_cmds::responder_limite,
             config_cmds::elenco_claude,
-            config_cmds::elenco_gemini,
+            config_cmds::elenco_antigravity,
             config_cmds::provedores_de_imagem,
             config_cmds::definir_provedor_imagem,
             config_cmds::salvar_chave_de_imagem,

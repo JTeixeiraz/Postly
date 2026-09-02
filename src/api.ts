@@ -4,6 +4,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type {
+  ClipeMedido,
+  ProgressoAnalise,
   PastaGaleria,
   EstadoLocal,
   ProgressoLocal,
@@ -164,13 +166,19 @@ export const api = {
 
   elencoClaude: () => invoke<VagaClaude[]>("elenco_claude"),
 
-  elencoGemini: () => invoke<VagaClaude[]>("elenco_gemini"),
+  elencoAntigravity: () => invoke<VagaClaude[]>("elenco_antigravity"),
 
   // ------------------------------------------------------------------ vídeo
   videoListar: () => invoke<ProjetoVideo[]>("video_listar"),
   videoCriar: (nome: string) => invoke<ProjetoVideo>("video_criar", { nome }),
   videoAdicionar: (slug: string, pasta: PastaAsset, nome: string, dados: string) =>
     invoke<ProjetoVideo>("video_adicionar", { slug, pasta, nome, dados }),
+  // Caminhos de disco, e nao base64: um clipe de centenas de MB pelo IPC
+  // estouraria a memoria das duas pontas. O arrastar-e-soltar do Tauri entrega
+  // o caminho de verdade, e o Rust copia direto.
+  videoAdicionarCaminhos: (slug: string, pasta: PastaAsset, caminhos: string[]) =>
+    invoke<[ProjetoVideo, string[]]>("video_adicionar_caminhos", { slug, pasta, caminhos }),
+  videoAnalisar: (slug: string) => invoke<ClipeMedido[]>("video_analisar", { slug }),
   videoRemoverItem: (slug: string, caminho: string) =>
     invoke<ProjetoVideo>("video_remover_item", { slug, caminho }),
   videoRemoverProjeto: (slug: string) =>
@@ -243,4 +251,8 @@ export function ouvirDownloads(
     "postly://download",
     (evento) => cb(evento.payload)
   );
+}
+
+export function ouvirAnalise(cb: (e: ProgressoAnalise) => void): Promise<UnlistenFn> {
+  return listen<ProgressoAnalise>("postly://analise", (evento) => cb(evento.payload));
 }

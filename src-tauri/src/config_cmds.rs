@@ -118,18 +118,16 @@ pub struct StatusProvedor {
     /// que o turno NAO vai usar a chave que ela talvez esperasse usar.
     pub credencial_ignorada: Option<String>,
 
-    /// O Gemini CLI esta instalado nesta maquina?
-    pub gemini_disponivel: bool,
-    pub gemini_versao: Option<String>,
-    pub gemini_caminho: Option<String>,
+    /// O Antigravity CLI esta instalado nesta maquina?
+    pub agy_disponivel: bool,
+    pub agy_versao: Option<String>,
+    pub agy_caminho: Option<String>,
     /// Variavel de credencial do Google encontrada no ambiente.
     ///
-    /// Ao contrario da do Claude Code, esta NAO e removida do processo filho —
-    /// medido, o metodo escolhido em `~/.gemini/settings.json` vence a
-    /// variavel, e quando nao ha metodo escolhido ela e a unica autenticacao
-    /// que a pessoa tem. O aviso serve para ela saber por qual conta o turno
-    /// pode estar sendo cobrado.
-    pub gemini_credencial_no_ambiente: Option<String>,
+    /// Ao contrario da do Claude Code, esta NAO e removida do processo filho:
+    /// quando existe, ela e a autenticacao de quem usa, nao um desvio. O aviso
+    /// serve para a pessoa saber por qual conta o turno vai.
+    pub agy_credencial_no_ambiente: Option<String>,
 }
 
 /// Um cargo e o modelo de um provedor externo que o assume.
@@ -173,14 +171,14 @@ pub fn elenco_claude() -> Vec<VagaClaude> {
     .collect()
 }
 
-/// O elenco quando quem executa e o Gemini CLI.
+/// O elenco quando quem executa e o Antigravity CLI.
 ///
 /// Comando proprio, e nao um parametro no `elenco_claude`: os dois provedores
 /// vivem em modulos separados e nada garante que o organograma deles siga
 /// igual para sempre. Um comando por provedor deixa a divergencia possivel sem
 /// obrigar a inventar um enum de despacho hoje.
 #[tauri::command]
-pub fn elenco_gemini() -> Vec<VagaClaude> {
+pub fn elenco_antigravity() -> Vec<VagaClaude> {
     use crate::orchestrator::roles::Role;
     [
         Role::DiretorGeral,
@@ -192,11 +190,11 @@ pub fn elenco_gemini() -> Vec<VagaClaude> {
     .iter()
     .map(|r| {
         let nivel = r.tier();
-        let modelo = crate::gemini_cli::modelo_do_nivel(nivel).to_string();
+        let modelo = crate::antigravity::modelo_do_nivel(nivel).to_string();
         VagaClaude {
             cargo: r.slug().to_string(),
             nivel,
-            rotulo: crate::gemini_cli::rotulo_do_modelo(&modelo).to_string(),
+            rotulo: crate::antigravity::rotulo_do_modelo(&modelo).to_string(),
             modelo,
             porque: crate::idioma::msg(r.porque_este_nivel().0, r.porque_este_nivel().1),
         }
@@ -207,7 +205,7 @@ pub fn elenco_gemini() -> Vec<VagaClaude> {
 #[tauri::command]
 pub async fn status_provedor() -> StatusProvedor {
     let claude = crate::claude::disponivel();
-    let gemini = crate::gemini_cli::disponivel();
+    let agy = crate::antigravity::disponivel();
     StatusProvedor {
         provedor: crate::prefs::load().provedor,
         claude_disponivel: claude,
@@ -222,14 +220,14 @@ pub async fn status_provedor() -> StatusProvedor {
         claude_caminho: crate::claude::localizar().map(|p| p.display().to_string()),
         credencial_ignorada: crate::claude::credencial_externa_no_ambiente(),
 
-        gemini_disponivel: gemini,
-        gemini_versao: if gemini {
-            crate::gemini_cli::versao().await
+        agy_disponivel: agy,
+        agy_versao: if agy {
+            crate::antigravity::versao().await
         } else {
             None
         },
-        gemini_caminho: crate::gemini_cli::localizar().map(|p| p.display().to_string()),
-        gemini_credencial_no_ambiente: crate::gemini_cli::credencial_externa_no_ambiente(),
+        agy_caminho: crate::antigravity::localizar().map(|p| p.display().to_string()),
+        agy_credencial_no_ambiente: crate::antigravity::credencial_externa_no_ambiente(),
     }
 }
 
@@ -270,9 +268,11 @@ pub async fn modos_de_desempenho() -> Vec<CartaoModo> {
                 // uma vazao que nao mediu.
                 if externo {
                     let id = match prefs.provedor {
-                        crate::prefs::Provedor::GeminiCli => crate::gemini_cli::rotulo_do_modelo(
-                            crate::gemini_cli::modelo_do_nivel_com(tier, m),
-                        ),
+                        crate::prefs::Provedor::Antigravity => {
+                            crate::antigravity::rotulo_do_modelo(
+                                crate::antigravity::modelo_do_nivel_com(tier, m),
+                            )
+                        }
                         _ => crate::claude::rotulo_do_modelo(crate::claude::modelo_do_nivel_com(
                             tier, m,
                         )),
@@ -451,10 +451,10 @@ pub fn definir_provedor(provedor: crate::prefs::Provedor) -> Result<crate::prefs
             "Claude Code was not found on this machine. Install it from claude.com/code.",
         ));
     }
-    if provedor == crate::prefs::Provedor::GeminiCli && !crate::gemini_cli::disponivel() {
+    if provedor == crate::prefs::Provedor::Antigravity && !crate::antigravity::disponivel() {
         return Err(crate::idioma::msg(
-            "Gemini CLI nao encontrado nesta maquina. Instale com `npm i -g @google/gemini-cli`.",
-            "Gemini CLI was not found on this machine. Install it with `npm i -g @google/gemini-cli`.",
+            "Antigravity CLI nao encontrado nesta maquina. Instale em antigravity.google.",
+            "Antigravity CLI was not found on this machine. Install it from antigravity.google.",
         ));
     }
     let mut p = crate::prefs::load();

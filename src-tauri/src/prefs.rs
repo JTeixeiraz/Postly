@@ -43,10 +43,18 @@ pub enum Provedor {
     /// O Claude Code que a pessoa ja tem instalado. Muito mais rapido, custa
     /// dinheiro por turno e manda o prompt para fora.
     ClaudeCode,
-    /// O Gemini CLI que a pessoa ja tem instalado, na sessao que ela ja logou.
-    /// Mesma troca do Claude Code: velocidade e qualidade em cima, o prompt
-    /// saindo da maquina e a cota da assinatura dela embaixo.
-    GeminiCli,
+    /// O Antigravity CLI (`agy`) que a pessoa ja tem instalado, na sessao que
+    /// ela ja logou. Mesma troca do Claude Code: velocidade e qualidade em
+    /// cima, o prompt saindo da maquina e a cota da assinatura dela embaixo.
+    ///
+    /// O `alias` NAO E COSMETICO. Este provedor se chamava `gemini_cli` ate o
+    /// Google migrar o `gemini` para o `agy`. Sem o alias, um `prefs.json`
+    /// gravado antes da troca deixaria de parsear — e `prefs::load()` faz
+    /// `.ok().unwrap_or_default()`, entao o arquivo INTEIRO viraria o padrao,
+    /// levando junto o design system, as referencias e as skills de quem ja
+    /// usava. Uma variante renomeada apagaria a configuracao das pessoas.
+    #[serde(alias = "gemini_cli")]
+    Antigravity,
 }
 
 impl Provedor {
@@ -209,5 +217,52 @@ impl Prefs {
             out.push(format!("\n[{}]\n{}", s.nome.trim(), s.texto.trim()));
         }
         out.join("\n")
+    }
+}
+
+#[cfg(test)]
+mod testes {
+    use super::*;
+
+    #[test]
+    fn um_prefs_antigo_com_gemini_cli_continua_legivel() {
+        // ESTE TESTE EXISTE PARA IMPEDIR UMA PERDA SILENCIOSA DE CONFIGURACAO.
+        //
+        // O provedor se chamava `gemini_cli` ate o Google migrar o `gemini`
+        // para o `agy`. `load()` faz `.ok().unwrap_or_default()`, entao uma
+        // variante que deixasse de parsear nao derrubaria so o campo: o
+        // arquivo INTEIRO viraria o padrao, e a pessoa perderia o design
+        // system, as referencias e as skills — sem erro nenhum na tela.
+        //
+        // Se alguem remover o `#[serde(alias = "gemini_cli")]`, este teste
+        // falha aqui, e nao na maquina de quem ja usava.
+        let antigo = r#"{
+            "modo": "maximo",
+            "provedor": "gemini_cli",
+            "ds": { "cores": "lima e carvao", "tipografia": "", "tom_visual": "", "evitar": "" },
+            "skills": [{"id":"1","nome":"minha","texto":"t","cargo":"","ativa":true}]
+        }"#;
+        let p: Prefs = serde_json::from_str(antigo).expect("o prefs antigo deixou de parsear");
+        assert_eq!(p.provedor, Provedor::Antigravity);
+        // O resto do arquivo tem que ter sobrevivido junto.
+        assert_eq!(p.modo, ModoDesempenho::Maximo);
+        assert_eq!(p.ds.cores, "lima e carvao");
+        assert_eq!(p.skills.len(), 1);
+    }
+
+    #[test]
+    fn o_nome_novo_tambem_e_aceito() {
+        let novo = r#"{"provedor":"antigravity"}"#;
+        let p: Prefs = serde_json::from_str(novo).unwrap();
+        assert_eq!(p.provedor, Provedor::Antigravity);
+    }
+
+    #[test]
+    fn provedor_desconhecido_derruba_o_arquivo_inteiro() {
+        // Isto NAO e um comportamento desejado — e a prova de que o alias
+        // acima importa. Se um dia o `load()` passar a recuperar campo a
+        // campo, este teste falha e o comentario do alias pode sair.
+        let futuro = r#"{"modo":"maximo","provedor":"algo-que-nao-existe"}"#;
+        assert!(serde_json::from_str::<Prefs>(futuro).is_err());
     }
 }

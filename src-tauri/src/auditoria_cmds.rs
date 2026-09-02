@@ -216,7 +216,7 @@ pub async fn analisar_desempenho() -> Result<String, String> {
         .await
         .map(|t| t.texto)
         .map_err(String::from),
-        crate::prefs::Provedor::GeminiCli => crate::gemini_cli::turno(
+        crate::prefs::Provedor::Antigravity => crate::antigravity::turno(
             crate::orchestrator::roles::Tier::Alto,
             &system,
             &prompt,

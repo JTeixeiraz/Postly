@@ -277,7 +277,8 @@ export const pt = {
     notePlaceholder: "ex.: a luz e o enquadramento, não o produto",
     empty: "Nenhuma imagem ainda.",
     exampleTitle: "Exemplo",
-    exampleBody: "Uma marca de café subiu três fotos do próprio grão (material da marca) e dois posts de uma torrefação escandinava (estilo), com a nota \"quero esse silêncio visual, fundo liso e uma coisa só em foco\". O criador manteve o produto dela e adotou o enquadramento da referência.",
+    exampleBody:
+      'Uma marca de café subiu três fotos do próprio grão (material da marca) e dois posts de uma torrefação escandinava (estilo), com a nota "quero esse silêncio visual, fundo liso e uma coisa só em foco". O criador manteve o produto dela e adotou o enquadramento da referência.',
     ds: "Identidade visual",
     dsWhy: "Restrições que o criador precisa respeitar em toda peça.",
     colors: "Cores",
@@ -302,11 +303,11 @@ export const pt = {
     claudeFound: "Encontrado nesta máquina, versão {v}",
     tiers: "O nível do cargo continua valendo: decisão vai para Opus, auditoria para Sonnet, execução para Haiku.",
     cost: "Cada turno aparece com o custo em dólar na trilha.",
-    gemini: "Gemini CLI",
-    geminiWhy: "Mesma troca do Claude Code: muito mais rápido, o prompt sai da sua máquina e cada turno gasta a cota da sua conta Google.",
-    geminiMissing: "Não encontrei o Gemini CLI nesta máquina.",
-    geminiProcurar: "Clique para procurar de novo — ou instale com npm i -g @google/gemini-cli.",
-    geminiFound: "Encontrado nesta máquina, versão {v}",
+    agy: "Antigravity CLI",
+    agyWhy: "Mesma troca do Claude Code: muito mais rápido, o prompt sai da sua máquina e cada turno gasta a cota da sua conta Google. É o sucessor do Gemini CLI.",
+    agyMissing: "Não encontrei o Antigravity CLI nesta máquina.",
+    agyProcurar: "Clique para procurar de novo — ou instale em antigravity.google.",
+    agyFound: "Encontrado nesta máquina, versão {v}",
   },
   skills: {
     open: "Skills",
@@ -410,7 +411,8 @@ export const pt = {
     verdictDiverge: "Superar e divergir",
     verdictDivergeWhy: "A próxima peça precisa bater {n} e não pode repetir o conceito que mais rendeu.",
     verdictFollow: "Seguir esta linha",
-    verdictFollowWhy: "\"{c}\" rendeu {x}× a mediana. Isso é veio, não sorte: vale continuar enquanto render.",
+    verdictFollowWhy:
+      '"{c}" rendeu {x}× a mediana. Isso é veio, não sorte: vale continuar enquanto render.',
     fromScrape: "raspado",
     fromManual: "digitado",
     collectedAt: "Coletado em",
@@ -424,11 +426,9 @@ export const pt = {
     nenhuma: "Nenhuma pasta ainda. Crie uma por produto e o material fica pronto para a próxima campanha.",
     resumo: "{n} assets · {r} referências · {b}",
     doProduto: "Material da marca",
-    doProdutoPorque:
-      "Foto do produto, da loja, da equipe. Vai como imagem para os modelos que enxergam e pode aparecer na peça.",
+    doProdutoPorque: "Foto do produto, da loja, da equipe. Vai como imagem para os modelos que enxergam e pode aparecer na peça.",
     deTerceiros: "Referências de estilo",
-    deTerceirosPorque:
-      "Trabalho de outras marcas, para dar direção. Vai só como texto — entregar a arte de outra marca para o modelo copiar é o caminho mais curto para sair logotipo alheio na sua peça.",
+    deTerceirosPorque: "Trabalho de outras marcas, para dar direção. Vai só como texto — entregar a arte de outra marca para o modelo copiar é o caminho mais curto para sair logotipo alheio na sua peça.",
     adicionar: "Adicionar",
     apagar: "Apagar",
     apagarPasta: "Apagar a pasta inteira",
@@ -438,13 +438,11 @@ export const pt = {
     erroLeitura: "Não consegui ler os arquivos escolhidos.",
     naCampanha: "Pasta de assets",
     naCampanhaNenhuma: "Nenhuma — só as referências avulsas",
-    naCampanhaPorque:
-      "O conteúdo da pasta soma com o que você subiu aqui embaixo; não substitui.",
+    naCampanhaPorque: "O conteúdo da pasta soma com o que você subiu aqui embaixo; não substitui.",
   },
   local: {
     motor: "Motor de difusão",
-    motorPorque:
-      "O executável do stable-diffusion.cpp, cerca de 30 MB. Roda na CPU, sem Python e sem compilar nada.",
+    motorPorque: "O executável do stable-diffusion.cpp, cerca de 30 MB. Roda na CPU, sem Python e sem compilar nada.",
     instalado: "instalado",
     baixarMotor: "Baixar o motor",
     baixar: "Baixar",
@@ -468,16 +466,13 @@ export const pt = {
     },
     tps: "≈ {n} tok/s",
     teto: "até {n} por modelo",
-    avisoMaximo:
-      "No máximo, um turno pode levar dezenas de minutos numa máquina sem GPU, e o resto do computador fica lento enquanto ele roda. A campanha continua igual — só demora mais para cada cargo responder.",
+    avisoMaximo: "No máximo, um turno pode levar dezenas de minutos numa máquina sem GPU, e o resto do computador fica lento enquanto ele roda. A campanha continua igual — só demora mais para cada cargo responder.",
   },
   limite: {
     pilula: "cota esgotada",
     titulo: "O Claude Code atingiu o limite",
-    textoCom:
-      "A cota volta às {hora}, daqui a {falta}. Você pode encerrar agora e retomar quando quiser, ou deixar o Postly esperar e continuar sozinho.",
-    textoSem:
-      "O Claude Code não disse quando a cota volta. A campanha para aqui, e os turnos que já rodaram ficam gravados.",
+    textoCom: "A cota volta às {hora}, daqui a {falta}. Você pode encerrar agora e retomar quando quiser, ou deixar o Postly esperar e continuar sozinho.",
+    textoSem: "O Claude Code não disse quando a cota volta. A campanha para aqui, e os turnos que já rodaram ficam gravados.",
     oQueOClaudeDisse: "O que o Claude Code respondeu",
     encerrar: "Encerrar agora",
     esperar: "Esperar {falta} e continuar",
@@ -485,8 +480,7 @@ export const pt = {
     notaSem: "Os turnos que já rodaram ficam gravados na pasta da execução.",
     esperando: "esperando a cota",
     voltaAs: "A campanha volta às {hora}",
-    textoEsperando:
-      "Faltam {falta}. Deixe o Postly aberto — a espera vive nesta janela, e fechar o aplicativo encerra a campanha. O computador avisa quando ela voltar.",
+    textoEsperando: "Faltam {falta}. Deixe o Postly aberto — a espera vive nesta janela, e fechar o aplicativo encerra a campanha. O computador avisa quando ela voltar.",
     encerrarAgora: "Não esperar, encerrar",
   },
   falha: {
@@ -541,14 +535,14 @@ export const pt = {
     howTitle: "Como o turno é executado",
   },
 
-  geminiElenco: {
+  agyElenco: {
     // O Gemini CLI não reporta o custo do turno como o Claude Code reporta.
     // Prometer um valor na trilha que não vai aparecer seria pior que não
     // prometer nada.
-    cost: "Cada turno gasta a cota da sua conta Google. O Gemini CLI não informa o valor por turno, então a trilha mostra o tempo e não o preço.",
+    cost: "Cada turno gasta a cota da sua conta Google. O Antigravity informa tokens, não preço — a trilha mostra o tempo, porque converter token em dinheiro exigiria uma tabela que muda sem avisar.",
     // O aviso é diferente do Claude Code de propósito, e a diferença foi
     // medida: lá a variável é removida do processo filho, aqui não.
-    envWarn: "{v} está no ambiente deste terminal. O Postly não remove essa variável: no Gemini CLI o método escolhido em ~/.gemini/settings.json vence a variável, e quando não há método escolhido ela é a sua única autenticação. Confira por qual conta o turno vai ser cobrado.",
+    envWarn: "{v} está no ambiente deste terminal. O Postly não remove essa variável — quando ela existe, é a sua autenticação e não um desvio. Confira por qual conta o turno vai ser cobrado.",
   },
 
   imgProvider: {
@@ -587,7 +581,7 @@ export const pt = {
     think: "Raciocínio estendido em quem decide a linha",
     generate: "Gerar vídeo",
     running: "Trabalhando",
-    needImages: "Suba ao menos uma imagem na aba de assets.",
+    needImages: "Suba ao menos um vídeo ou uma imagem na aba de assets.",
     willUseVoice: "Há narração na pasta. O roteiro vai ser medido pela duração da fala.",
     willAsk: "Não há narração na pasta. No meio do trabalho o vídeo vai parar e perguntar se você quer.",
     bundling: "Empacotando a biblioteca de cenas",
@@ -599,7 +593,10 @@ export const pt = {
     notApproved: "não aprovado",
     review: "Parecer do auditor",
     previous: "Renderizados antes",
-    nothingYet: "Nada rodou ainda. Preencha o briefing e gere.",
+    nextStep: "O próximo passo",
+    stepAssets: "Este vídeo ainda não tem material. Arraste seus vídeos ou suba imagens na aba de Assets — é daí que o Motion Designer monta as cenas.",
+    stepBrief: "O material está aqui. Agora diga, no Briefing, o que este vídeo precisa ser.",
+    stepGenerate: "Está tudo pronto. Volte ao Briefing e gere — a bancada se enche quando o vídeo ficar pronto.",
     redo: "Refazer com as minhas {n} notas",
     redoHow: "Selecione uma cena na linha do tempo e escreva o que está errado. O Motion Designer refaz a partir daí.",
     redoWhat: "Ele corrige o roteiro que já existe — mantém o que você não apontou e mexe só no resto.",
@@ -611,7 +608,8 @@ export const pt = {
     audio: "Áudio",
     audioNote: "Trilha e efeitos. MP3, WAV, M4A ou OGG.",
     voice: "Narração",
-    voiceNote: "A voz do vídeo. É esta pasta — e só ela — que responde se o vídeo tem narração: um arquivo chamado \"narração\" na pasta de áudio continua sendo trilha.",
+    voiceNote:
+      'A voz do vídeo. É esta pasta — e só ela — que responde se o vídeo tem narração: um arquivo chamado "narração" na pasta de áudio continua sendo trilha.',
     add: "Adicionar arquivos",
     empty: "Vazia.",
     hasVoice: "Há narração. O Motion Designer vai medir cada cena pela duração da fala, e o texto na tela não vai repetir o que a voz diz.",
@@ -638,7 +636,6 @@ export const pt = {
     thenWhat: "Depois de colocar o arquivo nessa pasta, volte ao briefing e gere de novo. Desta vez o vídeo não vai perguntar — a pasta já responde.",
   },
 
-
   linha: {
     scenes: "Cenas",
     voice: "Voz",
@@ -649,6 +646,7 @@ export const pt = {
 
   monitor: {
     empty: "O vídeo aparece aqui depois que o Motion Designer montar e renderizar. Preencha o briefing e gere.",
+    semVideo: "A rodada terminou sem arquivo de vídeo. O motivo está nos avisos abaixo — o roteiro continua aqui para você apontar o que corrigir.",
     noCodec: "Esta janela não consegue tocar o vídeo, mas o arquivo está pronto e correto.",
     noCodecFix: "A WebView do Linux decodifica vídeo pelo GStreamer, e o H.264 vem do pacote gst-libav, que não está instalado aqui. Instalar resolve a prévia; o arquivo renderizado toca em qualquer player.",
     openOutside: "Abrir no player do sistema",
@@ -681,6 +679,7 @@ export const pt = {
     comparacao: "comparação",
     declaracao: "declaração",
     fecho: "fecho",
+    clipe: "trecho do seu vídeo",
   },
 
   direcao: {
@@ -706,5 +705,36 @@ export const pt = {
     corte: "corte seco",
   },
 
-};
+  escolhaModelo: {
+    titulo: "Quem vai pensar este vídeo",
+    ollama: "Na sua máquina",
+    ollamaNota: "De graça e nada sai do computador. Lento sem placa de vídeo.",
+    claude: "Claude Code",
+    claudeNota: "Rápido. Gasta da sua assinatura da Anthropic.",
+    claudeAusente: "não instalado",
+    agy: "Antigravity",
+    agyNota: "Rápido. Gasta a cota da sua conta Google.",
+    agyAusente: "não instalado",
+    herdado: "Usando o que está escolhido na aba Modelos: {p}.",
+    soEsteVideo: "Vale só para este vídeo — a campanha continua com o que está na aba Modelos.",
+    claude_code: "Claude Code",
+    antigravity: "Antigravity",
+  },
 
+  clipes: {
+    titulo: "Seus vídeos",
+    nota: "O modelo corta as pausas vazias, escolhe os trechos e monta.",
+    arraste: "Arraste seus vídeos para cá",
+    solte: "Solte os vídeos aqui",
+    analisando: "Medindo o áudio",
+    medir: "Medir as pausas",
+    remedir: "Medir de novo",
+    bruto: "material bruto",
+    falado: "com som",
+    ganho: "{n}s de pausa para cortar",
+    semSom: "sem áudio",
+    pausas: "{n} pausas",
+    porQue: "As pausas são medidas no áudio de verdade, não estimadas — o modelo recebe os intervalos exatos e monta a partir deles.",
+    erroClipe: "não deu para ler",
+  },
+};

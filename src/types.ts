@@ -182,7 +182,7 @@ export interface DesignSystem {
   evitar: string;
 }
 
-export type Provedor = "ollama" | "claude_code" | "gemini_cli";
+export type Provedor = "ollama" | "claude_code" | "antigravity";
 
 export interface StatusProvedor {
   provedor: Provedor;
@@ -192,14 +192,13 @@ export interface StatusProvedor {
   claude_disponivel: boolean;
   claude_versao: string | null;
 
-  gemini_caminho: string | null;
-  gemini_disponivel: boolean;
-  gemini_versao: string | null;
+  agy_caminho: string | null;
+  agy_disponivel: boolean;
+  agy_versao: string | null;
   /** Variável do Google no ambiente. Ao contrário da do Claude Code, esta NÃO
-   *  é removida do processo filho — o método escolhido em `~/.gemini/settings.json`
-   *  vence a variável, e sem método escolhido ela é a única autenticação que
-   *  a pessoa tem. */
-  gemini_credencial_no_ambiente: string | null;
+   *  é removida do processo filho: quando existe, ela é a autenticação de quem
+   *  usa, não um desvio. O aviso serve para saber por qual conta o turno vai. */
+  agy_credencial_no_ambiente: string | null;
 }
 
 export interface Skill {
@@ -613,6 +612,8 @@ export interface ProjetoVideo {
   nome: string;
   caminho: string;
   imagens: ItemVideo[];
+  /** Vídeo bruto que a pessoa gravou. O modelo corta e monta. */
+  clipes: ItemVideo[];
   audio: ItemVideo[];
   narracao: ItemVideo[];
   /** Os .mp4 já renderizados, do mais novo para o mais velho. */
@@ -620,7 +621,7 @@ export interface ProjetoVideo {
   bytes: number;
 }
 
-export type PastaAsset = "imagens" | "audio" | "narracao";
+export type PastaAsset = "imagens" | "clipes" | "audio" | "narracao";
 
 export type TipoCena =
   | "titulo"
@@ -628,7 +629,37 @@ export type TipoCena =
   | "placa"
   | "comparacao"
   | "declaracao"
-  | "fecho";
+  | "fecho"
+  | "clipe";
+
+/** O trecho de um vídeo que a pessoa gravou, que uma cena `clipe` mostra. */
+export interface CorteVideo {
+  arquivo: string;
+  de_s: number;
+  ate_s: number;
+}
+
+/** Um clipe medido: onde há som, e onde não há.
+ *
+ *  Os intervalos vêm do `getSilentParts` do Remotion, não de adivinhação — um
+ *  modelo de linguagem não ouve o arquivo. */
+export interface ClipeMedido {
+  nome: string;
+  duracao_s: number;
+  largura: number;
+  altura: number;
+  fps: number;
+  tem_audio: boolean;
+  com_som: { de_s: number; ate_s: number }[];
+  pausas: number;
+  erro: string | null;
+}
+
+export interface ProgressoAnalise {
+  fase: string;
+  percent: number;
+  detalhe: string;
+}
 
 export type Movimento =
   | "aproximar"
@@ -677,6 +708,8 @@ export interface CenaVideo {
   /** Nomes de arquivo da pasta `imagens/`, não caminhos. */
   imagens: string[];
   narracao: string;
+  /** Preenchido quando `tipo` é `clipe`. */
+  corte: CorteVideo | null;
   direcao: DirecaoCena;
 }
 
@@ -729,6 +762,8 @@ export interface PedidoVideo {
   proporcao: string;
   idioma: string;
   pensamento_estendido: boolean;
+  /** Quem executa os turnos deste vídeo. `null` usa a preferência global. */
+  provedor: Provedor | null;
   /** Quando vem preenchido, o vídeo não recomeça: o gerente é pulado e o
    *  Motion Designer corrige o roteiro anterior. */
   notas: NotaDeCena[];

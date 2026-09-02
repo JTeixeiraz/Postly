@@ -1,4 +1,4 @@
-//! Achar o `gemini` desta maquina e preparar a pasta de onde ele roda.
+//! Achar o `agy` desta maquina e preparar a pasta de onde ele roda.
 //!
 //! Separado do turno porque e outro momento: isto acontece uma vez, na tela de
 //! configuracao, e responde "da para usar?". O turno acontece muitas vezes,
@@ -13,7 +13,7 @@ use std::path::PathBuf;
 /// porque la a variavel VENCE a assinatura e a pessoa passaria a pagar por
 /// token sem saber.
 ///
-/// No Gemini CLI o metodo de autenticacao e escolhido em
+/// No Antigravity CLI o metodo de autenticacao e escolhido em
 /// `~/.gemini/settings.json` e VENCE a variavel de ambiente — probe nesta
 /// maquina com `GEMINI_API_KEY` invalida: o CLI a ignorou e seguiu pelo OAuth
 /// que estava salvo. E quando nao ha metodo escolhido, a variavel e a UNICA
@@ -34,7 +34,7 @@ pub fn credencial_externa_no_ambiente() -> Option<String> {
         .map(|v| v.to_string())
 }
 
-/// Onde esta o `gemini` desta maquina.
+/// Onde esta o `agy` desta maquina.
 ///
 /// A busca tem os mesmos tres degraus do Claude Code, e pela mesma razao
 /// medida la: um app aberto pelo icone do menu recebe o PATH da sessao
@@ -46,7 +46,7 @@ pub fn credencial_externa_no_ambiente() -> Option<String> {
 /// aberto pelo icone nunca veria.
 ///
 /// O sucesso e memorizado e a falha nao: um binario que apareceu nao some, e a
-/// pessoa pode instalar o Gemini CLI com o app aberto.
+/// pessoa pode instalar o Antigravity CLI com o app aberto.
 static ENCONTRADO: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
 
 pub fn localizar() -> Option<PathBuf> {
@@ -61,7 +61,7 @@ pub fn localizar() -> Option<PathBuf> {
 }
 
 fn no_path() -> Option<PathBuf> {
-    crate::platform::current().which("gemini")
+    crate::platform::current().which("agy")
 }
 
 /// `-l` e o que importa: faz o shell ler o perfil, que e onde o `nvm` monta o
@@ -91,8 +91,8 @@ fn nos_lugares_conhecidos() -> Option<PathBuf> {
     let casa = dirs::home_dir()?;
     if crate::platform::current().id() == crate::platform::Platform::Windows {
         return [
-            casa.join("AppData/Roaming/npm/gemini.cmd"),
-            casa.join("AppData/Roaming/npm/gemini.ps1"),
+            casa.join("AppData/Roaming/npm/agy.exe"),
+            casa.join("AppData/Roaming/npm/agy.cmd"),
         ]
         .into_iter()
         .find(|p| p.is_file());
@@ -140,9 +140,9 @@ pub async fn versao() -> Option<String> {
         .then(|| String::from_utf8_lossy(&saida.stdout).trim().to_string())
 }
 
-/// A pasta de onde o `gemini` roda, com as configuracoes que o turno exige.
+/// A pasta de onde o `agy` roda, com as configuracoes que o turno exige.
 ///
-/// Nao e organizacao: o Gemini CLI le `<cwd>/.gemini/settings.json` como
+/// Nao e organizacao: o Antigravity CLI le `<cwd>/.gemini/settings.json` como
 /// configuracao de PROJETO, que vence a do usuario. E o unico jeito de
 /// desligar as ferramentas sem escrever no `~/.gemini` de quem usa — mexer na
 /// configuracao pessoal de alguem para o nosso turno rodar seria abuso.
@@ -152,7 +152,7 @@ pub async fn versao() -> Option<String> {
 ///   1. um agente de marketing nao tem por que mexer no disco de ninguem;
 ///   2. de quebra, encolhe o prompt que o CLI monta a cada chamada.
 pub fn pasta_de_trabalho() -> Result<PathBuf, String> {
-    let dir = crate::platform::current().data_dir().join("gemini-cli");
+    let dir = crate::platform::current().data_dir().join("antigravity");
     let conf = dir.join(".gemini");
     std::fs::create_dir_all(&conf).map_err(|e| e.to_string())?;
 
@@ -169,6 +169,6 @@ pub fn pasta_de_trabalho() -> Result<PathBuf, String> {
         conf.join("settings.json"),
         serde_json::to_string_pretty(&settings).map_err(|e| e.to_string())?,
     )
-    .map_err(|e| format!("falha ao preparar a pasta do Gemini CLI: {e}"))?;
+    .map_err(|e| format!("falha ao preparar a pasta do Antigravity CLI: {e}"))?;
     Ok(dir)
 }

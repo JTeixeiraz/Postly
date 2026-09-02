@@ -92,11 +92,11 @@ impl From<crate::claude::ErroTurno> for FalhaExterna {
     }
 }
 
-impl From<crate::gemini_cli::ErroTurno> for FalhaExterna {
-    fn from(e: crate::gemini_cli::ErroTurno) -> Self {
+impl From<crate::antigravity::ErroTurno> for FalhaExterna {
+    fn from(e: crate::antigravity::ErroTurno) -> Self {
         match e {
-            crate::gemini_cli::ErroTurno::Limite(l) => FalhaExterna::Limite(l),
-            crate::gemini_cli::ErroTurno::Outro(m) => FalhaExterna::Outro(m),
+            crate::antigravity::ErroTurno::Limite(l) => FalhaExterna::Limite(l),
+            crate::antigravity::ErroTurno::Outro(m) => FalhaExterna::Outro(m),
         }
     }
 }
@@ -443,7 +443,7 @@ impl<'a> AgentTurn<'a> {
     /// mesmo JSON quando o cargo devolve estrutura, mesma transcricao em disco.
     /// O orquestrador nao sabe nem precisa saber quem executou.
     ///
-    /// Claude Code e Gemini CLI dividem este caminho porque o que muda entre
+    /// Claude Code e Antigravity dividem este caminho porque o que muda entre
     /// eles cabe em tres pontos — o nome do modelo, a chamada do turno e o que
     /// a trilha mostra no fim. Duplicar o metodo por provedor faria toda
     /// correcao daqui precisar ser feita duas vezes, e a segunda seria
@@ -458,11 +458,11 @@ impl<'a> AgentTurn<'a> {
 
         let tier = self.role.tier();
         let modelo = match provedor {
-            P::GeminiCli => crate::gemini_cli::modelo_do_nivel(tier),
+            P::Antigravity => crate::antigravity::modelo_do_nivel(tier),
             _ => crate::claude::modelo_do_nivel(tier),
         };
         let nome_do_provedor = match provedor {
-            P::GeminiCli => "Gemini CLI",
+            P::Antigravity => "Antigravity",
             _ => "Claude Code",
         };
         let role_label = self.role.label();
@@ -509,12 +509,14 @@ impl<'a> AgentTurn<'a> {
             // transcricao, o despacho — e identico, e por isso vive fora do
             // `match`.
             //
-            // O custo e `Option` porque o Gemini CLI nao reporta o valor do
-            // turno como o Claude Code reporta. Mostrar `USD 0,000` ali seria
-            // afirmar que o turno saiu de graca, e ele nao saiu: gastou cota da
-            // assinatura de quem usa. A trilha omite o campo em vez de mentir.
+            // O custo e `Option` porque o Antigravity nao reporta o valor do
+            // turno como o Claude Code reporta — ele informa TOKENS, que nao
+            // viram preco sem uma tabela que mudaria sem avisar. Mostrar
+            // `USD 0,000` ali seria afirmar que o turno saiu de graca, e ele
+            // nao saiu: gastou cota da assinatura de quem usa. A trilha omite
+            // o campo em vez de mentir.
             let saida: Result<(String, Option<f64>), FalhaExterna> = match provedor {
-                P::GeminiCli => crate::gemini_cli::turno(tier, &self.system, &self.prompt, 900)
+                P::Antigravity => crate::antigravity::turno(tier, &self.system, &self.prompt, 900)
                     .await
                     .map(|t| (t.texto, None))
                     .map_err(FalhaExterna::from),

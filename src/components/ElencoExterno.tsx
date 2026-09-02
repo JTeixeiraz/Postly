@@ -27,25 +27,29 @@ export default function ElencoExterno({
   provedor,
 }: {
   status: StatusProvedor;
-  provedor: Extract<Provedor, "claude_code" | "gemini_cli">;
+  provedor: Extract<Provedor, "claude_code" | "antigravity">;
 }) {
   const { d, f, idioma } = useIdioma();
   const [vagas, setVagas] = useState<VagaClaude[] | null>(null);
 
-  const gemini = provedor === "gemini_cli";
+  const agy = provedor === "antigravity";
 
   useEffect(() => {
     setVagas(null);
-    const carregar = gemini ? api.elencoGemini() : api.elencoClaude();
+    const carregar = agy ? api.elencoAntigravity() : api.elencoClaude();
     void carregar.then(setVagas).catch(() => setVagas([]));
-  }, [gemini]);
+  }, [agy]);
 
   if (!vagas) return <div className="skeleton" style={{ height: 140 }} />;
 
-  const caminho = (gemini ? status.gemini_caminho : status.claude_caminho) ?? provedorBin(gemini);
-  // A do Claude Code e removida do processo filho; a do Gemini nao, e o texto
-  // do aviso diz coisas diferentes por isso. Ver `gemini_cli/ambiente.rs`.
-  const credencial = gemini ? status.gemini_credencial_no_ambiente : status.credencial_ignorada;
+  const caminho =
+    (agy ? status.agy_caminho : status.claude_caminho) ??
+    (agy ? "agy" : "claude");
+  // A do Claude Code é removida do processo filho; a do Antigravity não, e o
+  // texto do aviso diz coisas diferentes por isso. Ver `antigravity/ambiente.rs`.
+  const credencial = agy
+    ? status.agy_credencial_no_ambiente
+    : status.credencial_ignorada;
 
   return (
     <>
@@ -58,7 +62,10 @@ export default function ElencoExterno({
           </span>
         </div>
 
-        <div className="elenco" style={{ ["--postas" as string]: vagas.length }}>
+        <div
+          className="elenco"
+          style={{ ["--postas" as string]: vagas.length }}
+        >
           {vagas.map((v) => (
             <div className="vaga" key={v.cargo}>
               <span className="vaga__marca" />
@@ -71,7 +78,7 @@ export default function ElencoExterno({
                 )}
               </span>
               <span className="vaga__modelo">
-                <MarcaModelo familia={gemini ? "Google" : "Anthropic"} size={15} />
+                <MarcaModelo familia={agy ? "Google" : "Anthropic"} size={15} />
                 {v.rotulo}
               </span>
               <span className="vaga__tag">{v.modelo}</span>
@@ -89,20 +96,18 @@ export default function ElencoExterno({
             local e nao uma chamada de API. Vale mostrar: e a pergunta que
             qualquer pessoa faz antes de colar uma credencial num app. */}
         <p className="hint">{f(d.claudeElenco.localWhy, { p: caminho })}</p>
-        <p className="hint">{gemini ? d.geminiElenco.cost : d.claudeElenco.cost}</p>
+        <p className="hint">{agy ? d.agyElenco.cost : d.claudeElenco.cost}</p>
 
         {credencial && (
           <div className="note" data-tone="warn">
             <span>
-              {f(gemini ? d.geminiElenco.envWarn : d.claudeElenco.envWarn, { v: credencial })}
+              {f(agy ? d.agyElenco.envWarn : d.claudeElenco.envWarn, {
+                v: credencial,
+              })}
             </span>
           </div>
         )}
       </section>
     </>
   );
-}
-
-function provedorBin(gemini: boolean) {
-  return gemini ? "gemini" : "claude";
 }

@@ -76,13 +76,13 @@ export default function Provedor({
         : `${d.provider.claudeMissing} ${d.provider.claudeProcurar}`,
     },
     {
-      id: "gemini_cli",
-      titulo: d.provider.gemini,
-      porque: d.provider.geminiWhy,
-      ausente: !status.gemini_disponivel,
-      nota: status.gemini_disponivel
-        ? f(d.provider.geminiFound, { v: status.gemini_versao ?? "?" })
-        : `${d.provider.geminiMissing} ${d.provider.geminiProcurar}`,
+      id: "antigravity",
+      titulo: d.provider.agy,
+      porque: d.provider.agyWhy,
+      ausente: !status.agy_disponivel,
+      nota: status.agy_disponivel
+        ? f(d.provider.agyFound, { v: status.agy_versao ?? "?" })
+        : `${d.provider.agyMissing} ${d.provider.agyProcurar}`,
     },
   ];
 
