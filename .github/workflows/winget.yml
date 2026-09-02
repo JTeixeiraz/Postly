@@ -33,7 +33,7 @@ jobs:
   publicar:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Descobrir a versão e o instalador
         id: alvo
