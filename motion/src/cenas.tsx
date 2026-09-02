@@ -1,4 +1,11 @@
-import { AbsoluteFill, Img, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import {
+  AbsoluteFill,
+  Img,
+  OffthreadVideo,
+  staticFile,
+  useCurrentFrame,
+  useVideoConfig,
+} from "remotion";
 import { C, CURVA, FONTE } from "./tokens";
 import { camera, entrada } from "./camera";
 import type { Cena, Look, Pouso } from "./tipos";
@@ -131,6 +138,8 @@ export function Palco({
           conter={cena.tipo === "placa"}
         />
       );
+    case "clipe":
+      return <Clipe cena={cena} envelope={envelope} look={look} />;
     case "comparacao":
       return (
         <Comparacao
@@ -197,6 +206,44 @@ function ComImagem({
           }}
         />
       )}
+      {look.vinheta && <Vinheta />}
+      <Tarja cena={cena} look={look} />
+    </AbsoluteFill>
+  );
+}
+
+/** Um trecho do vídeo que a pessoa gravou.
+ *
+ *  `OffthreadVideo` e não `Video`: o render acontece fora do navegador, e o
+ *  `Video` depende do relógio da tag `<video>`, que num render determinístico
+ *  não avança sozinho. O Offthread extrai o quadro exato pelo compositor.
+ *
+ *  `trimBefore`/`trimAfter` em QUADROS, e o roteiro fala em segundos — a
+ *  conversão mora aqui, que é onde o fps é conhecido. Deixar o modelo declarar
+ *  quadro seria pedir uma multiplicação que ele erra. */
+function Clipe({
+  cena,
+  envelope,
+  look,
+}: {
+  cena: Cena;
+  envelope: React.CSSProperties;
+  look: Look;
+}) {
+  const { fps } = useVideoConfig();
+  if (!cena.corte) return <AbsoluteFill style={{ backgroundColor: C.fundo }} />;
+
+  const de = Math.max(0, Math.round(cena.corte.de_s * fps));
+  const ate = Math.max(de + 1, Math.round(cena.corte.ate_s * fps));
+
+  return (
+    <AbsoluteFill style={{ backgroundColor: C.fundo, ...envelope }}>
+      <OffthreadVideo
+        src={staticFile(`clipes/${cena.corte.arquivo}`)}
+        trimBefore={de}
+        trimAfter={ate}
+        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      />
       {look.vinheta && <Vinheta />}
       <Tarja cena={cena} look={look} />
     </AbsoluteFill>

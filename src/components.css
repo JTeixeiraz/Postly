@@ -643,3 +643,85 @@
   text-align: center;
 }
 .monitor__semcodec p { margin: 0; max-width: 46ch; }
+
+/* ══ escolha de modelo, e a área de soltar vídeo ═════════════════════════
+
+   Os cartões mostram a CONSEQUÊNCIA, não só o nome: qual modelo assumiria o
+   cargo que decide, se está instalado, e o que custa. Três nomes de programa
+   lado a lado não ajudam ninguém a escolher. */
+
+.modelos-escolha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--s2);
+}
+
+.modelo-cartao {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "marca nome"
+    "modelo modelo"
+    "nota nota";
+  align-items: center;
+  gap: 2px var(--s2);
+  padding: var(--s3);
+  text-align: left;
+  background: var(--card-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.modelo-cartao:hover { border-color: var(--act-txt); }
+
+.modelo-cartao[data-on="true"] {
+  border-color: var(--act-txt);
+  box-shadow: inset 0 0 0 1px var(--act-txt);
+  background: var(--act-wash);
+  color: var(--ink);
+}
+
+/* Ausente é apagado, NÃO desabilitado: um botão desabilitado não responde ao
+   clique, e quem acabou de instalar o CLI ficaria batendo nele sem entender.
+   Aqui o clique também vale como "procura de novo". */
+.modelo-cartao[data-ausente="true"] { opacity: 0.62; }
+
+.modelo-cartao__marca { grid-area: marca; display: flex; }
+.modelo-cartao__nome { grid-area: nome; font-size: var(--t-sm); font-weight: 600; color: var(--ink); }
+.modelo-cartao__modelo {
+  grid-area: modelo;
+  margin-top: var(--s1);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: var(--t-micro);
+  color: var(--act-txt);
+}
+.modelo-cartao[data-ausente="true"] .modelo-cartao__modelo { color: var(--ink-3); }
+.modelo-cartao__nota {
+  grid-area: nota;
+  margin-top: var(--s1);
+  font-size: var(--t-micro);
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+
+/* A área de soltar. Fica visível sempre, e não só durante o arrasto: uma zona
+   que só aparece quando você já está arrastando não ensina que ela existe. */
+.solta {
+  display: grid;
+  place-items: center;
+  padding: var(--s5, 22px) var(--s4);
+  text-align: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  color: var(--ink-3);
+  font-size: var(--t-sm);
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.solta[data-sobre="true"] {
+  border-color: var(--act-txt);
+  border-style: solid;
+  background: var(--act-wash);
+  color: var(--ink);
+}

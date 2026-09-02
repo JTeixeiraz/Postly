@@ -38,6 +38,56 @@ pub fn video_adicionar(
     })
 }
 
+/// Copia arquivos que já estão no disco para dentro do projeto.
+///
+/// Existe separado do `video_adicionar` porque vídeo não cabe em base64: um
+/// arquivo de meio giga viraria 660 MB de string na ponte IPC. O caminho real
+/// vem do evento de arrastar-e-soltar do Tauri.
+///
+/// Erro num arquivo não derruba os outros: quem arrastou cinco vídeos com um
+/// formato estranho no meio quer os quatro que servem, com aviso sobre o quinto.
+#[tauri::command]
+pub fn video_adicionar_caminhos(
+    slug: String,
+    pasta: String,
+    caminhos: Vec<String>,
+) -> Result<(assets::Projeto, Vec<String>), String> {
+    let mut falhas = Vec::new();
+    for c in &caminhos {
+        if let Err(e) = assets::adicionar_por_caminho(&slug, &pasta, c) {
+            falhas.push(format!("{}: {e}", c.rsplit('/').next().unwrap_or(c)));
+        }
+    }
+    let p = assets::ler(&slug).ok_or_else(|| {
+        crate::idioma::msg(
+            "Projeto de video nao encontrado.",
+            "Video project not found.",
+        )
+    })?;
+    Ok((p, falhas))
+}
+
+/// Mede os clipes de um projeto sem montar vídeo nenhum.
+///
+/// A tela chama isto quando a pessoa sobe um vídeo, para mostrar na hora quanto
+/// tempo é pausa. Ver o ganho ANTES de gerar é o que transforma "corta as
+/// pausas" numa promessa verificável.
+#[tauri::command]
+pub async fn video_analisar(
+    app: AppHandle,
+    estado: tauri::State<'_, crate::state::AppState>,
+    slug: String,
+) -> Result<Vec<crate::video::analise::Clipe>, String> {
+    let projeto = assets::ler(&slug).ok_or_else(|| {
+        crate::idioma::msg(
+            "Projeto de video nao encontrado.",
+            "Video project not found.",
+        )
+    })?;
+    let raiz = estado.app_root.clone();
+    crate::video::analise::medir(&app, &raiz, &projeto).await
+}
+
 #[tauri::command]
 pub fn video_remover_item(slug: String, caminho: String) -> Result<assets::Projeto, String> {
     assets::remover_item(&caminho)?;

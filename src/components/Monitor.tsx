@@ -20,6 +20,7 @@ export default function Monitor({
   aoAndar,
   render,
   buscarPara,
+  jaRodou,
 }: {
   video: VideoPronto | null;
   segundo: number;
@@ -27,6 +28,11 @@ export default function Monitor({
   render: ProgressoRender | null;
   /** Instante para onde o monitor deve pular, quando a linha do tempo pede. */
   buscarPara: number | null;
+  /** Já houve uma rodada neste projeto?
+   *
+   *  Sem isto o vazio diria sempre "preencha o briefing e gere" — inclusive depois de uma
+   *  rodada em que o render falhou, mandando a pessoa refazer o passo que ela já fez. */
+  jaRodou: boolean;
 }) {
   const { d } = useIdioma();
   const ref = useRef<HTMLVideoElement>(null);
@@ -66,7 +72,7 @@ export default function Monitor({
             </div>
           </>
         ) : (
-          <p className="hint">{d.monitor.empty}</p>
+          <p className="hint">{jaRodou ? d.monitor.semVideo : d.monitor.empty}</p>
         )}
       </div>
     );

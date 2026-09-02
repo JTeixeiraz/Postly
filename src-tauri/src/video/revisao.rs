@@ -15,6 +15,7 @@ use tauri::AppHandle;
 use super::montagem::montar;
 use super::{assets, spec, PedidoVideo, RelatorioVideo};
 use crate::orchestrator::transcript;
+use tauri::Manager;
 
 /// Uma anotacao da pessoa sobre uma cena do roteiro.
 ///
@@ -43,6 +44,10 @@ pub struct NotaDeCena {
 /// Pula o gerente e entra direto na montagem, com as notas como correcao e o
 /// roteiro anterior como ponto de partida. E o que faz "refazer" devolver o
 /// mesmo video melhor em vez de outro video.
+fn raiz(app: &AppHandle) -> std::path::PathBuf {
+    app.state::<crate::state::AppState>().app_root.clone()
+}
+
 pub(super) async fn revisar(
     app: AppHandle,
     run: transcript::RunPaths,
@@ -52,7 +57,28 @@ pub(super) async fn revisar(
 ) -> Result<RelatorioVideo, String> {
     let linha = req.linha_anterior.clone();
     let correcoes = bloco_de_notas(&req.notas, req.roteiro_anterior.as_ref());
-    montar(app, run, &req, &projeto, linha, Some(correcoes), 0, avisos).await
+    // A revisao remede os clipes: a pessoa pode ter subido outro take entre
+    // uma rodada e outra, e montar com a medicao velha citaria um arquivo que
+    // ja nao esta la.
+    let clipes = if projeto.clipes.is_empty() {
+        Vec::new()
+    } else {
+        super::analise::medir(&app, &raiz(&app), &projeto)
+            .await
+            .unwrap_or_default()
+    };
+    montar(
+        app,
+        run,
+        &req,
+        &projeto,
+        linha,
+        Some(correcoes),
+        0,
+        avisos,
+        clipes,
+    )
+    .await
 }
 
 /// As notas da pessoa, viradas em correção para o Motion Designer.

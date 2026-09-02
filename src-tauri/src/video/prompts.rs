@@ -21,6 +21,7 @@ fn catalogo_de_cenas() -> String {
         TipoCena::Comparacao,
         TipoCena::Declaracao,
         TipoCena::Fecho,
+        TipoCena::Clipe,
     ]
     .iter()
     .map(|t| {
@@ -49,6 +50,12 @@ fn descrever(t: TipoCena) -> (&'static str, &'static str) {
             "So texto grande, para o momento em que a frase e o conteudo.",
         ),
         TipoCena::Fecho => ("fecho", "Fecho com chamada para acao."),
+        TipoCena::Clipe => (
+            "clipe",
+            "Um TRECHO de um video que a pessoa gravou. Em vez de `imagens`, use \
+             `corte`: {\"arquivo\":\"<nome>\",\"de_s\":0.0,\"ate_s\":0.0}. A duracao \
+             da cena vem do proprio corte — nao a repita em `dur_s`.",
+        ),
     }
 }
 
@@ -63,7 +70,7 @@ deve deixar, em que ordem as ideias aparecem, e o que NAO entra. Voce nao \
 escolhe cenas nem tempos — quem faz isso e o Motion Designer, que le o que \
 voce escrever.
 
-Termine com a mensagem que atravessa, entre os marcadores.";
+Termine com a mensagem que atravessa, entre os marcadores exatos indicados abaixo.";
 
 pub const SYSTEM_GERENTE_EN: &str = "\
 You are the Sector Manager in a marketing department. You received a request \
@@ -76,7 +83,44 @@ it should leave, in what order the ideas appear, and what stays out. You do \
 not pick scenes or timings — the Motion Designer does that, reading what you \
 write.
 
-Finish with the message that crosses over, between the markers.";
+Finish with the message that crosses over, between the exact markers given below.";
+
+/// Os marcadores da mensagem que atravessa, escritos para o modelo.
+///
+/// ISTO FALTAVA, E A FALTA APARECEU RODANDO. Os prompts mandavam "termine com a
+/// mensagem entre os marcadores" sem nunca dizer QUAIS — e o modelo, sensato,
+/// inventou os dele (`---`). O `extract_handoff` nao achava o delimitador,
+/// caia no caminho de recuperacao e repassava a resposta INTEIRA para o cargo
+/// seguinte, com o aviso "o modelo nao usou os delimitadores".
+///
+/// Nao quebrava nada visivelmente — e por isso ficaria assim. O custo e o
+/// proximo cargo receber paginas de prosa em vez de um paragrafo, o que num
+/// modelo pequeno e a diferenca entre caber e nao caber no contexto.
+///
+/// Vem do `orchestrator::prompts` em vez de repetir as strings: dois lugares
+/// declarando o mesmo delimitador e um deles envelhecendo sozinho.
+fn bloco_de_marcadores() -> String {
+    use crate::orchestrator::prompts::{HANDOFF_CLOSE, HANDOFF_OPEN};
+    crate::idioma::msg(
+        &format!(
+            "A ULTIMA COISA da sua resposta deve ser a mensagem que atravessa, escrita \
+             exatamente assim:\n{HANDOFF_OPEN}\n<a mensagem>\n{HANDOFF_CLOSE}\n\
+             Tudo o que estiver fora desses marcadores fica gravado para auditoria e \
+             NAO chega ao proximo cargo."
+        ),
+        &format!(
+            "The LAST THING in your reply must be the message that crosses over, written \
+             exactly like this:\n{HANDOFF_OPEN}\n<the message>\n{HANDOFF_CLOSE}\n\
+             Anything outside those markers is saved for auditing and does NOT reach the \
+             next role."
+        ),
+    )
+}
+
+/// O system de um cargo que devolve prosa, com os marcadores no fim.
+pub fn com_marcadores(system: &str) -> String {
+    format!("{}\n\n{}", system.trim(), bloco_de_marcadores())
+}
 
 /// O que o gerente recebe.
 pub fn prompt_gerente(objetivo: &str, projeto: &Projeto, com_narracao: bool) -> String {
@@ -200,6 +244,7 @@ pub fn prompt_motion(
     projeto: &Projeto,
     proporcao: &str,
     correcoes: Option<&str>,
+    clipes: &[super::analise::Clipe],
 ) -> String {
     let voz = if projeto.tem_narracao() {
         crate::idioma::msg(
@@ -236,6 +281,11 @@ pub fn prompt_motion(
         lista(&projeto.audio),
         crate::idioma::msg("PROPORCAO PEDIDA:", "REQUESTED ASPECT RATIO:"),
     );
+
+    let bloco = bloco_de_clipes(clipes);
+    if !bloco.is_empty() {
+        p.push_str(&format!("\n\n{bloco}"));
+    }
 
     if projeto.tem_narracao() {
         p.push_str(&format!(
@@ -323,7 +373,7 @@ como voce escrever. Entao:
 - Escreva para o ouvido: frases curtas, sem aposto longo, sem sigla que \
   precise ser soletrada.
 
-Termine com a mensagem que atravessa, entre os marcadores.";
+Termine com a mensagem que atravessa, entre os marcadores exatos indicados abaixo.";
 
 pub const SYSTEM_LOCUCAO_EN: &str = "\
 You are the Motion Designer writing a video's VOICEOVER SCRIPT.
@@ -337,7 +387,7 @@ write it. So:
 - Write for the ear: short sentences, no long asides, no acronym that would need \
   spelling out.
 
-Finish with the message that crosses over, between the markers.";
+Finish with the message that crosses over, between the exact markers given below.";
 
 pub fn prompt_locucao(objetivo: &str, linha: &str, segundos_alvo: u32) -> String {
     format!(
@@ -349,6 +399,58 @@ pub fn prompt_locucao(objetivo: &str, linha: &str, segundos_alvo: u32) -> String
             &format!("TARGET LENGTH: about {segundos_alvo} seconds of speech."),
         )
     )
+}
+
+/// Os clipes da pessoa, com onde ha som de verdade.
+///
+/// OS TRECHOS SAO MEDIDOS, NAO ADIVINHADOS. Um modelo de linguagem recebe
+/// texto; ele nao ouve o arquivo. Pedir "corte as pausas vazias" sem lhe dizer
+/// ONDE elas estao seria pedir algo que ele so poderia fingir atender — e
+/// fingiria, cortando em tempos inventados. O `analise-agent` mede com o
+/// `getSilentParts` do proprio Remotion e o resultado chega aqui.
+pub fn bloco_de_clipes(clipes: &[super::analise::Clipe]) -> String {
+    if clipes.is_empty() {
+        return String::new();
+    }
+    let mut out = vec![crate::idioma::msg(
+        "CLIPES QUE A PESSOA GRAVOU. Os intervalos abaixo foram MEDIDOS no audio: \
+         sao os trechos onde ha som. Tudo que esta fora deles e pausa vazia, e \
+         cortar pausa vazia e o trabalho principal aqui. Monte a partir destes \
+         intervalos, na ordem que contar melhor a historia — voce pode reordenar, \
+         descartar trecho fraco e apertar o comeco e o fim de cada um.",
+        "CLIPS THE PERSON RECORDED. The ranges below were MEASURED in the audio: \
+         they are the parts that have sound. Anything outside them is dead air, and \
+         cutting dead air is the main job here. Build from these ranges, in whatever \
+         order tells the story best — you may reorder, drop a weak take, and tighten \
+         the head and tail of each one.",
+    )];
+
+    for c in clipes {
+        if let Some(e) = &c.erro {
+            out.push(format!("- {} — {}", c.nome, e));
+            continue;
+        }
+        let trechos = c
+            .com_som
+            .iter()
+            .map(|t| format!("{:.1}–{:.1}", t.de_s, t.ate_s))
+            .collect::<Vec<_>>()
+            .join(", ");
+        out.push(format!(
+            "- {} ({:.1}s, {}x{}{}) · com som: {}",
+            c.nome,
+            c.duracao_s,
+            c.largura,
+            c.altura,
+            if c.tem_audio { "" } else { ", SEM AUDIO" },
+            if trechos.is_empty() {
+                crate::idioma::msg("nenhum trecho audivel", "no audible range")
+            } else {
+                trechos
+            }
+        ));
+    }
+    out.join("\n")
 }
 
 /// Nomes de arquivo em lista, ou o aviso de que nao ha nenhum.
@@ -444,6 +546,20 @@ mod testes {
         // que e exatamente o template que a camada de direcao existe para evitar.
         assert!(SYSTEM_MOTION_PT.contains("NAO repita"));
         assert!(SYSTEM_MOTION_EN.contains("DO NOT repeat"));
+    }
+
+    #[test]
+    fn o_system_de_prosa_diz_quais_sao_os_marcadores() {
+        // Sem isto, o prompt mandava "termine entre os marcadores" sem dizer
+        // quais, e o modelo inventava os dele — o `extract_handoff` falhava e
+        // repassava a resposta INTEIRA ao cargo seguinte. Apareceu rodando de
+        // verdade, com o aviso "o modelo nao usou os delimitadores".
+        use crate::orchestrator::prompts::{HANDOFF_CLOSE, HANDOFF_OPEN};
+        let s = com_marcadores(SYSTEM_GERENTE_PT);
+        assert!(s.contains(HANDOFF_OPEN), "faltou o marcador de abertura");
+        assert!(s.contains(HANDOFF_CLOSE), "faltou o marcador de fechamento");
+        // E o system original continua inteiro.
+        assert!(s.contains("Gerente de Setor"));
     }
 
     #[test]

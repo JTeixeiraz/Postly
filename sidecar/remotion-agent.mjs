@@ -15,6 +15,18 @@
 
 import { existsSync, readdirSync, mkdirSync } from "node:fs";
 import { dirname, join, basename } from "node:path";
+import { fileURLToPath } from "node:url";
+
+/** O `node_modules` deste sidecar.
+ *
+ *  A biblioteca de cenas (`motion/`) importa `remotion` e `@remotion/fonts`, e
+ *  o webpack resolve import nu subindo a partir do ARQUIVO que importa. Sem
+ *  ajuda ele procuraria em `motion/node_modules`, o que obrigaria uma segunda
+ *  árvore de dependências — as mesmas centenas de MB de Remotion duplicadas
+ *  dentro do instalador. Apontar para cá deixa UMA árvore só.
+ *
+ *  Medido: `sidecar/node_modules` 294 MB, `motion/node_modules` 179 MB. */
+const NODE_MODULES = join(dirname(fileURLToPath(import.meta.url)), "node_modules");
 
 /** Uma linha de JSON no stdout. */
 const emitir = (obj) => process.stdout.write(`${JSON.stringify(obj)}\n`);
@@ -58,7 +70,9 @@ async function main() {
   // terminar. O caminho certo é a pasta do projeto virar o `publicDir` do
   // bundle, e a composição resolver cada nome com `staticFile()`.
   const assets = {};
-  for (const sub of ["imagens", "audio"]) {
+  // `clipes` entra junto: o `staticFile("clipes/x.mp4")` da cena resolve pelo
+  // `publicDir`, que é a pasta do projeto.
+  for (const sub of ["imagens", "audio", "clipes"]) {
     const dir = join(projeto, sub);
     if (!existsSync(dir)) continue;
     for (const nome of readdirSync(dir)) {
@@ -90,7 +104,22 @@ async function main() {
     // minutos por nada. No Windows a opção é ignorada e a cópia acontece de
     // qualquer jeito — é o preço lá, não um bug aqui.
     symlinkPublicDir: true,
-    onProgress: (p) => progresso("empacotando", p, ""),
+    // Ver `NODE_MODULES`: sem isto, `motion/` precisaria da própria árvore de
+    // dependências. `resolve.modules` recebe o caminho absoluto no fim da
+    // lista, então o que já resolvia continua resolvendo igual.
+    webpackOverride: (config) => ({
+      ...config,
+      resolve: {
+        ...config.resolve,
+        modules: [...(config.resolve?.modules ?? ["node_modules"]), NODE_MODULES],
+      },
+    }),
+    // DIVIDIDO POR 100, e isso foi medido. As duas fases do Remotion falam
+    // unidades diferentes: `bundle` reporta PORCENTAGEM (0–100) e `renderMedia`
+    // reporta FRAÇÃO (0–1). Repassando cru, o Rust e a barra da tela — que
+    // tratam tudo como fração — recebiam `65` e desenhavam `width: 6500%`.
+    // Normalizar aqui deixa um contrato só para quem consome.
+    onProgress: (p) => progresso("empacotando", p / 100, ""),
   });
 
   const inputProps = { roteiro, assets, narracao };

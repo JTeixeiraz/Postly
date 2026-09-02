@@ -114,6 +114,7 @@ pub async fn run_campaign(
             json_mode: false,
             pensar: req.pensamento_estendido,
             images: Vec::new(),
+            provedor: None,
         };
         let result = turn.execute().await?;
         avisos.extend(result.warnings);
@@ -153,6 +154,7 @@ pub async fn run_campaign(
             json_mode: false,
             pensar: req.pensamento_estendido,
             images: Vec::new(),
+            provedor: None,
         };
         let result = turn.execute().await?;
         avisos.extend(result.warnings);
@@ -194,6 +196,7 @@ pub async fn run_campaign(
             json_mode: true,
             pensar: false,
             images: refs_imagens.clone(),
+            provedor: None,
         };
         let criacao = turn.execute().await?;
         avisos.extend(criacao.warnings);
@@ -264,6 +267,7 @@ pub async fn run_campaign(
             json_mode: true,
             pensar: false,
             images: imagens_b64,
+            provedor: None,
         };
         let auditoria = turn.execute().await?;
         avisos.extend(auditoria.warnings);
@@ -314,6 +318,7 @@ pub async fn run_campaign(
             json_mode: true,
             pensar: false,
             images: Vec::new(),
+            provedor: None,
         };
         let decisao = turn.execute().await?;
         avisos.extend(decisao.warnings);
@@ -385,6 +390,7 @@ pub async fn run_campaign(
                 json_mode: false,
                 pensar: false,
                 images: Vec::new(),
+                provedor: None,
             };
             match turn.execute().await {
                 Ok(r) => {

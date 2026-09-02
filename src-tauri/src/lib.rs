@@ -149,6 +149,8 @@ pub fn run() {
             video_cmds::video_listar,
             video_cmds::video_criar,
             video_cmds::video_adicionar,
+            video_cmds::video_adicionar_caminhos,
+            video_cmds::video_analisar,
             video_cmds::video_remover_item,
             video_cmds::video_remover_projeto,
             video_cmds::video_gerar,

@@ -8,7 +8,7 @@
 
 use tauri::{AppHandle, Manager};
 
-use super::{assets, prompts, render, spec, PedidoVideo, RelatorioVideo};
+use super::{analise, assets, prompts, render, spec, PedidoVideo, RelatorioVideo};
 use crate::orchestrator::agent::AgentTurn;
 use crate::orchestrator::roles::Role;
 use crate::orchestrator::support::com_idioma;
@@ -21,6 +21,15 @@ use crate::orchestrator::transcript;
 /// de um modelo de nivel medio.
 const MAX_RODADAS: u8 = 2;
 
+/// A raiz de execucao, tirada do estado.
+///
+/// Uma leitura curta em vez de um parametro a mais: ela e constante para o
+/// processo inteiro, e carrega-la por tres assinaturas so para chegar aqui
+/// seria passar adiante um valor que nao muda.
+fn raiz_de_execucao(app: &AppHandle) -> std::path::PathBuf {
+    app.state::<crate::state::AppState>().app_root.clone()
+}
+
 #[allow(clippy::too_many_arguments)]
 pub async fn montar(
     app: AppHandle,
@@ -32,6 +41,10 @@ pub async fn montar(
     correcoes_iniciais: Option<String>,
     mut step: usize,
     mut avisos: Vec<String>,
+    // Ja medidos por quem chamou. Medir de novo aqui custaria minutos de
+    // compositor para chegar ao mesmo resultado — e numa revisao, custaria de
+    // novo a cada volta.
+    clipes: Vec<analise::Clipe>,
 ) -> Result<RelatorioVideo, String> {
     // ---- 3. Motion Designer monta, Auditor confere ----
     let mut correcoes: Option<String> = correcoes_iniciais;
@@ -54,13 +67,20 @@ pub async fn montar(
                 crate::idioma::msg(prompts::SYSTEM_MOTION_PT, prompts::SYSTEM_MOTION_EN),
                 &req.idioma,
             ),
-            prompt: prompts::prompt_motion(&linha, projeto, &req.proporcao, correcoes.as_deref()),
+            prompt: prompts::prompt_motion(
+                &linha,
+                projeto,
+                &req.proporcao,
+                correcoes.as_deref(),
+                &clipes,
+            ),
             json_mode: true,
             // Nunca: cargo que devolve JSON nao pensa. O orcamento de tokens
             // iria inteiro para o raciocinio e sobraria pouco para o JSON, que
             // e a unica parte que o programa le.
             pensar: false,
             images: Vec::new(),
+            provedor: req.provedor,
         };
         let montagem = turno.execute().await?;
         avisos.extend(montagem.warnings);
@@ -117,6 +137,7 @@ pub async fn montar(
             json_mode: true,
             pensar: false,
             images: Vec::new(),
+            provedor: req.provedor,
         };
         let auditoria = turno.execute().await?;
         avisos.extend(auditoria.warnings);
@@ -162,11 +183,7 @@ pub async fn montar(
         // A raiz sai do estado e nao de um parametro: ela e a mesma para o
         // processo inteiro, e passa-la por tres assinaturas so para chegar aqui
         // seria carregar um valor constante pelo caminho todo.
-        let raiz = {
-            let estado = app.state::<crate::state::AppState>();
-            estado.app_root.clone()
-        };
-        match render::renderizar(&app, &raiz, r, projeto).await {
+        match render::renderizar(&app, &raiz_de_execucao(&app), r, projeto).await {
             Ok(v) => video = Some(v),
             Err(e) => avisos.push(format!(
                 "{} {e}",

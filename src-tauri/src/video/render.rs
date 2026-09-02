@@ -116,15 +116,29 @@ pub async fn renderizar(
         .spawn()
         .map_err(|e| format!("falha ao iniciar o sidecar de render: {e}"))?;
 
-    let mut entrada = filho
-        .stdin
-        .take()
-        .ok_or_else(|| "o sidecar de render nao aceitou entrada".to_string())?;
-    entrada
-        .write_all(format!("{pedido}\n").as_bytes())
-        .await
-        .map_err(|e| format!("falha ao enviar o roteiro: {e}"))?;
-    entrada.shutdown().await.ok();
+    // O BLOCO EXISTE PARA O HANDLE SER DERRUBADO AQUI, e nao e estilo: e a
+    // correcao de um deadlock que travava o render para sempre.
+    //
+    // O sidecar le o stdin ate o EOF (`process.stdin.on("end", ...)`). Um
+    // `shutdown()` no `ChildStdin` do tokio NAO fecha o descritor — so o drop
+    // fecha. Com o handle vivo ate o fim da funcao, o filho ficava eternamente
+    // em `epoll_wait` esperando um EOF que nunca chegava: 0% de CPU, nenhum
+    // evento de progresso, nenhum erro.
+    //
+    // Medido rodando o pipeline de verdade. O teste manual do sidecar nao
+    // pegava isto porque usava `< arquivo`, que da EOF de graca — a falha so
+    // existia pelo caminho do app, que e justamente o que importa.
+    {
+        let mut entrada = filho
+            .stdin
+            .take()
+            .ok_or_else(|| "o sidecar de render nao aceitou entrada".to_string())?;
+        entrada
+            .write_all(format!("{pedido}\n").as_bytes())
+            .await
+            .map_err(|e| format!("falha ao enviar o roteiro: {e}"))?;
+        entrada.shutdown().await.ok();
+    }
 
     let stdout = filho
         .stdout
@@ -152,21 +166,41 @@ pub async fn renderizar(
     // A ultima linha valida manda — se o sidecar morrer no meio, nao ha
     // resultado e o erro sai do stderr.
     let mut resultado: Option<Resposta> = None;
-    while let Ok(Some(linha)) = linhas.next_line().await {
-        let linha = linha.trim();
-        if linha.is_empty() {
-            continue;
+    let leitura = async {
+        while let Ok(Some(linha)) = linhas.next_line().await {
+            let linha = linha.trim();
+            if linha.is_empty() {
+                continue;
+            }
+            if let Ok(p) = serde_json::from_str::<ProgressoRender>(linha) {
+                // O progresso e reconhecido antes da resposta porque as duas
+                // sao JSON: uma linha de progresso tambem casaria com
+                // `Resposta`, so que com todos os campos em `None`, e a tela
+                // perderia a barra.
+                let _ = app.emit(EVENT, p);
+                continue;
+            }
+            if let Ok(r) = serde_json::from_str::<Resposta>(linha) {
+                resultado = Some(r);
+            }
         }
-        if let Ok(p) = serde_json::from_str::<ProgressoRender>(linha) {
-            // O progresso e reconhecido antes da resposta porque as duas sao
-            // JSON: uma linha de progresso tambem casaria com `Resposta`, so
-            // que com todos os campos em `None`, e a tela perderia a barra.
-            let _ = app.emit(EVENT, p);
-            continue;
-        }
-        if let Ok(r) = serde_json::from_str::<Resposta>(linha) {
-            resultado = Some(r);
-        }
+    };
+
+    // TETO DE ESPERA. Sem ele, qualquer coisa que segure o sidecar deixa o
+    // video parado para sempre com a tela dizendo "renderizando" — foi
+    // exatamente assim que o deadlock do stdin se manifestou. E a mesma regra
+    // da espera do turno de movimento: caminho sem teto e caminho que trava.
+    //
+    // Generoso de proposito: empacotar num processo novo leva minutos, e
+    // derrubar um render por impaciencia joga fora o trabalho dos tres cargos.
+    if tokio::time::timeout(std::time::Duration::from_secs(1800), leitura)
+        .await
+        .is_err()
+    {
+        return Err(crate::idioma::msg(
+            "O render passou de 30 minutos sem terminar e foi encerrado.",
+            "The render went past 30 minutes without finishing and was stopped.",
+        ));
     }
 
     let status = filho

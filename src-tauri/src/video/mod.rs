@@ -26,6 +26,7 @@
 //! paralelo que mantivesse modelo residente seria emenda constitucional
 //! disfarcada de tela nova.
 
+pub mod analise;
 pub mod assets;
 pub mod direcao;
 mod montagem;
@@ -57,6 +58,14 @@ pub struct PedidoVideo {
     /// Raciocinio estendido no cargo que decide a linha.
     #[serde(default)]
     pub pensamento_estendido: bool,
+    /// Quem executa os turnos DESTE video.
+    ///
+    /// `None` usa a preferencia global. A escolha por rodada existe porque a
+    /// decisao aqui e diferente da da campanha: rascunhar um corte com modelo
+    /// local sai de graca e leva minutos; a versao final merece o CLI pago.
+    /// Trocar a preferencia global para isso mudaria a campanha junto.
+    #[serde(default)]
+    pub provedor: Option<crate::prefs::Provedor>,
     /// O que a pessoa apontou no roteiro anterior.
     ///
     /// Quando vem preenchido, o video NAO recomeca do zero: o gerente e pulado
@@ -132,6 +141,34 @@ pub async fn rodar(
     let mut avisos: Vec<String> = Vec::new();
     let mut step = 0usize;
 
+    // ---- 0. Mede os clipes ----
+    //
+    // ANTES DO GERENTE, e a ordem e o conserto de um defeito real. O gerente
+    // precisa saber se ha voz para decidir a linha: com voz, o texto na tela
+    // existe para NAO repetir o que se ouve; sem ela, o texto E a voz e as
+    // cenas precisam durar o tempo de leitura.
+    //
+    // Medindo depois, ele recebia "este video nao tem narracao" mesmo quando a
+    // pessoa falava no clipe — e desenhava para o caso errado. Pego lendo o
+    // proprio prompt que o `agy` recebeu numa execucao de verdade.
+    let clipes = if projeto.clipes.is_empty() {
+        Vec::new()
+    } else {
+        analise::medir(&app, &state.app_root, &projeto)
+            .await
+            .unwrap_or_else(|e| {
+                avisos.push(format!(
+                    "{} {e}",
+                    crate::idioma::msg(
+                        "Nao consegui medir os clipes, entao as pausas nao serao cortadas:",
+                        "Could not measure the clips, so pauses will not be cut:"
+                    )
+                ));
+                Vec::new()
+            })
+    };
+    let com_voz = projeto.tem_voz(&clipes);
+
     // ---- 1. O gerente decide a linha ----
     //
     // Ele ja sabe se ha voz: a pasta `narracao/` responde, e a resposta muda o
@@ -154,13 +191,17 @@ pub async fn rodar(
         role: Role::GerenteSetor,
         network: None,
         system: com_idioma(
-            crate::idioma::msg(prompts::SYSTEM_GERENTE_PT, prompts::SYSTEM_GERENTE_EN),
+            prompts::com_marcadores(&crate::idioma::msg(
+                prompts::SYSTEM_GERENTE_PT,
+                prompts::SYSTEM_GERENTE_EN,
+            )),
             &req.idioma,
         ),
-        prompt: prompts::prompt_gerente(&req.objetivo, &projeto, projeto.tem_narracao()),
+        prompt: prompts::prompt_gerente(&req.objetivo, &projeto, com_voz),
         json_mode: false,
         pensar: req.pensamento_estendido,
         images: Vec::new(),
+        provedor: req.provedor,
     };
     let r = turno.execute().await?;
     avisos.extend(r.warnings);
@@ -173,7 +214,7 @@ pub async fn rodar(
     // para texto na tela — exatamente o que teria que ser refeito quando a voz
     // chegasse. A pessoa gera a voz, larga na pasta e roda de novo; da segunda
     // vez a pasta responde sim e este bloco nao acontece.
-    if !projeto.tem_narracao() {
+    if !com_voz {
         let pasta = projeto.caminho_de("narracao");
         if narracao::perguntar(&app, state, &linha, &pasta).await
             == narracao::RespostaNarracao::QueroRoteiro
@@ -187,13 +228,17 @@ pub async fn rodar(
                 role: Role::MotionDesigner,
                 network: None,
                 system: com_idioma(
-                    crate::idioma::msg(prompts::SYSTEM_LOCUCAO_PT, prompts::SYSTEM_LOCUCAO_EN),
+                    prompts::com_marcadores(&crate::idioma::msg(
+                        prompts::SYSTEM_LOCUCAO_PT,
+                        prompts::SYSTEM_LOCUCAO_EN,
+                    )),
                     &req.idioma,
                 ),
                 prompt: prompts::prompt_locucao(&req.objetivo, &linha, alvo),
                 json_mode: false,
                 pensar: false,
                 images: Vec::new(),
+                provedor: req.provedor,
             };
             let r = turno.execute().await?;
             avisos.extend(r.warnings);
@@ -213,5 +258,5 @@ pub async fn rodar(
         }
     }
 
-    montar(app, run, &req, &projeto, linha, None, step, avisos).await
+    montar(app, run, &req, &projeto, linha, None, step, avisos, clipes).await
 }

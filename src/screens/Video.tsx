@@ -1,18 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, ouvirRender } from "../api";
+import { api, ouvirEstagios, ouvirRender } from "../api";
 import { formatarBytes, useIdioma } from "../i18n";
 import type {
+  ClipeMedido,
+  EventoEstagio,
+  Provedor,
   NotaDeCena,
   ProgressoRender,
   ProjetoVideo,
   RelatorioVideo,
 } from "../types";
 import AssetsVideo from "../components/AssetsVideo";
+import ClipesVideo from "../components/ClipesVideo";
+import EscolhaModelo from "../components/EscolhaModelo";
 import RoteiroPronto from "../components/RoteiroPronto";
 import Monitor from "../components/Monitor";
 import Linha from "../components/Linha";
 import Inspetor from "../components/Inspetor";
-
+import Relay, { postasDeEventos } from "../components/Relay";
+import { useOuvinte } from "../ouvir";
 
 type Aba = "montagem" | "assets" | "briefing";
 
@@ -39,6 +45,10 @@ export default function Video() {
   const [objetivo, setObjetivo] = useState("");
   const [proporcao, setProporcao] = useState("16:9");
   const [pensar, setPensar] = useState(false);
+  // `null` = herdar a preferência global. A escolha é por vídeo: ver
+  // `EscolhaModelo`.
+  const [provedor, setProvedor] = useState<Provedor | null>(null);
+  const [clipes, setClipes] = useState<ClipeMedido[] | null>(null);
 
   const [rodando, setRodando] = useState(false);
   const [render, setRender] = useState<ProgressoRender | null>(null);
@@ -51,23 +61,56 @@ export default function Video() {
   const [buscarPara, setBuscarPara] = useState<number | null>(null);
   const [notas, setNotas] = useState<NotaDeCena[]>([]);
 
+  // A trilha dos turnos. Sem ela a tela fica muda por dezenas de minutos num
+  // modelo local — a Campanha já resolvia isso e o vídeo não usava nada.
+  const [eventos, setEventos] = useState<EventoEstagio[]>([]);
+
   const recarregar = useCallback(async () => {
     const lista = await api.videoListar().catch(() => []);
     setProjetos(lista);
     // Mantém o projeto aberto entre recargas: perder a seleção depois de subir
     // um arquivo mandaria a pessoa de volta para a lista a cada upload.
-    setAtual((a) => (a ? (lista.find((p) => p.slug === a.slug) ?? null) : null));
+    setAtual((a) =>
+      a ? (lista.find((p) => p.slug === a.slug) ?? null) : null,
+    );
   }, []);
 
   useEffect(() => {
     void recarregar();
   }, [recarregar]);
 
-  useEffect(() => {
-    let parar: (() => void) | undefined;
-    void ouvirRender(setRender).then((x) => (parar = x));
-    return () => parar?.();
-  }, []);
+  useOuvinte(() => ouvirRender(setRender), []);
+
+  useOuvinte(
+    () => ouvirEstagios((e) => setEventos((atual) => [...atual, e])),
+    [],
+  );
+
+  /** Entra num projeto, do zero.
+   *
+   *  TUDO O QUE ERA DO PROJETO ANTERIOR É LIMPO AQUI, e isso é correção de um
+   *  defeito real: sem a limpeza, o relatório, as notas e o objetivo do
+   *  projeto A continuavam na tela dentro do projeto B — e "Refazer" mandaria
+   *  as notas de um vídeo para o outro.
+   *
+   *  A aba também é escolhida pelo estado, e não fixa em "montagem": um projeto
+   *  novo abria na bancada vazia, que é o FIM do caminho. Quem acabou de criar
+   *  um vídeo precisa começar pelos assets. */
+  const abrir = (p: ProjetoVideo | null) => {
+    setAtual(p);
+    setRelatorio(null);
+    setNotas([]);
+    setObjetivo("");
+    setSelecionada(null);
+    setSegundo(0);
+    setEventos([]);
+    setErro(null);
+    setClipes(null);
+    setProvedor(null);
+    // A aba de entrada segue o estado: quem acabou de criar um vídeo precisa
+    // começar pelo material, não pela bancada vazia.
+    if (p) setAba(p.imagens.length || p.clipes.length ? "briefing" : "assets");
+  };
 
   const criar = async () => {
     const nome = prompt(d.video.newName);
@@ -75,8 +118,7 @@ export default function Video() {
     try {
       const p = await api.videoCriar(nome);
       await recarregar();
-      setAtual(p);
-      setErro(null);
+      abrir(p);
     } catch (e) {
       setErro(String(e));
     }
@@ -92,6 +134,9 @@ export default function Video() {
     setRodando(true);
     setErro(null);
     setRender(null);
+    // A trilha é da rodada, não do projeto: manter os turnos da anterior faria
+    // a barra começar cheia e o percurso mentir.
+    setEventos([]);
     setAba("montagem");
     try {
       const r = await api.videoGerar({
@@ -100,6 +145,7 @@ export default function Video() {
         proporcao,
         idioma,
         pensamento_estendido: pensar,
+        provedor,
         notas: comNotas ? notas : [],
         roteiro_anterior: comNotas ? (relatorio?.roteiro ?? null) : null,
         linha_anterior: comNotas ? (relatorio?.linha ?? "") : "",
@@ -134,7 +180,7 @@ export default function Video() {
 
         <div className="stack stack--tight">
           {projetos.map((p) => (
-            <button className="choice" key={p.slug} onClick={() => setAtual(p)}>
+            <button className="choice" key={p.slug} onClick={() => abrir(p)}>
               <span className="choice__marca" aria-hidden />
               <div>
                 <span className="choice__title">{p.nome}</span>
@@ -172,7 +218,10 @@ export default function Video() {
     <>
       <section className="card card--flat">
         <div className="card__topo">
-          <button className="btn btn--quiet btn--sm" onClick={() => setAtual(null)}>
+          <button
+            className="btn btn--quiet btn--sm"
+            onClick={() => abrir(null)}
+          >
             {d.common.back}
           </button>
           <h2>{atual.nome}</h2>
@@ -192,7 +241,19 @@ export default function Video() {
         </div>
       </section>
 
-      {aba === "assets" && <AssetsVideo projeto={atual} aoMudar={setAtual} />}
+      {aba === "assets" && (
+        <>
+          {/* Os vídeos vêm primeiro: quando há clipe, é dele que o vídeo é
+              feito, e as imagens viram apoio. */}
+          <ClipesVideo
+            projeto={atual}
+            aoMudar={setAtual}
+            clipes={clipes}
+            aoMedir={setClipes}
+          />
+          <AssetsVideo projeto={atual} aoMudar={setAtual} />
+        </>
+      )}
 
       {aba === "briefing" && (
         <Briefing
@@ -203,6 +264,8 @@ export default function Video() {
           setProporcao={setProporcao}
           pensar={pensar}
           setPensar={setPensar}
+          provedor={provedor}
+          setProvedor={setProvedor}
           rodando={rodando}
           aoGerar={() => void gerar(false)}
         />
@@ -210,24 +273,54 @@ export default function Video() {
 
       {aba === "montagem" && (
         <>
-          <div className="bancada">
-            <Monitor
-              video={relatorio?.video ?? null}
-              segundo={segundo}
-              aoAndar={setSegundo}
-              render={render}
-              buscarPara={buscarPara}
+          {/* A TRILHA DOS TURNOS. Num modelo local um turno leva minutos, e sem
+              isto a tela ficava muda o tempo todo: o monitor dizia "o vídeo
+              aparece aqui" enquanto o Gerente trabalhava, e não havia como
+              distinguir "pensando" de "morreu". É o mesmo componente da
+              Campanha, alimentado pelos mesmos eventos. */}
+          {eventos.length > 0 && (
+            <section className="card card--flat">
+              <Relay postas={postasDeEventos(eventos)} />
+            </section>
+          )}
+
+          {/* O que fazer agora, quando ainda não há o que montar. A bancada
+              vazia sem instrução era o estado em que todo projeto novo caía. */}
+          {!relatorio && !rodando && (
+            <ProximoPasso
+              projeto={atual}
+              temObjetivo={objetivo.trim().length >= 10}
+              irPara={setAba}
             />
-            {relatorio?.roteiro && (
-              <Inspetor
-                roteiro={relatorio.roteiro}
-                indice={selecionada}
+          )}
+
+          {/* A bancada só existe quando há o que mostrar. Desenhá-la vazia ao
+              lado do cartão de próximo passo dava DUAS mensagens, e a do
+              monitor contradizia a outra: mandava preencher o briefing quando o
+              passo real era subir imagem. */}
+          {(relatorio || rodando) && (
+            <div className="bancada">
+              <Monitor
+                video={relatorio?.video ?? null}
                 segundo={segundo}
-                notas={notas}
-                aoAnotar={setNotas}
+                aoAndar={setSegundo}
+                render={render}
+                buscarPara={buscarPara}
+                // O monitor precisa saber se já houve rodada: sem isso ele diria
+                // "preencha o briefing e gere" depois de um render que falhou.
+                jaRodou={!!relatorio}
               />
-            )}
-          </div>
+              {relatorio?.roteiro && (
+                <Inspetor
+                  roteiro={relatorio.roteiro}
+                  indice={selecionada}
+                  segundo={segundo}
+                  notas={notas}
+                  aoAnotar={setNotas}
+                />
+              )}
+            </div>
+          )}
 
           {relatorio?.roteiro && (
             <section className="card card--flat">
@@ -264,15 +357,51 @@ export default function Video() {
             </section>
           )}
 
-          <Resultado
-            projeto={atual}
-            rodando={rodando}
-            relatorio={relatorio}
-            erro={erro}
-          />
+          <Resultado projeto={atual} relatorio={relatorio} erro={erro} />
         </>
       )}
     </>
+  );
+}
+
+/** O passo seguinte, escrito, quando a bancada ainda não tem o que mostrar.
+ *
+ *  Um projeto novo caía na aba de montagem vazia — o FIM do caminho — sem nada
+ *  dizendo que o começo é subir imagem. Aqui a tela diz qual é o passo e leva
+ *  até ele; o botão que aparece é sempre o único que faz sentido no estado
+ *  atual, em vez de um menu de tudo que existe. */
+function ProximoPasso({
+  projeto,
+  temObjetivo,
+  irPara,
+}: {
+  projeto: ProjetoVideo;
+  temObjetivo: boolean;
+  irPara: (a: Aba) => void;
+}) {
+  const { d } = useIdioma();
+
+  const [texto, rotulo, destino]: [string, string, Aba] =
+    !projeto.imagens.length && !projeto.clipes.length
+      ? [d.video.stepAssets, d.video.tabAssets, "assets"]
+      : !temObjetivo
+        ? [d.video.stepBrief, d.video.tabBrief, "briefing"]
+        : [d.video.stepGenerate, d.video.tabBrief, "briefing"];
+
+  return (
+    <section className="card">
+      <div className="card__topo">
+        <span className="card__titulo">{d.video.nextStep}</span>
+      </div>
+      <p className="hint">{texto}</p>
+      {/* Dentro de `.row` para não esticar: `.card` é grid, e um botão como
+          filho direto vira uma barra da largura inteira do cartão. */}
+      <div className="row">
+        <button className="btn btn--key" onClick={() => irPara(destino)}>
+          {rotulo}
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -284,6 +413,8 @@ function Briefing({
   setProporcao,
   pensar,
   setPensar,
+  provedor,
+  setProvedor,
   rodando,
   aoGerar,
 }: {
@@ -294,6 +425,8 @@ function Briefing({
   setProporcao: (s: string) => void;
   pensar: boolean;
   setPensar: (b: boolean) => void;
+  provedor: Provedor | null;
+  setProvedor: (p: Provedor | null) => void;
   rodando: boolean;
   aoGerar: () => void;
 }) {
@@ -332,8 +465,14 @@ function Briefing({
         </div>
       </div>
 
+      <EscolhaModelo valor={provedor} aoEscolher={setProvedor} />
+
       <label className="row">
-        <input type="checkbox" checked={pensar} onChange={(e) => setPensar(e.target.checked)} />
+        <input
+          type="checkbox"
+          checked={pensar}
+          onChange={(e) => setPensar(e.target.checked)}
+        />
         <span>{d.video.think}</span>
       </label>
 
@@ -341,30 +480,36 @@ function Briefing({
           costuma surpreender: se não há narração na pasta, o vídeo vai parar no
           meio para perguntar. */}
       <div className="note" data-tone={projeto.narracao.length ? "ok" : "warn"}>
-        <span>{projeto.narracao.length ? d.video.willUseVoice : d.video.willAsk}</span>
+        <span>
+          {projeto.narracao.length ? d.video.willUseVoice : d.video.willAsk}
+        </span>
       </div>
 
       <button
         className="btn btn--key"
-        disabled={rodando || objetivo.trim().length < 10 || !projeto.imagens.length}
+        disabled={
+          rodando ||
+          objetivo.trim().length < 10 ||
+          (!projeto.imagens.length && !projeto.clipes.length)
+        }
         onClick={aoGerar}
       >
         {rodando ? d.video.running : d.video.generate}
       </button>
 
-      {!projeto.imagens.length && <p className="hint">{d.video.needImages}</p>}
+      {!projeto.imagens.length && !projeto.clipes.length && (
+        <p className="hint">{d.video.needImages}</p>
+      )}
     </section>
   );
 }
 
 function Resultado({
   projeto,
-  rodando,
   relatorio,
   erro,
 }: {
   projeto: ProjetoVideo;
-  rodando: boolean;
   relatorio: RelatorioVideo | null;
   erro: string | null;
 }) {
@@ -404,7 +549,8 @@ function Resultado({
             {d.video.open}
           </button>
           <span className="hint num">
-            {formatarBytes(relatorio.video.bytes, idioma)} · {relatorio.video.arquivo}
+            {formatarBytes(relatorio.video.bytes, idioma)} ·{" "}
+            {relatorio.video.arquivo}
           </span>
         </div>
       )}
@@ -421,7 +567,9 @@ function Resultado({
             {projeto.saidas.map((s) => (
               <div className="chave-linha" key={s.caminho}>
                 <span style={{ flex: 1 }}>{s.nome}</span>
-                <span className="hint num">{formatarBytes(s.bytes, idioma)}</span>
+                <span className="hint num">
+                  {formatarBytes(s.bytes, idioma)}
+                </span>
                 <button
                   className="btn btn--quiet btn--sm"
                   onClick={() => void api.abrirNoSistema(s.caminho)}
@@ -433,8 +581,6 @@ function Resultado({
           </div>
         </section>
       )}
-
-      {!rodando && !relatorio && !erro && <p className="hint">{d.video.nothingYet}</p>}
     </>
   );
 }

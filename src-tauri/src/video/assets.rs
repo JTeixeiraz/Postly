@@ -7,6 +7,7 @@
 //! videos/lancamento-outono/
 //! ├── .nome        o nome digitado, com acento e maiuscula
 //! ├── imagens/     entram na tela do video
+//! ├── clipes/      VIDEO BRUTO da pessoa, para o modelo cortar e montar
 //! ├── audio/       trilha e efeitos
 //! ├── narracao/    A VOZ. E so olhar aqui para saber se ha narracao.
 //! └── saida/       os .mp4 renderizados
@@ -44,6 +45,7 @@ use std::path::{Path, PathBuf};
 /// render, que e onde ela custa mais caro para diagnosticar.
 const PASTAS: &[(&str, &[&str])] = &[
     ("imagens", &["png", "jpg", "jpeg", "webp"]),
+    ("clipes", &["mp4", "mov", "webm", "mkv", "m4v"]),
     ("audio", &["mp3", "wav", "m4a", "ogg"]),
     ("narracao", &["mp3", "wav", "m4a", "ogg"]),
 ];
@@ -72,6 +74,8 @@ pub struct Projeto {
     pub nome: String,
     pub caminho: String,
     pub imagens: Vec<Item>,
+    /// Video bruto que a pessoa gravou. O modelo corta e monta.
+    pub clipes: Vec<Item>,
     pub audio: Vec<Item>,
     /// A voz. A existencia desta lista e o que responde `tem_narracao`.
     pub narracao: Vec<Item>,
@@ -90,6 +94,18 @@ impl Projeto {
     /// renderizado com cenas medidas para uma voz que nao existe.
     pub fn tem_narracao(&self) -> bool {
         !self.narracao.is_empty()
+    }
+
+    /// Este video ja tem voz, venha ela de onde vier?
+    ///
+    /// A PERGUNTA SOBRE NARRACAO NAO PODE IGNORAR OS CLIPES. Quando a pessoa
+    /// sobe um video em que ela fala, a voz do video E a narracao — parar o
+    /// trabalho para perguntar "voce quer narracao?" seria perguntar sobre algo
+    /// que ja esta ali, e aceitar produziria duas vozes por cima uma da outra.
+    ///
+    /// Clipe sem audio (b-roll) nao conta: ele nao traz voz nenhuma.
+    pub fn tem_voz(&self, clipes: &[super::analise::Clipe]) -> bool {
+        self.tem_narracao() || clipes.iter().any(|c| c.tem_audio && !c.com_som.is_empty())
     }
 
     pub fn caminho_de(&self, sub: &str) -> PathBuf {
@@ -151,6 +167,7 @@ pub fn ler(slug: &str) -> Option<Projeto> {
         .unwrap_or_else(|| slug.clone());
 
     let imagens = arquivos_de(&dir.join("imagens"), extensoes("imagens"));
+    let clipes = arquivos_de(&dir.join("clipes"), extensoes("clipes"));
     let audio = arquivos_de(&dir.join("audio"), extensoes("audio"));
     let narracao = arquivos_de(&dir.join("narracao"), extensoes("narracao"));
     let mut saidas = arquivos_de(&dir.join(SAIDA), &["mp4"]);
@@ -159,6 +176,7 @@ pub fn ler(slug: &str) -> Option<Projeto> {
 
     let bytes = imagens
         .iter()
+        .chain(&clipes)
         .chain(&audio)
         .chain(&narracao)
         .chain(&saidas)
@@ -170,6 +188,7 @@ pub fn ler(slug: &str) -> Option<Projeto> {
         nome,
         caminho: dir.to_string_lossy().to_string(),
         imagens,
+        clipes,
         audio,
         narracao,
         saidas,
@@ -300,6 +319,73 @@ pub fn adicionar(slug: &str, sub: &str, nome: &str, base64_dados: &str) -> Resul
     })
 }
 
+/// Copia um arquivo que já está no disco da pessoa para dentro do projeto.
+///
+/// POR CAMINHO, E NÃO POR BASE64, e a diferença não é gosto. Imagem e áudio
+/// chegam pela ponte IPC como texto base64 porque são pequenos; um vídeo de
+/// meio giga viraria 660 MB de string na memória da janela e outro tanto no
+/// Rust, e o app morreria antes de gravar o primeiro byte.
+///
+/// O caminho real vem do evento de arrastar-e-soltar do Tauri, que entrega
+/// `paths` de verdade — sem plugin novo, que é o que fez a galeria escolher
+/// base64 no começo.
+pub fn adicionar_por_caminho(slug: &str, sub: &str, origem: &str) -> Result<Item, String> {
+    let exts = extensoes(sub);
+    if exts.is_empty() {
+        return Err(format!("pasta desconhecida: {sub}"));
+    }
+
+    let origem = Path::new(origem);
+    let ext = origem
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_lowercase())
+        .filter(|e| exts.contains(&e.as_str()))
+        .ok_or_else(|| {
+            crate::idioma::msg(
+                &format!("Esta pasta aceita: {}.", exts.join(", ")),
+                &format!("This folder accepts: {}.", exts.join(", ")),
+            )
+        })?;
+
+    let slug = crate::galeria::slugificar(slug);
+    let destino_dir = raiz().join(&slug).join(sub);
+    if !destino_dir.is_dir() {
+        return Err(crate::idioma::msg(
+            "Projeto de video nao encontrado.",
+            "Video project not found.",
+        ));
+    }
+
+    let base = origem
+        .file_stem()
+        .map(|s| crate::galeria::slugificar(&s.to_string_lossy()))
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "clipe".into());
+    let mut destino = destino_dir.join(format!("{base}.{ext}"));
+    let mut n = 2;
+    while destino.exists() {
+        destino = destino_dir.join(format!("{base}-{n}.{ext}"));
+        n += 1;
+    }
+
+    // Copia, e nao move: o arquivo e da pessoa e continua onde ela deixou.
+    // Mover o video original de alguem para dentro de uma pasta do app seria
+    // decidir pelo disco dela.
+    let bytes =
+        std::fs::copy(origem, &destino).map_err(|e| format!("{}: {e}", origem.display()))?;
+
+    Ok(Item {
+        nome: destino
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string(),
+        caminho: destino.to_string_lossy().to_string(),
+        bytes,
+    })
+}
+
 /// Apaga um arquivo de um projeto.
 ///
 /// Confere que o caminho esta DENTRO da raiz dos videos antes de apagar: um
@@ -335,6 +421,52 @@ mod testes {
     use super::*;
 
     #[test]
+    fn clipe_falado_conta_como_voz_e_clipe_mudo_nao() {
+        // Sem isto, quem sobe um video em que fala seria interrompido com
+        // "voce quer narracao?" — e aceitar poria uma segunda voz por cima da
+        // dela. Ja um b-roll mudo nao traz voz nenhuma e a pergunta continua
+        // fazendo sentido.
+        use crate::video::analise::{Clipe, Trecho};
+        let base = Projeto {
+            slug: "x".into(),
+            nome: "x".into(),
+            caminho: "/tmp/x".into(),
+            imagens: vec![],
+            clipes: vec![],
+            audio: vec![],
+            narracao: vec![],
+            saidas: vec![],
+            bytes: 0,
+        };
+        let clipe = |audio: bool, som: bool| Clipe {
+            nome: "t.mp4".into(),
+            duracao_s: 5.0,
+            largura: 1920,
+            altura: 1080,
+            fps: 30.0,
+            tem_audio: audio,
+            com_som: if som {
+                vec![Trecho {
+                    de_s: 0.0,
+                    ate_s: 4.0,
+                }]
+            } else {
+                vec![]
+            },
+            pausas: 0,
+            erro: None,
+        };
+
+        assert!(base.tem_voz(&[clipe(true, true)]), "clipe falado e voz");
+        assert!(
+            !base.tem_voz(&[clipe(false, false)]),
+            "b-roll mudo nao e voz"
+        );
+        assert!(!base.tem_voz(&[clipe(true, false)]), "faixa muda nao e voz");
+        assert!(!base.tem_voz(&[]), "sem nada nao ha voz");
+    }
+
+    #[test]
     fn cada_pasta_aceita_so_o_que_ela_sabe_usar() {
         // Um mp3 em `imagens/` nunca vira quadro. Aceitar ali so adiaria a
         // falha para o render, que e onde ela custa mais caro para diagnosticar.
@@ -361,6 +493,7 @@ mod testes {
             nome: "x".into(),
             caminho: "/tmp/x".into(),
             imagens: vec![],
+            clipes: vec![],
             audio: vec![Item {
                 nome: "narracao-final.mp3".into(),
                 caminho: "/tmp/x/audio/narracao-final.mp3".into(),

@@ -42,6 +42,14 @@ use super::direcao::{Direcao, Look};
 const DUR_MIN_S: f32 = 0.6;
 const DUR_MAX_S: f32 = 20.0;
 
+/// Teto para uma cena de clipe.
+///
+/// Maior que o das outras porque aqui a duracao nao e escolha de ritmo: e o
+/// tamanho de um trecho falado que a pessoa gravou. Um take de 40 segundos e
+/// comum; barrar em 20 obrigaria a picotar fala no meio, que e o oposto do que
+/// cortar pausa serve para fazer.
+const DUR_MAX_CLIPE_S: f32 = 90.0;
+
 /// Teto de cenas por video.
 ///
 /// Nao e limite tecnico: e o ponto em que o render deixa de ser "alguns
@@ -69,6 +77,21 @@ pub enum TipoCena {
     Declaracao,
     /// Fecho com chamada para acao.
     Fecho,
+    /// Um trecho de um video que a pessoa gravou.
+    ///
+    /// E o unico tipo que nao inventa imagem: ele MOSTRA o material dela,
+    /// cortado onde o modelo decidiu. As pausas vazias saem aqui — nao por
+    /// adivinhacao, mas porque o `analise-agent` mediu onde ha som.
+    Clipe,
+}
+
+/// O trecho de um clipe que uma cena mostra.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Corte {
+    /// Nome do arquivo na pasta `clipes/`, nao caminho.
+    pub arquivo: String,
+    pub de_s: f32,
+    pub ate_s: f32,
 }
 
 impl TipoCena {
@@ -79,7 +102,7 @@ impl TipoCena {
     /// depois.
     pub fn imagens_necessarias(&self) -> usize {
         match self {
-            TipoCena::Titulo | TipoCena::Declaracao | TipoCena::Fecho => 0,
+            TipoCena::Titulo | TipoCena::Declaracao | TipoCena::Fecho | TipoCena::Clipe => 0,
             TipoCena::KenBurns | TipoCena::Placa => 1,
             TipoCena::Comparacao => 2,
         }
@@ -90,6 +113,17 @@ impl TipoCena {
 pub struct Cena {
     pub tipo: TipoCena,
     /// Duracao em segundos. Ver `DUR_MIN_S` e `DUR_MAX_S`.
+    ///
+    /// TEM PADRAO PORQUE O PROMPT MANDA OMITIR EM CLIPE. Ali a duracao vem do
+    /// corte, e pedir os dois cria a chance de discordarem; o prompt diz "nao
+    /// repita em `dur_s`" e o modelo obedece. Sem o padrao, obedecer derrubava
+    /// o roteiro inteiro com `missing field dur_s` — pego rodando de verdade,
+    /// depois de 95 segundos de dois turnos pagos.
+    ///
+    /// Zero nao vira cena de duracao zero: a normalizacao deriva do corte, e
+    /// numa cena que nao e clipe o zero cai fora da faixa minima e a validacao
+    /// diz qual cena esta sem duracao.
+    #[serde(default)]
     pub dur_s: f32,
     #[serde(default)]
     pub titulo: String,
@@ -105,6 +139,9 @@ pub struct Cena {
     /// Trecho da narracao que cai nesta cena, quando ha narracao.
     #[serde(default)]
     pub narracao: String,
+    /// O trecho de video, quando o tipo e `clipe`.
+    #[serde(default)]
+    pub corte: Option<Corte>,
     /// COMO esta cena se parece — ver `direcao.rs`.
     ///
     /// E o que separa este sistema de um template: sem ela, duas cenas do mesmo
@@ -150,6 +187,17 @@ impl Roteiro {
     pub fn normalizar(mut self) -> Self {
         self.look = self.look.aparar();
         for (i, c) in self.cenas.iter_mut().enumerate() {
+            // A DURACAO DE UM CLIPE E O TAMANHO DO CORTE, sempre. Deixar o
+            // modelo declarar as duas coisas cria uma chance de elas
+            // discordarem — e ai o video mostraria meio trecho, ou congelaria
+            // no fim de um que acabou antes. Derivar remove a classe inteira.
+            if c.tipo == TipoCena::Clipe {
+                if let Some(k) = &c.corte {
+                    if k.ate_s > k.de_s {
+                        c.dur_s = k.ate_s - k.de_s;
+                    }
+                }
+            }
             // `Direcao::default()` e o sinal de "o modelo nao disse nada": a
             // serializacao preenche assim quando o bloco falta inteiro. Quando
             // ele disse algo, respeitamos — mesmo que so um campo.
@@ -193,6 +241,16 @@ pub enum ErroRoteiro {
         cena: usize,
         dur_s: f32,
     },
+    SemCorte(usize),
+    ClipeInexistente {
+        cena: usize,
+        nome: String,
+    },
+    CorteInvertido {
+        cena: usize,
+        de_s: f32,
+        ate_s: f32,
+    },
     FaltaImagem {
         cena: usize,
         precisa: usize,
@@ -222,6 +280,22 @@ impl std::fmt::Display for ErroRoteiro {
                 ),
                 &format!(
                     "Scene {cena} lasts {dur_s:.1}s, outside the {DUR_MIN_S}–{DUR_MAX_S}s range."
+                ),
+            ),
+            ErroRoteiro::SemCorte(cena) => crate::idioma::msg(
+                &format!("A cena {cena} e um clipe e nao disse qual trecho mostrar."),
+                &format!("Scene {cena} is a clip and did not say which segment to show."),
+            ),
+            ErroRoteiro::ClipeInexistente { cena, nome } => crate::idioma::msg(
+                &format!("A cena {cena} pede o clipe \"{nome}\", que nao esta na pasta do video."),
+                &format!(
+                    "Scene {cena} asks for clip \"{nome}\", which is not in the video folder."
+                ),
+            ),
+            ErroRoteiro::CorteInvertido { cena, de_s, ate_s } => crate::idioma::msg(
+                &format!("A cena {cena} corta de {de_s:.1}s ate {ate_s:.1}s, que nao e um trecho."),
+                &format!(
+                    "Scene {cena} cuts from {de_s:.1}s to {ate_s:.1}s, which is not a segment."
                 ),
             ),
             ErroRoteiro::FaltaImagem { cena, precisa, tem } => crate::idioma::msg(
@@ -265,11 +339,33 @@ pub fn validar(r: &Roteiro, projeto: &super::assets::Projeto) -> Result<(), Erro
         // corresponde a nada que a pessoa consiga contar no roteiro.
         let cena = i + 1;
 
-        if !(DUR_MIN_S..=DUR_MAX_S).contains(&c.dur_s) {
+        let teto = if c.tipo == TipoCena::Clipe {
+            DUR_MAX_CLIPE_S
+        } else {
+            DUR_MAX_S
+        };
+        if !(DUR_MIN_S..=teto).contains(&c.dur_s) {
             return Err(ErroRoteiro::DuracaoForaDaFaixa {
                 cena,
                 dur_s: c.dur_s,
             });
+        }
+
+        if c.tipo == TipoCena::Clipe {
+            let corte = c.corte.as_ref().ok_or(ErroRoteiro::SemCorte(cena))?;
+            if corte.ate_s <= corte.de_s {
+                return Err(ErroRoteiro::CorteInvertido {
+                    cena,
+                    de_s: corte.de_s,
+                    ate_s: corte.ate_s,
+                });
+            }
+            if !projeto.clipes.iter().any(|i| i.nome == corte.arquivo) {
+                return Err(ErroRoteiro::ClipeInexistente {
+                    cena,
+                    nome: corte.arquivo.clone(),
+                });
+            }
         }
 
         let precisa = c.tipo.imagens_necessarias();
@@ -316,6 +412,7 @@ mod testes {
             nome: "v".into(),
             caminho: "/tmp/v".into(),
             imagens: vec![item("a.png"), item("b.png")],
+            clipes: vec![item("take.mp4")],
             audio: vec![item("trilha.mp3")],
             narracao: vec![],
             saidas: vec![],
@@ -331,6 +428,7 @@ mod testes {
             subtitulo: String::new(),
             imagens: imagens.iter().map(|s| s.to_string()).collect(),
             narracao: String::new(),
+            corte: None,
             direcao: Direcao::default(),
         }
     }
@@ -449,6 +547,115 @@ mod testes {
             r.cenas[0].direcao.movimento,
             crate::video::direcao::Movimento::Nenhum
         );
+    }
+
+    fn cena_de_clipe(arquivo: &str, de: f32, ate: f32) -> Cena {
+        let mut c = cena(TipoCena::Clipe, &[]);
+        c.corte = Some(Corte {
+            arquivo: arquivo.into(),
+            de_s: de,
+            ate_s: ate,
+        });
+        c
+    }
+
+    #[test]
+    fn clipe_sem_dur_s_e_aceito_porque_o_prompt_manda_omitir() {
+        // O JSON QUE UM MODELO REAL DEVOLVEU. O prompt diz "a duracao vem do
+        // corte — nao a repita em `dur_s`", e ele obedeceu. Sem `serde(default)`
+        // obedecer derrubava o roteiro inteiro.
+        let bruto = serde_json::json!({
+            "cenas": [{
+                "tipo": "clipe",
+                "titulo": "Sem as pausas",
+                "subtitulo": "",
+                "imagens": [],
+                "narracao": "",
+                "corte": {"arquivo": "take.mp4", "de_s": 5.02, "ate_s": 8.01}
+            }],
+            "trilha": "", "proporcao": "9:16", "racional": "",
+            "look": {"energia": 0.4, "vinheta": false, "filete": true}
+        });
+        let r: Roteiro = serde_json::from_value(bruto).expect("o roteiro real deixou de parsear");
+        let r = r.normalizar();
+        assert!(
+            (r.cenas[0].dur_s - 2.99).abs() < 0.01,
+            "{}",
+            r.cenas[0].dur_s
+        );
+        assert_eq!(validar(&r, &projeto()), Ok(()));
+    }
+
+    #[test]
+    fn cena_normal_sem_duracao_e_recusada_com_nome() {
+        // O padrao existe para o clipe. Numa cena de texto, duracao ausente e
+        // erro de verdade — e a mensagem precisa dizer qual cena, senao a
+        // pessoa procura num roteiro de trinta.
+        let bruto = serde_json::json!({
+            "cenas": [{"tipo": "titulo", "titulo": "a", "subtitulo": "", "imagens": [], "narracao": ""}],
+            "trilha": "", "proporcao": "16:9", "racional": "",
+            "look": {"energia": 0.5, "vinheta": false, "filete": false}
+        });
+        let r: Roteiro = serde_json::from_value(bruto).unwrap();
+        assert!(matches!(
+            validar(&r.normalizar(), &projeto()),
+            Err(ErroRoteiro::DuracaoForaDaFaixa { cena: 1, .. })
+        ));
+    }
+
+    #[test]
+    fn a_duracao_do_clipe_vem_do_corte_e_nao_do_que_o_modelo_disse() {
+        // Deixar o modelo declarar as duas coisas cria uma chance de elas
+        // discordarem — e ai o video mostraria meio trecho, ou congelaria no
+        // fim de um que acabou antes. Derivar remove a classe inteira.
+        let mut c = cena_de_clipe("take.mp4", 5.0, 12.5);
+        c.dur_s = 3.0; // o modelo errou
+        let r = roteiro(vec![c]).normalizar();
+        assert_eq!(r.cenas[0].dur_s, 7.5);
+    }
+
+    #[test]
+    fn clipe_que_nao_existe_e_recusado_antes_do_render() {
+        let r = roteiro(vec![cena_de_clipe("sumido.mp4", 0.0, 2.0)]).normalizar();
+        assert_eq!(
+            validar(&r, &projeto()),
+            Err(ErroRoteiro::ClipeInexistente {
+                cena: 1,
+                nome: "sumido.mp4".into()
+            })
+        );
+    }
+
+    #[test]
+    fn corte_invertido_e_recusado() {
+        // `ate_s <= de_s` daria um trecho de duracao zero ou negativa, e o
+        // render mostraria um quadro congelado sem ninguem entender por que.
+        let r = roteiro(vec![cena_de_clipe("take.mp4", 8.0, 3.0)]);
+        assert!(matches!(
+            validar(&r, &projeto()),
+            Err(ErroRoteiro::CorteInvertido { cena: 1, .. })
+        ));
+    }
+
+    #[test]
+    fn clipe_sem_corte_e_recusado() {
+        let r = roteiro(vec![cena(TipoCena::Clipe, &[])]);
+        assert_eq!(validar(&r, &projeto()), Err(ErroRoteiro::SemCorte(1)));
+    }
+
+    #[test]
+    fn um_take_longo_cabe_no_clipe_e_nao_nas_outras_cenas() {
+        // Uma cena de texto de 40s e a tela parada; um take falado de 40s e
+        // material normal. O teto por tipo e o que deixa os dois conviverem.
+        let r = roteiro(vec![cena_de_clipe("take.mp4", 0.0, 40.0)]).normalizar();
+        assert_eq!(validar(&r, &projeto()), Ok(()));
+
+        let mut t = cena(TipoCena::Declaracao, &[]);
+        t.dur_s = 40.0;
+        assert!(matches!(
+            validar(&roteiro(vec![t]), &projeto()),
+            Err(ErroRoteiro::DuracaoForaDaFaixa { .. })
+        ));
     }
 
     #[test]

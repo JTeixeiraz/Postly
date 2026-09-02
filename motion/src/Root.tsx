@@ -19,9 +19,9 @@ const DIR: Direcao = {
 const EXEMPLO: Props = {
   roteiro: {
     cenas: [
-      { tipo: "titulo", dur_s: 2.5, titulo: "Um título", subtitulo: "e um subtítulo", imagens: [], narracao: "", direcao: DIR },
-      { tipo: "declaracao", dur_s: 3, titulo: "A frase que é o conteúdo.", subtitulo: "", imagens: [], narracao: "", direcao: { ...DIR, pouso: "coluna_esquerda" } },
-      { tipo: "fecho", dur_s: 2.5, titulo: "O fecho", subtitulo: "com chamada", imagens: [], narracao: "", direcao: DIR },
+      { tipo: "titulo", dur_s: 2.5, titulo: "Um título", subtitulo: "e um subtítulo", imagens: [], narracao: "", corte: null, direcao: DIR },
+      { tipo: "declaracao", dur_s: 3, titulo: "A frase que é o conteúdo.", subtitulo: "", imagens: [], narracao: "", corte: null, direcao: { ...DIR, pouso: "coluna_esquerda" } },
+      { tipo: "fecho", dur_s: 2.5, titulo: "O fecho", subtitulo: "com chamada", imagens: [], narracao: "", corte: null, direcao: DIR },
     ],
     trilha: "",
     proporcao: "16:9",

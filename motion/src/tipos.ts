@@ -10,7 +10,16 @@ export type TipoCena =
   | "placa"
   | "comparacao"
   | "declaracao"
-  | "fecho";
+  | "fecho"
+  | "clipe";
+
+/** O trecho de um vídeo que a pessoa gravou. */
+export interface Corte {
+  /** Nome do arquivo em `clipes/`, não caminho. */
+  arquivo: string;
+  de_s: number;
+  ate_s: number;
+}
 
 export type Movimento =
   | "aproximar"
@@ -62,6 +71,8 @@ export interface Cena {
   /** Nomes de arquivo, não caminhos. O `staticFile` resolve. */
   imagens: string[];
   narracao: string;
+  /** Preenchido quando `tipo` é `clipe`. */
+  corte: Corte | null;
   direcao: Direcao;
 }
 

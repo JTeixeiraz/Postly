@@ -68,7 +68,8 @@
       "../sidecar/remotion-agent.mjs": "sidecar/remotion-agent.mjs",
       "../motion/package.json": "motion/package.json",
       "../motion/tsconfig.json": "motion/tsconfig.json",
-      "../motion/src/*": "motion/src/"
+      "../motion/src/*": "motion/src/",
+      "../sidecar/analise-agent.mjs": "sidecar/analise-agent.mjs"
     }
   }
 }

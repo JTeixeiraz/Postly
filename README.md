@@ -224,20 +224,23 @@ Nunca há dois modelos residentes.
 O nível do modelo é proporcional ao que o cargo entrega. Quem decide precisa
 raciocinar; quem cumpre um briefing pronto, não.
 
-### Quem executa: Ollama, Claude Code ou Gemini CLI
+### Quem executa: Ollama, Claude Code ou Antigravity CLI
 
 Por padrão os turnos rodam em modelos locais do Ollama. Se você já tem o
-**Claude Code** ou o **Gemini CLI** instalado, pode trocar o executor na aba
+**Claude Code** ou o **Antigravity CLI** instalado, pode trocar o executor na aba
 Modelos e ganhar velocidade. O mesmo princípio vale nos três — o nível do cargo
 é proporcional ao que ele entrega — só que o eixo muda:
 
-| Nível | Ollama | Claude Code | Gemini CLI |
+| Nível | Ollama | Claude Code | Antigravity |
 |---|---|---|---|
-| Alto (decide, julga) | o mais forte que couber na memória | Opus 5 | Gemini 2.5 Pro |
-| Médio (audita) | intermediário | Sonnet 5 | Gemini 2.5 Flash |
-| Baixo (executa briefing) | modelo pequeno | Haiku 4.5 | Gemini 2.5 Flash-Lite |
+| Alto (decide, julga) | o mais forte que couber na memória | Opus 5 | Gemini 3.1 Pro (High) |
+| Médio (audita) | intermediário | Sonnet 5 | Gemini 3.7 Flash (High) |
+| Baixo (executa briefing) | modelo pequeno | Haiku 4.5 | Gemini 3.7 Flash (Low) |
 
-Nos dois casos isso executa o binário da sua máquina (`claude` ou `gemini`), com
+No Antigravity o próprio ID do modelo já carrega o nível de esforço, então o
+nível do cargo vira o nome do modelo sem precisar de um segundo parâmetro.
+
+Nos dois casos isso executa o binário da sua máquina (`claude` ou `agy`), com
 a sessão que você já logou. **Não existe campo de chave de API em lugar nenhum
 do Postly.**
 
@@ -246,13 +249,18 @@ e um processo filho herda o ambiente do pai — então o Postly remove essa
 variável (e as de Bedrock e Vertex) do processo do Claude Code. O turno roda
 pela sua assinatura, ou não roda. O custo de cada turno aparece na trilha.
 
-**Gemini CLI:** aqui a regra é outra, e a diferença foi medida. O Gemini escolhe
-o método de autenticação em `~/.gemini/settings.json`, e o método escolhido
-**vence** a variável de ambiente; quando não há método escolhido, a variável é a
-sua única autenticação. Remover seria quebrar quem funciona hoje, então o Postly
-**avisa e não mexe**. O CLI também não reporta o custo por turno, então a trilha
-mostra o tempo em vez do preço — dizer `USD 0,000` seria afirmar que o turno saiu
-de graça, e ele gastou cota da sua conta.
+**Antigravity CLI:** aqui a regra é outra. Se houver uma variável de credencial
+do Google no ambiente, o Postly **avisa e não mexe** — quando ela existe, é a sua
+autenticação e não um desvio. O CLI reporta tokens, não preço, então a trilha
+mostra o tempo: converter token em dinheiro exigiria uma tabela que muda sem
+avisar, e `USD 0,000` afirmaria que o turno saiu de graça quando ele gastou cota
+da sua conta.
+
+> O Antigravity CLI (`agy`) é o **sucessor do Gemini CLI**. O Postly integrava o
+> `gemini` até o Google migrar; hoje o `gemini` recusa conta pessoal com
+> `IneligibleTierError · UNSUPPORTED_CLIENT`, medido nesta máquina em modo
+> headless e em terminal. Quem tinha o provedor antigo salvo não perde nada: o
+> `prefs.json` continua sendo lido, e há teste para isso.
 
 ### Quem desenha a arte: você escolhe
 
@@ -478,6 +486,12 @@ markup toda semana e resistem ativamente a automação. Os adaptadores tentam
 vários seletores em ordem e tiram captura de tela quando falham, mas conte com
 manutenção. **Use o modo Simular primeiro.**
 
+**O primeiro uso baixa cerca de 300 MB.** O `sidecar/` vem no instalador como
+código, e as dependências (Playwright, Chromium, Remotion) são instaladas na sua
+máquina na primeira abertura — não dentro da pasta do programa, que no Windows e
+no macOS é somente leitura, mas no seu diretório de dados. Sem rede na primeira
+abertura, o app abre e diz o que falta em vez de fingir que está pronto.
+
 **O TikTok espera vídeo, e a campanha ainda manda imagem.** A aba Vídeos já
 produz `.mp4`, mas os dois caminhos não estão ligados: a publicação de campanha
 continua enviando a arte gerada. Ligar um no outro é trabalho que falta.
@@ -514,7 +528,7 @@ src-tauri/src/            backend em Rust
 ├── browser/              ponte com o sidecar do Playwright
 ├── imagem/               os cinco geradores de arte, um adaptador cada
 ├── gemini/               cliente da API de imagem e texto
-├── gemini_cli/           o Gemini CLI local como provedor de turno
+├── antigravity/          o Antigravity CLI local (`agy`) como provedor de turno
 ├── claude/               o Claude Code local como provedor de turno
 ├── video/                o vídeo avulso: assets, direção, roteiro e render
 ├── metricas.rs           desempenho publicado e a regra de divergir
@@ -551,8 +565,25 @@ cd video && npm install && npm run dev
 ```bash
 npm run tauri dev                  # app em modo desenvolvimento
 npm run build                      # checagem de tipos + build do frontend
-cd src-tauri && cargo test         # 38 testes
+cd src-tauri && cargo test         # 126 testes
 ./scripts/primeira-vez.sh          # apaga o estado, para testar o onboarding
+```
+
+Os testes que falam com serviço externo ficam `#[ignore]` em binário próprio,
+para não entrarem na lista do CI. Rode à mão quando quiser conferir o mundo
+real em vez do contrato:
+
+```bash
+cargo test --test antigravity_vivo -- --ignored --nocapture   # um turno de verdade
+cargo test --test video_vivo       -- --ignored --nocapture   # roteiro contra modelo real
+cargo test --test ollama_vivo      -- --ignored --nocapture
+```
+
+E o pipeline de vídeo inteiro, de ponta a ponta, sem depender de clique — a
+janela é WebKitGTK e clique sintético não chega nela:
+
+```bash
+cd src-tauri && cargo run --example rodar_video -- <slug-do-projeto> "<objetivo>"
 ```
 
 **Stack:** [Tauri v2](https://tauri.app) (Rust + WebView), React, TypeScript,

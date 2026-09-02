@@ -69,6 +69,13 @@ pub struct AgentTurn<'a> {
     pub pensar: bool,
     /// Imagens em base64 para modelos com visao (o auditor conferindo a arte).
     pub images: Vec<String>,
+    /// Quem executa ESTE turno, quando alguem escolheu por fora.
+    ///
+    /// `None` usa a preferencia global. O override existe para a tela de video,
+    /// onde a escolha e por rodada: um modelo local para rascunhar de graca, um
+    /// CLI pago para a versao que vai sair. Trocar a preferencia global para
+    /// isso mudaria a campanha junto, que ninguem pediu.
+    pub provedor: Option<crate::prefs::Provedor>,
 }
 
 /// A falha de um turno rodado por um CLI de fora.
@@ -160,7 +167,9 @@ impl<'a> AgentTurn<'a> {
         // Provedor externo: o caminho e outro e muito mais curto. Nao ha
         // memoria para medir, modelo para baixar nem nada para descarregar,
         // porque a inferencia acontece fora desta maquina.
-        let provedor = crate::prefs::load().provedor;
+        let provedor = self
+            .provedor
+            .unwrap_or_else(|| crate::prefs::load().provedor);
         if provedor.externo() {
             return self.executar_fora(provedor, started, warnings).await;
         }
