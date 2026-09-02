@@ -35,7 +35,7 @@ chrono = "0.4"
 anyhow = "1"
 base64 = "0.23"
 aes-gcm = "0.11"
-rand = "0.8"
+rand = "0.10"
 dirs = "6"
 
 [dev-dependencies]
