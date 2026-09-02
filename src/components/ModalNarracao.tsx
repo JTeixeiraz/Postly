@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { api, ouvirNarracao } from "../api";
 import { useIdioma } from "../i18n";
 import type { PedidoNarracao } from "../types";
+import { useOuvinte } from "../ouvir";
 
 /** A pergunta sobre narração, quando a pasta de voz está vazia.
  *
@@ -18,11 +19,7 @@ export default function ModalNarracao() {
   const [pedido, setPedido] = useState<PedidoNarracao | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  useEffect(() => {
-    let parar: (() => void) | undefined;
-    void ouvirNarracao(setPedido).then((x) => (parar = x));
-    return () => parar?.();
-  }, []);
+  useOuvinte(() => ouvirNarracao(setPedido), []);
 
   const responder = async (quer: boolean) => {
     setEnviando(true);

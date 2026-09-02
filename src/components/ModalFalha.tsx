@@ -4,6 +4,7 @@ import { api, ouvirFalha } from "../api";
 import { useIdioma } from "../i18n";
 import type { Falha } from "../types";
 import { IconAlert, IconOpen } from "./Icons";
+import { useOuvinte } from "../ouvir";
 
 /** O que a pessoa encontra quando volta e a campanha morreu.
  *
@@ -15,11 +16,7 @@ export default function ModalFalha() {
   const { d } = useIdioma();
   const [falha, setFalha] = useState<Falha | null>(null);
 
-  useEffect(() => {
-    let parar: (() => void) | undefined;
-    void ouvirFalha(setFalha).then((x) => (parar = x));
-    return () => parar?.();
-  }, []);
+  useOuvinte(() => ouvirFalha(setFalha), []);
 
   // Escape fecha: o modal informa, não retém. Reter o que já falhou só
   // somaria uma segunda frustração à primeira.

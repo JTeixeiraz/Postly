@@ -17,6 +17,7 @@ import ElencoExterno from "../components/ElencoExterno";
 import EscolhaImagem from "../components/EscolhaImagem";
 import Galeria from "../components/Galeria";
 import ModoDesempenho from "../components/ModoDesempenho";
+import { useOuvinte } from "../ouvir";
 
 export default function Modelos({
   diag,
@@ -46,13 +47,7 @@ export default function Modelos({
 
   // O Ollama informa o andamento do pull; sem isto o botao ficaria parado por
   // minutos num download de 20 GB, e a pessoa nao saberia se travou.
-  useEffect(() => {
-    let parar: (() => void) | undefined;
-    void ouvirDownloads((e) => {
-      setBaixando((atual) => ({ ...atual, [e.model]: e.percent }));
-    }).then((x) => (parar = x));
-    return () => parar?.();
-  }, []);
+  useOuvinte(() => ouvirDownloads((e) => setBaixando((atual) => ({ ...atual, [e.model]: e.percent }))), []);
 
   const baixar = async (tag: string) => {
     setRecado(null);

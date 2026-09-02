@@ -4,6 +4,7 @@ import { api, ouvirAtualizacao } from "../api";
 import { formatarBytes, useIdioma } from "../i18n";
 import type { Atualizacao, ProgressoBaixa } from "../types";
 import { IconArrow, IconSpinner } from "./Icons";
+import { useOuvinte } from "../ouvir";
 
 const ADIADA = "postly:atualizacao-adiada";
 
@@ -36,11 +37,7 @@ export default function ModalAtualizacao() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    let parar: (() => void) | undefined;
-    void ouvirAtualizacao(setBaixando).then((x) => (parar = x));
-    return () => parar?.();
-  }, []);
+  useOuvinte(() => ouvirAtualizacao(setBaixando), []);
 
   const instalar = async () => {
     if (!nova?.url_instalador) return;

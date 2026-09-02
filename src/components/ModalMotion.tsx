@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { api, ouvirMotion } from "../api";
 import { useIdioma } from "../i18n";
 import type { PedidoMotion } from "../types";
+import { useOuvinte } from "../ouvir";
 
 const ROTULO_REDE: Record<string, string> = {
   instagram: "Instagram",
@@ -24,11 +25,7 @@ export default function ModalMotion() {
   const [pedido, setPedido] = useState<PedidoMotion | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  useEffect(() => {
-    let parar: (() => void) | undefined;
-    void ouvirMotion(setPedido).then((x) => (parar = x));
-    return () => parar?.();
-  }, []);
+  useOuvinte(() => ouvirMotion(setPedido), []);
 
   const responder = async (aceitar: boolean) => {
     setEnviando(true);

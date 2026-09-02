@@ -10,6 +10,7 @@ import type { PastaGaleria } from "../types";
 import PlanoExecucao from "../components/PlanoExecucao";
 import Selecao from "../components/Selecao";
 import { IconArrow, IconCheck, IconSpinner } from "../components/Icons";
+import { useOuvinte } from "../ouvir";
 
 export default function Campanha({ diag }: { diag: Diagnostico | null }) {
   const { d, f, idioma } = useIdioma();
@@ -47,11 +48,7 @@ export default function Campanha({ diag }: { diag: Diagnostico | null }) {
     void api.preferencias().then(setPrefs).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    let parar: (() => void) | undefined;
-    void ouvirEstagios((e) => setEventos((atual) => [...atual, e])).then((x) => (parar = x));
-    return () => parar?.();
-  }, []);
+  useOuvinte(() => ouvirEstagios((e) => setEventos((atual) => [...atual, e])), []);
 
   useEffect(() => {
     if (rodando) fim.current?.scrollIntoView({ behavior: "smooth", block: "end" });
