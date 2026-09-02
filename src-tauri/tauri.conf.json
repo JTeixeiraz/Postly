@@ -58,6 +58,17 @@
           "English"
         ]
       }
+    },
+    "resources": {
+      "../sidecar/package.json": "sidecar/package.json",
+      "../sidecar/package-lock.json": "sidecar/package-lock.json",
+      "../sidecar/playwright-agent.mjs": "sidecar/playwright-agent.mjs",
+      "../sidecar/networks.mjs": "sidecar/networks.mjs",
+      "../sidecar/metricas.mjs": "sidecar/metricas.mjs",
+      "../sidecar/remotion-agent.mjs": "sidecar/remotion-agent.mjs",
+      "../motion/package.json": "motion/package.json",
+      "../motion/tsconfig.json": "motion/tsconfig.json",
+      "../motion/src/*": "motion/src/"
     }
   }
 }

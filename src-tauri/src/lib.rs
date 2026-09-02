@@ -11,11 +11,12 @@
 //! - `gemini`       geracao de imagem e legenda.
 //! - `antigravity`  o Antigravity CLI local (`agy`) como provedor de turno.
 //! - `browser`      ponte com o sidecar do Playwright.
+//! - `recursos`     onde `sidecar/` e `motion/` vivem na maquina de quem usa.
 //! - `vault`        cofre cifrado de chave e credenciais.
 //! - `video`        o video avulso: assets, roteiro de cenas e render.
 
-pub mod atualizacao;
 pub mod antigravity;
+pub mod atualizacao;
 pub mod auditoria_cmds;
 pub mod brain;
 pub mod browser;
@@ -34,6 +35,7 @@ pub mod ollama;
 pub mod orchestrator;
 pub mod platform;
 pub mod prefs;
+pub mod recursos;
 pub mod referencias;
 pub mod state;
 pub mod vault;
@@ -42,29 +44,30 @@ pub mod video_cmds;
 
 use state::AppState;
 
-/// Raiz do projeto, onde vive a pasta `sidecar/`. Em desenvolvimento o binario
-/// roda em `src-tauri/target/debug`, entao subimos ate encontrar o sidecar.
-fn app_root() -> std::path::PathBuf {
-    if let Ok(exe) = std::env::current_exe() {
-        let mut dir = exe.parent().map(|p| p.to_path_buf());
-        while let Some(candidate) = dir {
-            if candidate.join("sidecar/playwright-agent.mjs").exists() {
-                return candidate;
-            }
-            dir = candidate.parent().map(|p| p.to_path_buf());
-        }
-    }
-    std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let root = app_root();
     // Garante o diretorio de dados antes de qualquer leitura de cofre ou cerebro.
     let _ = std::fs::create_dir_all(platform::current().data_dir());
 
     tauri::Builder::default()
-        .manage(AppState::new(root))
+        .setup(|app| {
+            // A SEMEADURA ACONTECE ANTES DE QUALQUER SONDA, e essa ordem e a
+            // correcao de um defeito relatado: sem o `sidecar/` em disco, a
+            // tela de Preparacao mostrava o erro de navegador e o
+            // provisionamento automatico nao tinha o que instalar.
+            use tauri::Manager;
+            if let Ok(dir) = app.path().resource_dir() {
+                recursos::definir_diretorio_de_recursos(dir);
+            }
+            if let Err(e) = recursos::semear() {
+                // Nao derruba a abertura: o app ainda serve para configurar e
+                // ler historico, e a tela de Preparacao vai dizer o que falta
+                // com muito mais contexto que um crash na primeira tela.
+                eprintln!("falha ao preparar os arquivos de execucao: {e}");
+            }
+            app.manage(AppState::new(recursos::raiz()));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             auditoria_cmds::listar_metricas,
             auditoria_cmds::leitura_desempenho,

@@ -36,17 +36,14 @@ pub struct StatusNavegador {
     pub detalhe: String,
 }
 
+/// Onde o sidecar está para ser executado.
+///
+/// Vinha daqui uma SEGUNDA noção de raiz, diferente da que o `AppState` usava —
+/// e duas respostas para "onde fica o sidecar" é exatamente como um defeito se
+/// esconde. Agora existe uma só, em `recursos`, que também sabe semear a cópia
+/// gravável num app instalado.
 fn raiz_sidecar() -> PathBuf {
-    // Em desenvolvimento o sidecar mora ao lado do src-tauri; empacotado, ele
-    // vai junto do binário.
-    let dev = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../sidecar");
-    if dev.join("package.json").exists() {
-        return dev;
-    }
-    std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.join("sidecar")))
-        .unwrap_or(dev)
+    crate::recursos::raiz().join("sidecar")
 }
 
 /// Pergunta ao próprio Playwright onde está o executável.
@@ -128,6 +125,33 @@ pub async fn provisionar() -> RelatorioNavegador {
     let raiz = raiz_sidecar();
     let mut passos = Vec::new();
     let mut erros = Vec::new();
+
+    // SEMEIA ANTES DE TENTAR INSTALAR. Num app instalado a pasta pode ainda nao
+    // existir, e era exatamente esse o defeito relatado: o provisionamento
+    // rodava `npm ci` num diretorio inexistente, nada era instalado, e a tela
+    // continuava mostrando o erro de navegador sem nunca sair dele.
+    if let Err(e) = crate::recursos::semear() {
+        erros.push(e);
+        return RelatorioNavegador {
+            ok: false,
+            passos,
+            erros,
+            status_final: status(),
+        };
+    }
+
+    // Semeia antes de qualquer coisa: num app instalado a pasta pode ainda não
+    // existir, e era exatamente esse o defeito — o botão de instalar rodava
+    // `npm ci` num diretório inexistente e não instalava nada.
+    if let Err(e) = crate::recursos::semear() {
+        erros.push(e);
+        return RelatorioNavegador {
+            ok: false,
+            passos,
+            erros,
+            status_final: status(),
+        };
+    }
 
     if !strategy.node_installed() {
         erros.push(crate::idioma::msg(

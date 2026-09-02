@@ -7,6 +7,7 @@ import Meter from "../components/Meter";
 import Elenco from "../components/Elenco";
 import Otimizar from "./Otimizar";
 import { IconAlert, IconArrow, IconCheck, IconDot, IconSpinner } from "../components/Icons";
+import { useOuvinte } from "../ouvir";
 
 type Estado = "espera" | "rodando" | "ok" | "aviso" | "falhou";
 type Chave = "sistema" | "memoria" | "acelerador" | "ollama" | "navegador";
@@ -182,10 +183,21 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
     }
 
     setAutoInstalando(true);
-    if (faltaOllama) await prepararOllama();
-    if (faltaNavegador) await prepararNavegador();
+    const ollamaOk = faltaOllama ? await prepararOllama() : true;
+    const navegadorOk = faltaNavegador ? await prepararNavegador() : true;
     setAutoInstalando(false);
-    localStorage.setItem(CHAVE_PREPARO, "1");
+    // A MARCA SO CAI QUANDO DEU CERTO. Antes ela caia sempre, e uma tentativa que
+    // falhava queimava a unica chance automatica: na abertura seguinte `primeiraVez`
+    // ja era falso e o app nunca mais tentava sozinho — a pessoa ficava com o erro
+    // na tela e um botao para sempre.
+    //
+    // Foi assim que um usuario no Windows ficou preso: o `sidecar/` nao vinha no
+    // instalador, a instalacao falhava, e a segunda abertura ja nem tentava. Aquela
+    // causa esta corrigida em `recursos.rs`; isto conserta o que acontece quando a
+    // instalacao falha por outro motivo — sem rede, disco cheio, npm ausente.
+    if (ollamaOk && navegadorOk) {
+      localStorage.setItem(CHAVE_PREPARO, "1");
+    }
   };
 
   const aplicarOllama = (olla: OllamaStatus) => {
@@ -228,7 +240,7 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
     });
   };
 
-  const prepararNavegador = async () => {
+  const prepararNavegador = async (): Promise<boolean> => {
     setOcupado("navegador");
     marcar("navegador", { estado: "rodando", resultado: d.boot.browserDownloading });
     try {
@@ -236,6 +248,7 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
       setNavegador(r.status_final);
       if (r.ok) {
         marcar("navegador", { estado: "ok", resultado: d.boot.browserReady });
+        return true;
       } else {
         marcar("navegador", {
           estado: "falhou",
@@ -247,6 +260,7 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
           ),
         });
       }
+      return false;
     } finally {
       setOcupado(null);
     }
@@ -254,13 +268,9 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
 
   // O instalador do Ollama baixa perto de um giga. Sem acompanhar linha a
   // linha, a tela ficaria minutos parada e a pessoa nao saberia se travou.
-  useEffect(() => {
-    let parar: (() => void) | undefined;
-    void ouvirProvisao(setProvisao).then((x) => (parar = x));
-    return () => parar?.();
-  }, []);
+  useOuvinte(() => ouvirProvisao(setProvisao), []);
 
-  const prepararOllama = async () => {
+  const prepararOllama = async (): Promise<boolean> => {
     setOcupado("ollama");
     setProvisao({ passo: 0, total: 0, label: d.boot.installing, linha: "", percent: 0, fase: "instalando" });
     marcar("ollama", { estado: "rodando", resultado: d.boot.probing });
@@ -274,6 +284,8 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
           estado: "ok",
           resultado: f(d.boot.ollamaReady, { version: novo.version ?? "?" }),
         });
+        void recarregar();
+        return true;
       } else {
         marcar("ollama", {
           estado: "falhou",
@@ -285,7 +297,7 @@ export default function Preparo({ diag, recarregar, avancar }: Props) {
           ),
         });
       }
-      void recarregar();
+      return false;
     } finally {
       setOcupado(null);
     }

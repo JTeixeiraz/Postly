@@ -70,16 +70,20 @@ jobs:
 
       - run: npm ci
 
-      # O sidecar tem package.json próprio e não entra no npm ci da raiz.
-      # Sem ele não há Playwright, e sem Playwright não há publicação.
-      - run: npm ci --prefix sidecar
+      # NÃO se instala o sidecar aqui, e a ausência é deliberada. O comentário
+      # anterior dizia que sem este passo não haveria Playwright no instalador —
+      # e isso nunca foi verdade: `node_modules` jamais entrou no pacote. O que
+      # o instalador leva são os ARQUIVOS de `sidecar/` e `motion/`, declarados
+      # em `bundle.resources`; as dependências são instaladas na máquina de quem
+      # usa, na primeira abertura. Rodar `npm ci` aqui só baixava um Chromium
+      # por runner, quatro vezes por release, para jogar fora.
 
       - name: Testes do Rust
         # Alvos explícitos em vez de `--skip`: os dois testes que falam com um
         # Ollama vivo estão num binário próprio (`ollama_vivo`), e `--skip`
         # filtra NOME de teste, não arquivo — ele não os pegaria e o job
         # quebraria no runner, que não tem Ollama.
-        run: cargo test --manifest-path src-tauri/Cargo.toml --lib --test cerebro --test sistema
+        run: cargo test --manifest-path src-tauri/Cargo.toml --lib --test cerebro --test sistema --test limite
 
       - uses: tauri-apps/tauri-action@v1
         env:
