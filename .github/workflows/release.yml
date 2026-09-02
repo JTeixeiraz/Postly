@@ -83,7 +83,21 @@ jobs:
         # Ollama vivo estão num binário próprio (`ollama_vivo`), e `--skip`
         # filtra NOME de teste, não arquivo — ele não os pegaria e o job
         # quebraria no runner, que não tem Ollama.
-        run: cargo test --manifest-path src-tauri/Cargo.toml --lib --test cerebro --test sistema --test limite
+        run: cargo test --manifest-path src-tauri/Cargo.toml --lib --test cerebro --test sistema
+
+      - name: Teste do limite de cota
+        # FORA DO WINDOWS, e a exclusão foi medida. `limite.rs` monta um app
+        # Tauri de teste (`mock_builder`), e no Windows o binário resultante
+        # nem inicia: sai com 0xc0000139, STATUS_ENTRYPOINT_NOT_FOUND, porque
+        # o `WebView2Loader.dll` fica em `target/debug` e o executável do teste
+        # em `target/debug/deps`. Isso derrubou a primeira tentativa da 0.2.0.
+        #
+        # O que o teste cobre — a campanha parar e esperar na cota estourada —
+        # não tem nada de específico de sistema, então rodá-lo nos outros três
+        # runners cobre o comportamento. O `verificar.yml`, que é o portão do
+        # dia a dia, roda no Ubuntu e continua exercitando este arquivo.
+        if: runner.os != 'Windows'
+        run: cargo test --manifest-path src-tauri/Cargo.toml --test limite
 
       - uses: tauri-apps/tauri-action@v1
         env:
